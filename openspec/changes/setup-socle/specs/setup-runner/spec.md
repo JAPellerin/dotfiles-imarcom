@@ -16,18 +16,22 @@ Le runner SHALL s'exécuter sous le compte de l'utilisateur (jamais en root) et 
 - **THEN** l'utilisateur n'est invité à saisir son mot de passe qu'une seule fois, au démarrage
 
 ### Requirement: Menu interactif par défaut
-Sans argument, le runner SHALL afficher un menu à sélection multiple listant tous les modules découverts avec leur description et leur état (déjà fait ou non), puis exécuter la sélection. Les modules déjà faits SHALL être présentés mais non présélectionnés.
+Sans argument, le runner SHALL afficher un menu à sélection multiple listant tous les modules découverts, chacun sous la forme `[groupe] nom — description — état`, puis exécuter la sélection. Les modules pas encore faits SHALL être présélectionnés ; les modules déjà faits SHALL être présentés mais non présélectionnés. Ainsi, valider le menu sans rien changer installe tout ce qui manque.
 
-#### Scenario: Sélection multiple
-- **WHEN** l'utilisateur lance `setup.sh` sans argument et coche `base`, `1password`
-- **THEN** les deux modules s'exécutent, dans l'ordre de leurs dépendances
+#### Scenario: Machine vierge
+- **WHEN** l'utilisateur lance `setup.sh` sur une machine où aucun module n'est fait et valide le menu sans rien changer
+- **THEN** tous les modules disponibles dans cet environnement s'exécutent, dans l'ordre de leurs dépendances
+
+#### Scenario: Sélection ajustée
+- **WHEN** l'utilisateur lance `setup.sh` sans argument, décoche tout sauf `base` et `1password`
+- **THEN** seuls ces deux modules s'exécutent, dans l'ordre de leurs dépendances
 
 #### Scenario: État visible
 - **WHEN** le module `base` a déjà été appliqué sur la machine
-- **THEN** le menu l'affiche avec un marqueur « déjà fait » et il n'est pas présélectionné
+- **THEN** le menu l'affiche sous `[systeme] base` avec un marqueur « déjà fait » et il n'est pas présélectionné
 
 ### Requirement: Exécution ciblée par nom
-Le runner SHALL accepter un ou plusieurs noms de modules en argument (`setup.sh git node`) et les exécuter sans afficher le menu. Il SHALL aussi accepter `--all` (tous les modules) et `--list` (affiche les modules, leur description et leur état, puis quitte). Un nom inconnu MUST provoquer une erreur listant les noms valides.
+Le runner SHALL accepter un ou plusieurs noms de modules en argument (`setup.sh git node`) et les exécuter sans afficher le menu. Il SHALL aussi accepter `--all` (tous les modules) et `--list` (affiche les modules avec leur groupe, leur description et leur état, puis quitte). Un nom inconnu MUST provoquer une erreur listant les noms valides.
 
 #### Scenario: Module par nom
 - **WHEN** l'utilisateur lance `setup.sh 1password`
@@ -39,7 +43,7 @@ Le runner SHALL accepter un ou plusieurs noms de modules en argument (`setup.sh 
 
 #### Scenario: Liste
 - **WHEN** l'utilisateur lance `setup.sh --list`
-- **THEN** le runner affiche chaque module avec sa description et son état, sans rien exécuter
+- **THEN** le runner affiche chaque module avec son groupe, sa description et son état, sans rien exécuter
 
 ### Requirement: Résolution des dépendances
 Avant d'exécuter un module, le runner SHALL exécuter ses dépendances (récursivement) qui ne sont pas encore faites, chaque module au plus une fois par exécution. Une dépendance circulaire ou inconnue MUST être détectée avant toute exécution et provoquer une erreur explicite.

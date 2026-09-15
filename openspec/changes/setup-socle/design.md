@@ -13,6 +13,7 @@ Dépôt vide. Cible : laptop de travail Ubuntu 26.04 LTS avec GNOME ; développe
 - Portabilité hors Ubuntu 26.04 (pas de Debian, Fedora, macOS).
 - Désinstallation / rollback des modules.
 - Exécution non interactive complète (`--yes`) : possible plus tard, pas dans le socle.
+- Profils de sélection (`--profile minimal`) : la présélection des modules non faits couvre le cas « tout installer » ; voir `ROADMAP.md`.
 
 ## Decisions
 
@@ -26,10 +27,10 @@ Dépôt public, aucune donnée sensible (tout secret vit dans 1Password), donc c
 Le précédent script tournait en root ; ici oh-my-zsh, nvm, `op signin`, `.desktop` et les fichiers de config appartiennent à l'utilisateur. `setup.sh` refuse root, appelle `sudo -v` au démarrage puis rafraîchit le ticket en tâche de fond (`while true; do sudo -n true; sleep 60; done &`, tué à la sortie via `trap`). Les commandes privilégiées passent par un helper `run_sudo`.
 
 ### D4. Contrat de module : fichier sourcé, métadonnées + 3 fonctions
-Un module = `modules/NN-nom.sh` sourcé dans un sous-shell par le runner, exposant `MODULE_NAME/DESC/DEPS[/NEEDS_GUI]` et `module_check/install/configure`. Sourcer dans un sous-shell isole les fonctions et variables d'un module à l'autre (deux modules peuvent définir `module_install` sans conflit). L'état n'est pas persisté dans un fichier : `module_check` est la seule source de vérité, ce qui garantit qu'un état réel divergent (paquet désinstallé à la main) est bien détecté. Alternative rejetée : fichier d'état `~/.local/state/dotfiles/done` (ment dès qu'on touche la machine à la main).
+Un module = `modules/NN-nom.sh` sourcé dans un sous-shell par le runner, exposant `MODULE_NAME/DESC/GROUP/DEPS[/NEEDS_GUI]` et `module_check/install/configure`. Sourcer dans un sous-shell isole les fonctions et variables d'un module à l'autre (deux modules peuvent définir `module_install` sans conflit). L'état n'est pas persisté dans un fichier : `module_check` est la seule source de vérité, ce qui garantit qu'un état réel divergent (paquet désinstallé à la main) est bien détecté. Alternative rejetée : fichier d'état `~/.local/state/dotfiles/done` (ment dès qu'on touche la machine à la main).
 
 ### D5. Découverte et affichage
-Le runner charge chaque module une première fois pour lire les métadonnées et appeler `module_check` (rapide, sans effet de bord), construit la liste `nom | description | état`, puis affiche `gum choose --no-limit`. Les modules « déjà faits » sont visibles, non présélectionnés. `--list` affiche la même table via `gum table` ou un `printf` aligné.
+Le runner charge chaque module une première fois pour lire les métadonnées et appeler `module_check` (rapide, sans effet de bord), construit la liste `[groupe] nom — description — état`, puis affiche `gum choose --no-limit --selected=<modules non faits>`. Les modules « déjà faits » sont visibles, non présélectionnés : `Entrée` sans rien toucher installe tout ce qui manque. `gum choose` n'offre pas d'en-têtes non sélectionnables, d'où le préfixe `[groupe]` (valeurs et découpage dans `ROADMAP.md`) ; l'ordre d'affichage suit le préfixe `NN`. `--list` affiche la même table via `gum table` ou un `printf` aligné.
 
 ### D6. Ordonnancement
 Tri topologique simple sur `MODULE_DEPS` (DFS avec détection de cycle), avec deux règles : les dépendances d'abord, puis `1password` avancé devant tout module non-dépendance. Le préfixe `NN` du nom de fichier ne sert qu'à l'affichage et à départager les ex æquo.
