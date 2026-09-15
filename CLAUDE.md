@@ -38,6 +38,7 @@ Commandes utiles : `openspec list`, `openspec status --change <nom>`, `openspec 
 - **Secrets via 1Password** : app de bureau + CLI `op` depuis le dépôt apt officiel ; module `1password` exécuté d'office avant les autres ; secrets lus par `op read op://...`, jamais journalisés ; agent SSH de l'app (`SSH_AUTH_SOCK`), activation = étape manuelle affichée en fin d'exécution.
 - **Cible** : nouveau laptop de travail Ubuntu 26.04 + GNOME. Tests de bout en bout dans une VM Hyper-V avec snapshot « vierge » ; développement des modules non graphiques dans cette WSL (`has_gui` faux → modules `NEEDS_GUI` sautés).
 - Détail des choix et alternatives : `openspec/changes/setup-socle/design.md` (D1–D10).
+- **Découpage des modules et ordre des changes** : `ROADMAP.md` (15 sept 2026). Menu : modules non faits précochés, préfixe de groupe `[shell]`, une app de bureau = un module.
 
 ## Contraintes générales
 

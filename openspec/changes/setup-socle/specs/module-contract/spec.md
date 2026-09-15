@@ -12,10 +12,10 @@ Chaque module SHALL être un fichier `modules/NN-<nom>.sh` où `NN` est un préf
 - **THEN** il apparaît dans `setup.sh --list` et dans le menu sans autre modification
 
 ### Requirement: Métadonnées obligatoires
-Chaque module SHALL déclarer `MODULE_NAME` (identique au `<nom>` du fichier), `MODULE_DESC` (une ligne, en français) et `MODULE_DEPS` (liste de noms de modules, possiblement vide). Il MAY déclarer `MODULE_NEEDS_GUI=1` s'il nécessite une session graphique. Un module dont les métadonnées obligatoires manquent ou dont `MODULE_NAME` diffère du nom de fichier MUST être rejeté par le runner avec un message nommant le fichier.
+Chaque module SHALL déclarer `MODULE_NAME` (identique au `<nom>` du fichier), `MODULE_DESC` (une ligne, en français), `MODULE_GROUP` (un mot en kebab-case parmi `systeme`, `shell`, `dev`, `apps`, `bureau`, `projets`, affiché en préfixe dans le menu) et `MODULE_DEPS` (liste de noms de modules, possiblement vide). Il MAY déclarer `MODULE_NEEDS_GUI=1` s'il nécessite une session graphique. Un module dont les métadonnées obligatoires manquent ou dont `MODULE_NAME` diffère du nom de fichier MUST être rejeté par le runner avec un message nommant le fichier.
 
 #### Scenario: Module invalide
-- **WHEN** `modules/50-browsers.sh` ne déclare pas `MODULE_DESC`
+- **WHEN** `modules/50-navigateur.sh` ne déclare pas `MODULE_DESC`
 - **THEN** `setup.sh` signale le fichier et le champ manquant, et refuse de démarrer
 
 ### Requirement: Fonctions du cycle de vie
@@ -37,11 +37,15 @@ Chaque module SHALL définir trois fonctions : `module_check` (retourne 0 si le 
 - **THEN** il se termine sans erreur et l'état final est identique à une première application
 
 ### Requirement: Interactivité et choix
-Un module MAY poser des questions à l'utilisateur (choix d'options, confirmation) via les helpers d'interface fournis par le socle. Ces questions SHALL être posées au début de `module_install`, avant toute action longue, pour que l'utilisateur ne soit pas sollicité au milieu d'une installation.
+Un module MAY poser des questions à l'utilisateur (choix d'options, confirmation) via les helpers d'interface fournis par le socle. Ces questions SHALL être posées au début de `module_install`, avant toute action longue, pour que l'utilisateur ne soit pas sollicité au milieu d'une installation. Comme l'état n'est pas persisté, un module à choix interne SHALL considérer dans `module_check` qu'il reste à faire et n'installer, à chaque exécution, que ce qui manque parmi les options choisies. Ce cas est l'exception : une application de bureau a en règle générale son propre module, et le choix se fait dans le menu principal.
 
 #### Scenario: Module avec options
-- **WHEN** le module `browsers` propose Brave, Chrome et Firefox
+- **WHEN** le module `navigateur` propose Brave, Chrome et Firefox
 - **THEN** la sélection est demandée avant le premier `apt install`, puis les installations s'enchaînent sans nouvelle question
+
+#### Scenario: Relance d'un module à choix interne
+- **WHEN** Brave est déjà installé et l'utilisateur relance `navigateur` en choisissant Brave et Firefox
+- **THEN** seul Firefox est installé et le module se termine sans erreur
 
 ### Requirement: Déclaration des étapes manuelles
 Un module SHALL pouvoir déclarer, via un helper du socle, une ou plusieurs étapes manuelles que le script ne peut pas automatiser ; le runner les reprend dans le résumé final.

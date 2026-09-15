@@ -1,0 +1,48 @@
+# Feuille de route
+
+Découpage des modules du script de configuration, convenu le 15 septembre 2026. Un module = un fichier `modules/NN-nom.sh` = un change OpenSpec, réalisé dans l'ordre ci-dessous une fois le socle (`setup-socle`) en place. L'inventaire lisible des outils et des liens officiels reste la note Obsidian « Setup du poste de travail - Linux ».
+
+## Principes du menu
+
+- Sans argument, `setup.sh` affiche un menu `gum` à sélection multiple : les modules **pas encore faits sont cochés d'avance**, les « déjà faits » sont visibles mais décochés. Sur une machine vierge, `Entrée` installe tout ; sur une relance, `Entrée` n'installe que ce qui manque.
+- Chaque module déclare un **groupe** (`MODULE_GROUP`) affiché en préfixe dans le menu (`[shell] zsh …`) ; l'ordre d'affichage suit le préfixe `NN` du fichier.
+- Un module = un état « fait / pas fait » sans ambiguïté pour `module_check`. Les applications de bureau ont donc **chacune leur module** (choix dans le menu principal) ; seul `navigateur` pose sa question à l'intérieur (quel navigateur) et se contente d'installer ce qui manque à chaque lancement.
+- Les profils (`--profile minimal`) ne sont pas prévus dans le socle ; à envisager si le menu devient trop long.
+
+## Modules
+
+| NN | Module | Groupe | Contenu | GUI |
+|---|---|---|---|---|
+| 00 | `base` | systeme | `apt upgrade`, curl, git, jq, build-essential, … | |
+| 10 | `1password` | systeme | app + CLI `op`, agent SSH | app seulement |
+| 20 | `shell` | shell | zsh, oh-my-zsh, Powerlevel10k, plugins, `.commonrc` / `.zshrc` / `.bashrc`, **mécanisme de déploiement des fichiers de config** (symlinks / stow / chezmoi, à trancher ici) | |
+| 21 | `terminal` | shell | Ghostty + config + police Nerd Font | oui |
+| 22 | `cli-tools` | shell | ripgrep, fd, fzf, bat, zoxide, git-delta, lazygit, postgresql-client, yq | |
+| 30 | `git` | dev | `user.*`, delta, clé SSH depuis 1Password (convention `op://` fixée ici), `gh`, known_hosts | |
+| 40 | `node` | dev | nvm, Node 26, pnpm 11, globaux npm (openspec) | |
+| 41 | `docker` | dev | Docker Engine (dépôt apt officiel), groupe `docker` | |
+| 42 | `dev-tools` | dev | Claude Code, twg CLI | |
+| 50 | `navigateur` | apps | choix Brave / Firefox / Chrome (question interne) | oui |
+| 51 | `vscode` | apps | VS Code (dépôt Microsoft) + extensions + gnome-keyring | oui |
+| 52 | `claude-desktop` | apps | dépôt apt Claude Desktop | oui |
+| 60 | `obsidian` | apps | `.deb` officiel (GitHub releases) | oui |
+| 61 | `rocketchat` | apps | client de bureau | oui |
+| 62 | `thunderbird` | apps | courriel + agendas Google | oui |
+| 63 | `spotify` | apps | facultatif | oui |
+| 65 | `vpn` | apps | OpenVPN + NetworkManager, profil `.ovpn` lu dans 1Password | oui |
+| 70 | `gnome` | bureau | réglages dconf, thème, clavier, raccourcis | oui |
+| 80 | `projets` | projets | clones Bitbucket Desjardins, `make setup` | |
+
+Le helper AppImage de `lib/` (déplacement dans `~/Applications`, fichier `.desktop` avec icône) est introduit par le premier module qui en a besoin.
+
+## Ordre des changes
+
+1. `setup-socle` — bootstrap, runner, contrat, `lib/`, `base`, `1password` (planifié)
+2. `shell` — tranche la gestion des fichiers de config, dont tout le reste dépend
+3. `git` — fixe la convention des secrets `op://<coffre>/<item>/<champ>`
+4. `cli-tools`, `terminal`
+5. `node`, `docker`, `dev-tools`
+6. `vscode`, `navigateur`, `claude-desktop`
+7. `obsidian`, `rocketchat`, `thunderbird`, `spotify`, `vpn`
+8. `gnome`
+9. `projets`
