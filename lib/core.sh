@@ -78,14 +78,18 @@ _run_cleanup() {
 trap _run_cleanup EXIT
 
 # --- sudo : une seule saisie, ticket rafraîchi en tâche de fond (D3) --------------------
+# La boucle est détachée de stdout/stderr (sinon `$(setup.sh …)` attendrait la
+# fin du `sleep`) et tue son `sleep` en cours quand on l'arrête.
 sudo_keepalive() {
   sudo -v || die "Impossible d'obtenir les droits sudo."
   (
+    trap 'kill "${sleep_pid:-}" 2>/dev/null; exit 0' TERM
     while kill -0 "$$" 2>/dev/null; do
       sudo -n true 2>/dev/null
-      sleep 60
+      sleep 60 & sleep_pid=$!
+      wait "$sleep_pid"
     done
-  ) &
+  ) >/dev/null 2>&1 &
   _SUDO_KEEPALIVE_PID=$!
   add_cleanup "kill $_SUDO_KEEPALIVE_PID 2>/dev/null"
   printf '[%s] INFO  sudo : ticket obtenu, keepalive pid %s\n' "$(date +%H:%M:%S)" "$_SUDO_KEEPALIVE_PID" >>"$LOG_FILE"
@@ -110,10 +114,11 @@ run() {
 # invite (le ticket est maintenu par sudo_keepalive).
 run_sudo() { run sudo -n "$@"; }
 
-# _run_report_failure <code> <description> : message d'échec + extrait du journal.
+# _run_report_failure <code> <description> : message d'échec + extrait du journal
+# (les lignes depuis la dernière commande lancée par run, 20 au plus).
 _run_report_failure() {
   local rc=$1 what=$2 extract
-  extract=$(tail -n 15 "$LOG_FILE")
+  extract=$(tac "$LOG_FILE" | sed '/^\[[0-9:]*\] \$ /q' | tac | tail -n 20)
   log_error "Échec (code $rc) : $what"
   printf '%s%s%s\n' "$_C_DIM" "$extract" "$_C_RESET" >&2
   printf '%sJournal complet : %s%s\n' "$_C_DIM" "$LOG_FILE" "$_C_RESET" >&2

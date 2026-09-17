@@ -2,7 +2,7 @@
 # tests/test-module.sh — lib/module.sh avec les factices de tests/fixtures/modules/.
 # shellcheck source=lib.sh
 source "$(dirname -- "${BASH_SOURCE[0]}")/lib.sh"
-MODULES_DIR="$FIXTURES_DIR/modules"
+MODULES_DIR="$FIXTURES_DIR/contrat"
 # shellcheck source=../lib/module.sh
 source "$DOTFILES_DIR/lib/module.sh"
 
@@ -21,11 +21,14 @@ assert_contains "nom attendu indiqué" "$out" "attendu « mauvais-nom »"
 assert_contains "groupe inconnu signalé" "$out" "MODULE_GROUP « inconnu »"
 assert_contains "fonction manquante signalée" "$out" "module_configure manquante"
 assert_fail "fichier inexistant rejeté" module_meta "$MODULES_DIR/99-absent.sh"
+assert_fail "MODULE_DESC avec virgule rejeté" module_meta "$MODULES_DIR/03-virgule.sh"
+out=$(module_meta "$MODULES_DIR/03-virgule.sh" 2>&1 >/dev/null)
+assert_contains "la virgule est signalée" "$out" "ni virgule ni « | »"
 
 printf '%s\n' "== module_meta : module valide =="
 assert_ok "module valide accepté" module_meta "$MODULES_DIR/02-valide.sh"
 meta=$(module_meta "$MODULES_DIR/02-valide.sh" 2>/dev/null)
-assert_eq "métadonnées sur une ligne (tab)" $'valide\tModule factice conforme\tdev\tbase,autre\t1' "$meta"
+assert_eq "métadonnées sur une ligne (séparateur |)" 'valide|Module factice conforme|dev|base,autre|1' "$meta"
 assert_eq "rien ne fuit du sous-shell" "" "${FUITE_INTERNE:-}"
 assert_fail "les fonctions du module ne fuient pas" declare -F module_install
 
