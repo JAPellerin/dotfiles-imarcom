@@ -32,6 +32,6 @@
 ## 5. Bootstrap et test de bout en bout
 
 - [x] 5.1 `bootstrap.sh` : `apt install git gum` si absents, clone HTTPS ou `git pull`, refus si `~/dotfiles` n'est pas un dépôt, `exec bash setup.sh < /dev/tty` ; `shellcheck` propre et vérifier localement `bash bootstrap.sh` avec un `~/dotfiles` déjà cloné (parcours `git pull`)
-- [ ] 5.2 Pousser `main` sur le dépôt GitHub `JAPellerin/dotfiles-imarcom` (créé, vide, remote SSH `git@github.com:JAPellerin/dotfiles-imarcom.git`), avec les URL raw + clone HTTPS en constantes dans `bootstrap.sh` ; vérifier `curl -fsSL https://raw.githubusercontent.com/JAPellerin/dotfiles-imarcom/main/bootstrap.sh | head -1` renvoie le shebang
+- [x] 5.2 Pousser `main` sur le dépôt GitHub `JAPellerin/dotfiles-imarcom` (créé, vide, remote SSH `git@github.com:JAPellerin/dotfiles-imarcom.git`), avec les URL raw + clone HTTPS en constantes dans `bootstrap.sh` ; vérifier `curl -fsSL https://raw.githubusercontent.com/JAPellerin/dotfiles-imarcom/main/bootstrap.sh | head -1` renvoie le shebang
 - [ ] 5.3 Créer la VM Hyper-V Ubuntu 26.04 Desktop et prendre un snapshot « vierge » ; vérifier que le snapshot se restaure
 - [ ] 5.4 Test de bout en bout dans la VM : `curl -fsSL <url-raw>/bootstrap.sh | bash` → menu → `base` + `1password` (app + CLI, intégration, agent SSH) ; vérifier le résumé final, `op whoami`, `echo $SSH_AUTH_SOCK` dans un nouveau shell, puis restaurer le snapshot et relancer pour vérifier l'idempotence (« déjà fait » partout)
