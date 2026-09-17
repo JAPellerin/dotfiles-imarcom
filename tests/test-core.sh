@@ -43,6 +43,17 @@ if [[ -n ${WSL_DISTRO_NAME:-} ]]; then
   assert_fail "faux dans cette WSL de développement" has_gui
 fi
 
+printf '%s\n' "== ensure_line =="
+rc="$TEST_TMP/rc"
+# shellcheck disable=SC2016  # la ligne doit rester littérale ($HOME évalué au chargement du shell)
+ligne='export SSH_AUTH_SOCK="$HOME/.1password/agent.sock"'
+assert_ok "première insertion (fichier créé)" ensure_line "$rc" "$ligne"
+assert_fail "seconde insertion refusée (déjà présente)" ensure_line "$rc" "$ligne"
+ensure_line "$rc" "autre ligne" || true
+assert_eq "aucune duplication" 1 "$(grep -c SSH_AUTH_SOCK "$rc")"
+assert_eq "les lignes s'ajoutent à la fin" $'export SSH_AUTH_SOCK="$HOME/.1password/agent.sock"\nautre ligne' "$(cat "$rc")"
+assert_fail "correspondance exacte : un préfixe ne compte pas" grep -qxF 'export SSH_AUTH_SOCK' "$rc"
+
 printf '%s\n' "== Garde-fous =="
 assert_ok "require_not_root passe pour un utilisateur normal" require_not_root
 assert_rc "die sort avec le code 1" 1 bash -c "LOG_FILE=$LOG_FILE; source lib/core.sh; die 'fatal'"

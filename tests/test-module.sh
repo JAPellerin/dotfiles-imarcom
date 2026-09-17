@@ -38,6 +38,8 @@ assert_eq "module_install s'exécute avec ses variables" "install-valide" "$(mod
 assert_ok "module_configure déclare une étape manuelle" module_call "$MODULES_DIR/02-valide.sh" module_configure
 assert_file "fichier des étapes manuelles présent" "$MANUAL_STEPS_FILE"
 assert_eq "étape manuelle consignée « module<TAB>texte »" $'valide\tActiver quelque chose à la main' "$(cat "$MANUAL_STEPS_FILE")"
+module_call "$MODULES_DIR/02-valide.sh" module_configure >/dev/null 2>&1
+assert_eq "une même étape déclarée deux fois n'est consignée qu'une fois" 1 "$(wc -l <"$MANUAL_STEPS_FILE")"
 assert_fail "module_call propage l'échec d'une fonction" module_call "$MODULES_DIR/01-mauvais-nom.sh" module_configure
 
 test_done

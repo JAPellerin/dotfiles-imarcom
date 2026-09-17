@@ -24,10 +24,10 @@
 
 ## 4. Modules `base` et `1password`
 
-- [ ] 4.1 `modules/00-base.sh` (`MODULE_GROUP=systeme`) : `apt update && upgrade` (après `ui_confirm`, oui par défaut) puis paquets listés dans la spec ; vérifier dans la WSL que deux exécutions successives donnent « fait » puis « déjà fait »
-- [ ] 4.2 `modules/10-1password.sh` (`MODULE_GROUP=systeme`) — installation : dépôt officiel + `debsig`, `1password-cli` toujours, `1password` si `has_gui` ; vérifier dans la WSL que seul le CLI est installé et que `op --version` fonctionne
-- [ ] 4.3 `modules/10-1password.sh` — connexion : `op whoami`, parcours « intégration app » (guidage + confirmation) et parcours `op account add` / `op signin` avec export de session ; vérifier dans la WSL le parcours manuel jusqu'à `op whoami` réussi
-- [ ] 4.4 `modules/10-1password.sh` — agent SSH : ligne `SSH_AUTH_SOCK` idempotente dans la config shell commune quand l'app est installée, `manual_step` pour l'activation ; vérifier que deux exécutions ne dupliquent pas la ligne
+- [x] 4.1 `modules/00-base.sh` (`MODULE_GROUP=systeme`) : `apt update && upgrade` (après `ui_confirm`, oui par défaut) puis paquets listés dans la spec ; vérifier dans la WSL que deux exécutions successives donnent « fait » puis « déjà fait »
+- [x] 4.2 `modules/10-1password.sh` (`MODULE_GROUP=systeme`) — installation : dépôt officiel + `debsig`, `1password-cli` toujours, `1password` si `has_gui` ; vérifier dans la WSL que seul le CLI est installé et que `op --version` fonctionne
+- [x] 4.3 `modules/10-1password.sh` — connexion : `op whoami`, parcours « intégration app » (guidage + confirmation) et parcours `op account add` / `op signin` avec export de session ; vérifier dans la WSL le parcours manuel jusqu'à `op whoami` réussi
+- [x] 4.4 `modules/10-1password.sh` — agent SSH : ligne `SSH_AUTH_SOCK` idempotente dans la config shell commune quand l'app est installée, `manual_step` pour l'activation ; vérifier que deux exécutions ne dupliquent pas la ligne — vérifié par tests/test-core.sh (ensure_line) et essai à blanc ; parcours réel avec l'app en 5.4
 
 ## 5. Bootstrap et test de bout en bout
 

@@ -28,7 +28,9 @@ add_cleanup "rm -f '$MANUAL_STEPS_FILE'"
 # manual_step <texte> : déclare une étape que le script ne peut pas automatiser.
 # Appelée depuis un module ; consignée sous la forme « <module><TAB><texte> ».
 manual_step() {
-  printf '%s\t%s\n' "${MODULE_NAME:-?}" "$*" >>"$MANUAL_STEPS_FILE"
+  local line
+  line=$(printf '%s\t%s' "${MODULE_NAME:-?}" "$*")
+  grep -qxF -- "$line" "$MANUAL_STEPS_FILE" 2>/dev/null || printf '%s\n' "$line" >>"$MANUAL_STEPS_FILE"
   log_info "Étape manuelle à faire ensuite : $*"
 }
 
