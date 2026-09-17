@@ -79,17 +79,26 @@ _op_connect() {
     return 0
   fi
   if pkg_installed 1password; then
+    local err_file
+    err_file=$(mktemp -t dotfiles-op-err.XXXXXX)
+    add_cleanup "rm -f '$err_file'"
     log_info "Activer l'intégration entre l'application 1Password et le CLI :"
     log_info "  1. Ouvrir et déverrouiller l'application 1Password (Applications › 1Password)."
     log_info "  2. Settings › Security : activer « Unlock using system authentication »."
     log_info "  3. Settings › Developer : cocher « Integrate with 1Password CLI »."
     while true; do
-      if ui_confirm "Intégration activée ? (op whoami sera testé ; autoriser la demande dans l'app)" oui; then
+      if ui_confirm "Intégration activée ? (op signin sera lancé ; autoriser la demande dans l'app)" oui; then
+        # Avec l'intégration, c'est `op signin` qui déclenche la demande
+        # d'autorisation dans l'app ; `op whoami` seul échoue tant qu'elle
+        # n'a pas été accordée. Sortie standard ignorée : sans intégration, op
+        # y écrirait un jeton de session (jamais journalisé).
+        op signin >/dev/null 2>"$err_file" </dev/tty || true
         if op_session_active; then
           log_ok "Session 1Password active via l'application."
           return 0
         fi
-        log_warn "op whoami échoue toujours."
+        log_warn "Session toujours inactive : $(op whoami 2>&1 >/dev/null | head -1)"
+        [[ -s $err_file ]] && log_warn "op signin : $(head -1 "$err_file")"
         ui_confirm "Réessayer ? (« Non » bascule sur la connexion en terminal)" oui || break
       else
         break
