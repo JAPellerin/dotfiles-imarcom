@@ -25,7 +25,7 @@ Commandes utiles : `openspec list`, `openspec status --change <nom>`, `openspec 
 ## Commandes de développement
 
 - `shellcheck setup.sh bootstrap.sh lib/*.sh modules/*.sh tests/*.sh` — lint (aucun avertissement toléré)
-- `bash tests/test-<sujet>.sh` — tests Bash maison de `lib/` et du runner (modules factices sous `tests/fixtures/modules/`, `MODULES_DIR` pour pointer le runner dessus)
+- `bash tests/run-all.sh` (ou `bash tests/test-<sujet>.sh`) — tests Bash maison de `lib/` et du runner, hors ligne et sans sudo (modules factices sous `tests/fixtures/modules/`, `MODULES_DIR` pour pointer le runner dessus) ; `bash tests/demo-ui.sh` — démo interactive des wrappers `gum`
 - `./setup.sh --list` — modules découverts, description, état
 - `./setup.sh <module>` — exécuter un module (et ses dépendances) pour le tester isolément
 - Test de bout en bout : VM Hyper-V, restaurer le snapshot « vierge », `curl -fsSL https://raw.githubusercontent.com/JAPellerin/dotfiles-imarcom/main/bootstrap.sh | bash`

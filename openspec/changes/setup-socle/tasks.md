@@ -6,12 +6,12 @@
 
 ## 2. Bibliothèque `lib/`
 
-- [ ] 2.1 `lib/core.sh` : `log_info/warn/error/step` (écran + journal), `die`, `require_not_root`, `sudo_keepalive` (+ `trap` de nettoyage), `run` / `run_sudo` (sortie dans `$LOG_FILE`, dernières lignes du journal en cas d'échec), `has_gui` (faux si `$WSL_DISTRO_NAME`), `LOG_FILE` sous `~/.local/state/dotfiles/` ; `tests/lib.sh` (`assert_*`) et `tests/test-core.sh` : `has_gui` faux dans la WSL, journal créé, `run` d'une commande qui échoue renvoie non nul et journalise
-- [ ] 2.2 `lib/apt.sh` : `apt_update_once`, `apt_install <paquets...>` (n'installe que les manquants), `apt_add_repo` deb822 idempotent, `pkg_installed`, tous via `run_sudo` ; `tests/test-apt.sh` : un double appel à `apt_add_repo` ne réécrit pas le `.sources` et ne relance pas `apt update`
-- [ ] 2.3 `lib/ui.sh` : wrappers `ui_choose`, `ui_choose_multi`, `ui_confirm`, `ui_input`, `ui_password`, `ui_spin`, `ui_header` autour de `gum` (aucune redirection globale : `gum` garde le terminal) ; vérifier manuellement chaque wrapper depuis un shell interactif (`tests/demo-ui.sh`)
-- [ ] 2.4 `lib/op.sh` : `op_session_active`, `op_read <op://...>` (échoue sans session, n'écrit rien dans le journal), `op_signin_interactive` ; `tests/test-op.sh` : `op_read` sans session → code non nul et message « lancer setup.sh 1password »
-- [ ] 2.5 `lib/module.sh` : `manual_step <texte>` (fichier temporaire d'étapes), chargement d'un module en sous-shell, validation des métadonnées (nom = fichier, champs requis dont `MODULE_GROUP`) ; `tests/test-module.sh` avec un factice `tests/fixtures/modules/` sans `MODULE_DESC` : rejeté en nommant le fichier
-- [ ] 2.6 Passer `shellcheck` sur `lib/*.sh` et `tests/*.sh` sans avertissement
+- [x] 2.1 `lib/core.sh` : `log_info/warn/error/step` (écran + journal), `die`, `require_not_root`, `sudo_keepalive` (+ `trap` de nettoyage), `run` / `run_sudo` (sortie dans `$LOG_FILE`, dernières lignes du journal en cas d'échec), `has_gui` (faux si `$WSL_DISTRO_NAME`), `LOG_FILE` sous `~/.local/state/dotfiles/` ; `tests/lib.sh` (`assert_*`) et `tests/test-core.sh` : `has_gui` faux dans la WSL, journal créé, `run` d'une commande qui échoue renvoie non nul et journalise
+- [x] 2.2 `lib/apt.sh` : `apt_update_once`, `apt_install <paquets...>` (n'installe que les manquants), `apt_add_repo` deb822 idempotent, `pkg_installed`, tous via `run_sudo` ; `tests/test-apt.sh` : un double appel à `apt_add_repo` ne réécrit pas le `.sources` et ne relance pas `apt update`
+- [x] 2.3 `lib/ui.sh` : wrappers `ui_choose`, `ui_choose_multi`, `ui_confirm`, `ui_input`, `ui_password`, `ui_spin`, `ui_header` autour de `gum` (aucune redirection globale : `gum` garde le terminal) ; vérifier manuellement chaque wrapper depuis un shell interactif (`tests/demo-ui.sh`)
+- [x] 2.4 `lib/op.sh` : `op_session_active`, `op_read <op://...>` (échoue sans session, n'écrit rien dans le journal), `op_signin_interactive` ; `tests/test-op.sh` : `op_read` sans session → code non nul et message « lancer setup.sh 1password »
+- [x] 2.5 `lib/module.sh` : `manual_step <texte>` (fichier temporaire d'étapes), chargement d'un module en sous-shell, validation des métadonnées (nom = fichier, champs requis dont `MODULE_GROUP`) ; `tests/test-module.sh` avec un factice `tests/fixtures/modules/` sans `MODULE_DESC` : rejeté en nommant le fichier
+- [x] 2.6 Passer `shellcheck` sur `lib/*.sh` et `tests/*.sh` sans avertissement
 
 ## 3. Runner `setup.sh`
 
