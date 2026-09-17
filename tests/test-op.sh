@@ -52,4 +52,11 @@ assert_ok "op_session_active vrai si op whoami réussit" op_session_active
 assert_eq "op_read renvoie le secret sur stdout" "valeur-secrete" "$(op_read op://Perso/GitHub/token 2>/dev/null)"
 assert_not_contains "le secret n'apparaît pas dans le journal" "$(cat "$LOG_FILE")" "valeur-secrete"
 
+printf '%s\n' "== fichier de session partagé entre sous-shells =="
+assert_file "OP_SESSION_FILE créé (vide) au chargement" "$OP_SESSION_FILE"
+assert_eq "permissions 0600" 600 "$(stat -c %a "$OP_SESSION_FILE")"
+printf 'export OP_SESSION_test=jeton\n' >"$OP_SESSION_FILE"
+( op_session_active >/dev/null; printf '%s' "${OP_SESSION_test:-}" ) >"$TEST_TMP/vu"
+assert_eq "op_session_active recharge la session dans un sous-shell" "jeton" "$(cat "$TEST_TMP/vu")"
+
 test_done

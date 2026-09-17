@@ -124,6 +124,22 @@ _run_report_failure() {
   printf '%sJournal complet : %s%s\n' "$_C_DIM" "$LOG_FILE" "$_C_RESET" >&2
 }
 
+# --- Fichiers de configuration --------------------------------------------------------------
+# Config shell commune bash/zsh (POSIX uniquement), chargée par .bashrc et .zshrc.
+SHELL_COMMON_RC="${SHELL_COMMON_RC:-$HOME/.commonrc}"
+
+# ensure_line <fichier> <ligne> : ajoute la ligne (exacte) au fichier si elle n'y
+# est pas déjà — idempotent, crée le fichier au besoin. Renvoie 0 si ajoutée,
+# 1 si déjà présente (pour journaliser sans dupliquer).
+ensure_line() {
+  local file=$1 line=$2
+  if [[ -f $file ]] && grep -qxF -- "$line" "$file"; then
+    return 1
+  fi
+  mkdir -p -- "$(dirname -- "$file")"
+  printf '%s\n' "$line" >>"$file"
+}
+
 # --- Environnement graphique (D9) -----------------------------------------------------------------
 # has_gui : vrai si une session graphique est utilisable pour installer des apps
 # de bureau. Faux d'office dans WSL : WSLg expose DISPLAY/WAYLAND_DISPLAY sans que
