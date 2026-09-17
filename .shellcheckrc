@@ -1,0 +1,4 @@
+# Configuration shellcheck du dépôt : suivre les fichiers « source » relativement
+# au dossier du script (lib/*.sh, tests/lib.sh) pour vérifier les appels croisés.
+external-sources=true
+source-path=SCRIPTDIR
