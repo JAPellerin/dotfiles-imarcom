@@ -24,7 +24,8 @@ Commandes utiles : `openspec list`, `openspec status --change <nom>`, `openspec 
 
 ## Commandes de développement
 
-- `shellcheck setup.sh bootstrap.sh lib/*.sh modules/*.sh` — lint (aucun avertissement toléré)
+- `shellcheck setup.sh bootstrap.sh lib/*.sh modules/*.sh tests/*.sh` — lint (aucun avertissement toléré)
+- `bash tests/test-<sujet>.sh` — tests Bash maison de `lib/` et du runner (modules factices sous `tests/fixtures/modules/`, `MODULES_DIR` pour pointer le runner dessus)
 - `./setup.sh --list` — modules découverts, description, état
 - `./setup.sh <module>` — exécuter un module (et ses dépendances) pour le tester isolément
 - Test de bout en bout : VM Hyper-V, restaurer le snapshot « vierge », `curl -fsSL https://raw.githubusercontent.com/JAPellerin/dotfiles-imarcom/main/bootstrap.sh | bash`
@@ -37,7 +38,7 @@ Commandes utiles : `openspec list`, `openspec status --change <nom>`, `openspec 
 - **Contrat de module** : `modules/NN-nom.sh` déclare `MODULE_NAME/DESC/DEPS[/NEEDS_GUI]` et `module_check` / `module_install` / `module_configure`. `module_check` est la seule source de vérité de l'état (pas de fichier d'état). Tout doit être idempotent. Les questions à l'utilisateur se posent au début de `module_install`. Les modules passent par les helpers de `lib/` (jamais `gum` ni `apt` en direct).
 - **Secrets via 1Password** : app de bureau + CLI `op` depuis le dépôt apt officiel ; module `1password` exécuté d'office avant les autres ; secrets lus par `op read op://...`, jamais journalisés ; agent SSH de l'app (`SSH_AUTH_SOCK`), activation = étape manuelle affichée en fin d'exécution.
 - **Cible** : nouveau laptop de travail Ubuntu 26.04 + GNOME. Tests de bout en bout dans une VM Hyper-V avec snapshot « vierge » ; développement des modules non graphiques dans cette WSL (`has_gui` faux → modules `NEEDS_GUI` sautés).
-- Détail des choix et alternatives : `openspec/changes/setup-socle/design.md` (D1–D10).
+- Détail des choix et alternatives : `openspec/changes/setup-socle/design.md` (D1–D11). Tranché le 17 sept 2026 : `has_gui` faux sous WSL (`$WSL_DISTRO_NAME`), journal via les helpers `run`/`run_sudo`/`apt_*` sans redirection globale (pour préserver `gum` et `sudo`), tests versionnés sous `tests/`.
 - **Découpage des modules et ordre des changes** : `ROADMAP.md` (15 sept 2026). Menu : modules non faits précochés, préfixe de groupe `[shell]`, une app de bureau = un module.
 
 ## Contraintes générales

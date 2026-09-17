@@ -36,16 +36,19 @@ Le runner charge chaque module une première fois pour lire les métadonnées et
 Tri topologique simple sur `MODULE_DEPS` (DFS avec détection de cycle), avec deux règles : les dépendances d'abord, puis `1password` avancé devant tout module non-dépendance. Le préfixe `NN` du nom de fichier ne sert qu'à l'affichage et à départager les ex æquo.
 
 ### D7. Journal
-`exec` d'un `tee` : stdout/stderr des commandes vont dans `~/.local/state/dotfiles/setup-<date>.log` ; à l'écran, seuls les messages `log_*` et les spinners `gum spin`. Les secrets lus par `op_read` ne transitent jamais par le journal (le helper n'écrit rien et les modules doivent les passer par variable, jamais par `echo`).
+Journal `~/.local/state/dotfiles/setup-<date>.log` alimenté par les helpers, **sans redirection globale** : `run` / `run_sudo` / `apt_*` envoient stdout/stderr de chaque commande dans `$LOG_FILE` (`>>"$LOG_FILE" 2>&1`) pendant qu'`ui_spin` affiche un spinner ; `log_*` écrit à l'écran **et** dans le journal ; en cas d'échec, `run` affiche les dernières lignes du journal et son chemin. La garantie « journal complet » tient parce que le contrat de module (D4) interdit d'appeler `apt`/`gum`/commandes longues hors helper. Alternative rejetée le 17 sept : `exec > >(tee …) 2>&1` global, qui retire le terminal à `gum` (interface dessinée sur stderr) et à l'invite `sudo`, et remplit le journal de séquences d'échappement ; `script(1)` capturerait tout mais avec les codes ANSI et un processus intermédiaire. Les secrets lus par `op_read` ne transitent jamais par le journal (le helper n'écrit rien et les modules doivent les passer par variable, jamais par `echo`).
 
 ### D8. 1Password : app + CLI, même dépôt
 Le dépôt apt `downloads.1password.com/linux/debian/<arch>` sert les deux paquets (`1password`, `1password-cli`), avec la politique `debsig` demandée par la doc officielle. L'app n'est installée que si `$DISPLAY`/`$WAYLAND_DISPLAY` existe (`has_gui`). Connexion : intégration app → CLI si l'app est là (déverrouillage par l'app, agent SSH), sinon `op account add` interactif. La session issue de `op signin` est exportée dans l'environnement du runner pour les modules suivants (`eval "$(op signin)"`).
 
 ### D9. Détection d'environnement graphique
-`has_gui()` : vrai si `$XDG_SESSION_TYPE` est `x11`/`wayland` ou si `$DISPLAY`/`$WAYLAND_DISPLAY` est défini ; faux sinon (WSL, TTY, SSH). Les modules `MODULE_NEEDS_GUI=1` sont listés « non disponible ici » et sautés sans échec.
+`has_gui()` : **faux si `$WSL_DISTRO_NAME` est défini** (WSLg expose `DISPLAY=:0` et `WAYLAND_DISPLAY=wayland-0` sans que la WSL soit un bureau cible ; vérifié le 17 sept dans la WSL de développement) ; sinon vrai si `$XDG_SESSION_TYPE` est `x11`/`wayland` ou si `$DISPLAY`/`$WAYLAND_DISPLAY` est défini ; faux sinon (TTY, SSH). Alternative rejetée : ne regarder que `$XDG_SESSION_TYPE` (absent sous `ssh`, `sudo -i` et certains terminaux → faux négatifs sur le laptop). Une variable de surcharge `DOTFILES_GUI=0/1` pourra être ajoutée si le besoin de tester le chemin graphique depuis la WSL apparaît. Les modules `MODULE_NEEDS_GUI=1` sont listés « non disponible ici » et sautés sans échec.
 
 ### D10. Helper apt en deb822
 `apt_add_repo <nom> <url-clé> <url-dépôt> <suite> <composants>` écrit la clé dans `/etc/apt/keyrings/<nom>.asc` (ou `.gpg` si dearmor requis) et `/etc/apt/sources.list.d/<nom>.sources` au format deb822, comme le fait Ubuntu 26.04 nativement et comme `setup-sudo.sh` le faisait pour Docker. Idempotent : ne réécrit pas si le contenu est identique, et ne relance `apt update` que si un dépôt a changé.
+
+### D11. Tests versionnés sous `tests/`
+Les vérifications des tâches ne sont pas jetables : `tests/test-<sujet>.sh` (Bash, quelques `assert_*` dans `tests/lib.sh`, lancés à la main, passés à `shellcheck`) et modules factices sous `tests/fixtures/modules/` (dépendances, cycle, échec, sans `MODULE_DESC`). Pour les rendre possibles, `setup.sh` lit le dossier des modules dans `MODULES_DIR` (défaut `modules/`). Alternatives : `bats-core` (apt `bats`, sortie TAP, pertinent si une CI GitHub Actions arrive — les scripts maison s'y convertiront facilement) ; vérifications manuelles supprimées après coup (rejeté : chaque régression de `lib/` se découvrirait en VM, lent). Décidé le 17 sept.
 
 ## Risks / Trade-offs
 
