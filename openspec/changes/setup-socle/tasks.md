@@ -15,12 +15,12 @@
 
 ## 3. Runner `setup.sh`
 
-- [ ] 3.1 Squelette : refus root, `sudo -v` + keepalive, chargement de `lib/`, découverte de `$MODULES_DIR` (défaut `modules/`), `--list` ; vérifier `setup.sh --list` affiche groupe, nom, description, état et que `sudo setup.sh` refuse
-- [ ] 3.2 Résolution des dépendances : tri topologique, détection de cycle et de dépendance inconnue, `1password` avancé devant les non-dépendances ; `tests/test-deps.sh` avec des factices sous `tests/fixtures/modules/` (`a` dep `b`, cycle `c`↔`d`, dépendance inconnue) : ordre et erreurs corrects
-- [ ] 3.3 Exécution : `module_check` → `install` → `configure`, isolation des échecs, saut des dépendants, saut des `MODULE_NEEDS_GUI` sans GUI ; `tests/test-run.sh` avec un factice qui échoue : dépendants sautés et code de sortie non nul
-- [ ] 3.4 Menu par défaut : `gum choose --no-limit` avec libellé `[groupe] nom — description — état`, présélection des non faits (`--selected`), « déjà faits » décochés, mode ciblé par noms et `--all`, erreur sur nom inconnu listant les valides ; vérifier `setup.sh navigateurz` et le menu manuellement
-- [ ] 3.5 Résumé final : table fait / déjà fait / sauté / échoué, section « Étapes manuelles restantes », chemin du journal en cas d'échec ; vérifier le rendu avec les modules factices
-- [ ] 3.6 `shellcheck setup.sh tests/*.sh` sans avertissement ; vérifier que les commandes documentées dans `CLAUDE.md` existent (dont `bash tests/test-*.sh`) ; les modules factices restent versionnés sous `tests/fixtures/modules/`
+- [x] 3.1 Squelette : refus root, `sudo -v` + keepalive, chargement de `lib/`, découverte de `$MODULES_DIR` (défaut `modules/`), `--list` ; vérifier `setup.sh --list` affiche groupe, nom, description, état et que `sudo setup.sh` refuse
+- [x] 3.2 Résolution des dépendances : tri topologique, détection de cycle et de dépendance inconnue, `1password` avancé devant les non-dépendances ; `tests/test-deps.sh` avec des factices sous `tests/fixtures/modules/` (`a` dep `b`, cycle `c`↔`d`, dépendance inconnue) : ordre et erreurs corrects
+- [x] 3.3 Exécution : `module_check` → `install` → `configure`, isolation des échecs, saut des dépendants, saut des `MODULE_NEEDS_GUI` sans GUI ; `tests/test-run.sh` avec un factice qui échoue : dépendants sautés et code de sortie non nul
+- [x] 3.4 Menu par défaut : `gum choose --no-limit` avec libellé `[groupe] nom — description — état`, présélection des non faits (`--selected`), « déjà faits » décochés, mode ciblé par noms et `--all`, erreur sur nom inconnu listant les valides ; vérifier `setup.sh navigateurz` et le menu manuellement
+- [x] 3.5 Résumé final : table fait / déjà fait / sauté / échoué, section « Étapes manuelles restantes », chemin du journal en cas d'échec ; vérifier le rendu avec les modules factices
+- [x] 3.6 `shellcheck setup.sh tests/*.sh` sans avertissement ; vérifier que les commandes documentées dans `CLAUDE.md` existent (dont `bash tests/test-*.sh`) ; les modules factices restent versionnés sous `tests/fixtures/` (jeux `modules/`, `contrat/`, `cycle/`, `dep-inconnue/`)
 
 ## 4. Modules `base` et `1password`
 

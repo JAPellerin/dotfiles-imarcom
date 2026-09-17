@@ -24,6 +24,20 @@ export DOTFILES_DIR DOTFILES_STATE_DIR LOG_FILE
 source "$DOTFILES_DIR/lib/core.sh"
 add_cleanup "rm -rf '$TEST_TMP'"
 
+# fake_sudo : place un faux `sudo` en tête du PATH (exécute la commande telle
+# quelle, accepte -v et -n) pour tester le runner sans droits ni mot de passe.
+fake_sudo() {
+  mkdir -p "$TEST_TMP/bin"
+  cat >"$TEST_TMP/bin/sudo" <<'FAKE'
+#!/usr/bin/env bash
+[[ ${1:-} == -v ]] && exit 0
+[[ ${1:-} == -n ]] && shift
+exec "$@"
+FAKE
+  chmod +x "$TEST_TMP/bin/sudo"
+  export PATH="$TEST_TMP/bin:$PATH"
+}
+
 _TESTS_RUN=0
 _TESTS_FAILED=0
 

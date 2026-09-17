@@ -41,7 +41,9 @@ module_name_from_file() {
 
 # module_meta <fichier> : charge le module dans un sous-shell propre, valide ses
 # métadonnées et ses fonctions, puis imprime une ligne sur stdout :
-#   nom<TAB>description<TAB>groupe<TAB>dépendances<TAB>needs_gui(0|1)
+#   nom|description|groupe|dépendances,séparées,par,virgules|needs_gui(0|1)
+# (séparateur « | » plutôt qu'une tabulation : `read` fusionne les tabulations
+# consécutives et un champ vide décalerait les suivants).
 # Code non nul et message nommant le fichier et le champ fautif sinon.
 module_meta() {
   local file=$1
@@ -60,6 +62,11 @@ module_meta() {
     if [[ -n ${MODULE_NAME:-} && $MODULE_NAME != "$expected" ]]; then
       log_error "$file : MODULE_NAME « $MODULE_NAME » ne correspond pas au nom de fichier (attendu « $expected »)"; err=1
     fi
+    # Virgule et barre verticale interdites : la virgule sépare les présélections
+    # de `gum choose --selected`, la barre sépare les champs ci-dessous.
+    if [[ ${MODULE_DESC:-} == *[,\|]* ]]; then
+      log_error "$file : MODULE_DESC ne doit contenir ni virgule ni « | »"; err=1
+    fi
     if [[ -n ${MODULE_GROUP:-} ]] && ! [[ " $MODULE_GROUPS " == *" $MODULE_GROUP "* ]]; then
       log_error "$file : MODULE_GROUP « $MODULE_GROUP » inconnu (valeurs : $MODULE_GROUPS)"; err=1
     fi
@@ -68,7 +75,7 @@ module_meta() {
     done
     (( err == 0 )) || exit 1
     # shellcheck disable=SC2153  # MODULE_DESC est défini par le module sourcé
-    printf '%s\t%s\t%s\t%s\t%s\n' "$MODULE_NAME" "$MODULE_DESC" "$MODULE_GROUP" "${MODULE_DEPS// /,}" "${MODULE_NEEDS_GUI:-0}"
+    printf '%s|%s|%s|%s|%s\n' "$MODULE_NAME" "$MODULE_DESC" "$MODULE_GROUP" "${MODULE_DEPS// /,}" "${MODULE_NEEDS_GUI:-0}"
   )
 }
 
