@@ -152,9 +152,10 @@ _op_open_settings() {
     return 0
   fi
   for page in "$@"; do
+    # Pause entre deux pages seulement (le temps que l'app démarre).
+    [[ $page == "$1" ]] || sleep "$OP_OPEN_DELAY"
     run xdg-open "onepassword://settings/$page" \
       || log_warn "Impossible d'ouvrir onepassword://settings/$page : aller dans les réglages de l'app à la main."
-    sleep "$OP_OPEN_DELAY"
   done
 }
 
@@ -172,7 +173,11 @@ _op_try_signin() {
     _op_warn_cli_account
     return 0
   fi
-  log_warn "Session toujours inactive${err_file:+ : $(head -1 "$err_file" 2>/dev/null)}"
+  if [[ -s $err_file ]]; then
+    log_warn "Session toujours inactive : $(head -1 "$err_file")"
+  else
+    log_warn "Session toujours inactive."
+  fi
   log_warn "Vérifier dans l'app : « Unlock using system authentication » (Settings › Security) et « Integrate with 1Password CLI » (Settings › Developer)."
   return 1
 }
