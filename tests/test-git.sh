@@ -61,7 +61,7 @@ FAKE
 cat >"$TEST_TMP/bin/curl" <<'FAKE'
 #!/usr/bin/env bash
 printf 'curl %s\n' "$*" >>"$FAKE_DIR/calls"
-[[ -f $FAKE_DIR/offline ]] && exit 6
+[[ -f $FAKE_DIR/offline ]] && { echo "curl: (6) Could not resolve host" >&2; exit 6; }
 printf '{"ssh_keys":["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl","ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg="]}\n'
 FAKE
 chmod +x "$TEST_TMP/bin/"*
@@ -139,6 +139,8 @@ touch "$TEST_TMP/session" "$TEST_TMP/offline"
 out=$(module_configure 2>&1); rc=$?
 assert_eq "échoue" 1 "$rc"
 assert_contains "erreur nommant la source" "$out" "api.github.com/meta"
+assert_not_contains "l'erreur de curl n'est pas à l'écran" "$out" "Could not resolve host"
+assert_contains "l'erreur de curl est au journal" "$(cat "$LOG_FILE")" "Could not resolve host"
 rm -f "$TEST_TMP/offline"
 
 printf '%s\n' "== module_check sans réseau (gh auth token) =="

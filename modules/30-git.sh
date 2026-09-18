@@ -61,7 +61,7 @@ _git_ssh_dir() { [[ -d $GIT_SSH_DIR ]] || { mkdir -- "$GIT_SSH_DIR" && chmod 070
 # Clés SSH publiques de github.com depuis la source officielle, sans doublon.
 _git_known_hosts() {
   local keys line added=0
-  keys=$(curl -fsSL "$GIT_GITHUB_META_URL" | jq -r '.ssh_keys[]' 2>>"$LOG_FILE") || {
+  keys=$({ curl -fsSL "$GIT_GITHUB_META_URL" | jq -r '.ssh_keys[]'; } 2>>"$LOG_FILE") || {
     log_error "Impossible de lire les clés SSH de GitHub ($GIT_GITHUB_META_URL) : voir le journal."; return 1; }
   [[ -n $keys ]] || { log_error "Aucune clé SSH dans la réponse de $GIT_GITHUB_META_URL"; return 1; }
   _git_ssh_dir
