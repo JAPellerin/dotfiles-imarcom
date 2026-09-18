@@ -76,11 +76,12 @@ module_configure() {
 }
 
 # Délais du parcours « intégration app » (surchargeables : tests) : durée d'un
-# tour d'attente de l'agent SSH, intervalle de sondage, pause entre les deux
-# pages ouvertes (le temps que l'app démarre).
+# tour d'attente, intervalle de sondage, pause entre deux pages ouvertes (le
+# temps que l'app démarre), intervalle de renvoi du lien Developer.
 OP_WAIT_SECONDS="${OP_WAIT_SECONDS:-300}"
 OP_WAIT_INTERVAL="${OP_WAIT_INTERVAL:-2}"
 OP_OPEN_DELAY="${OP_OPEN_DELAY:-3}"
+OP_DEV_RESEND="${OP_DEV_RESEND:-5}"
 OP_CLI_CONFIG="${OP_CLI_CONFIG:-$HOME/.config/op/config}"
 
 # Connexion : rien à faire si une session est active ; sinon intégration avec
@@ -135,7 +136,7 @@ _op_connect_via_app() {
     log_info "  4. Settings › Developer : cocher « Use the SSH agent »."
     log_info "Le script reprend tout seul dès que les cases 3 et 4 sont cochées ; Ctrl-C pour abandonner."
   fi
-  _OP_DEV_OPENED=""
+  _OP_DEV_SENT=""
   while true; do
     if (( wait )) && ui_wait "En attente de l'intégration CLI et de l'agent SSH de 1Password" "$OP_WAIT_SECONDS" "$OP_WAIT_INTERVAL" _op_poll_ready; then
       _op_try_signin "$err_file" && return 0
@@ -156,11 +157,17 @@ _op_connect_via_app() {
 }
 
 # Condition sondée par wait_for (dans le shell courant, l'état persiste) : dès
-# que l'authentification système est cochée, ouvre une seule fois la page
-# Developer (cases 3 et 4) ; prêt quand l'intégration CLI et l'agent sont actifs.
+# que l'authentification système est cochée, envoie le lien Developer, et le
+# renvoie toutes les OP_DEV_RESEND s tant qu'aucune case de cette page n'est
+# cochée — l'app termine l'enrôlement de l'authentification système (durée =
+# saisie du mot de passe de session) en affichant Security, ce qui écrasait un
+# envoi unique (VM, 18 sept) ; un lien vers la page déjà affichée est sans effet.
+# Prêt quand l'intégration CLI et l'agent sont actifs.
 _op_poll_ready() {
-  if [[ -z $_OP_DEV_OPENED ]] && op_app_setting_on security.authenticatedUnlock.enabled; then
-    _OP_DEV_OPENED=1
+  if op_app_setting_on security.authenticatedUnlock.enabled \
+     && ! op_app_cli_enabled && ! op_app_setting_on sshAgent.enabled \
+     && (( ${_OP_DEV_SENT:--999} + OP_DEV_RESEND <= SECONDS )); then
+    _OP_DEV_SENT=$SECONDS
     _op_open_settings developers
   fi
   op_app_cli_enabled && op_agent_ready
@@ -177,9 +184,10 @@ _op_open_settings() {
     log_warn "xdg-open introuvable : ouvrir l'application 1Password à la main (Applications › 1Password)."
     return 0
   fi
+  local i=0
   for page in "$@"; do
-    # Pause entre deux pages seulement (le temps que l'app démarre).
-    [[ $page == "$1" ]] || sleep "$OP_OPEN_DELAY"
+    # Pause entre deux envois seulement (le temps que l'app démarre).
+    (( i++ == 0 )) || sleep "$OP_OPEN_DELAY"
     printf '[%s] $ xdg-open onepassword://settings/%s (détaché)\n' "$(date +%H:%M:%S)" "$page" >>"$LOG_FILE"
     setsid -f xdg-open "onepassword://settings/$page" >/dev/null 2>&1 </dev/null \
       || log_warn "Impossible d'ouvrir onepassword://settings/$page : aller dans les réglages de l'app à la main."
