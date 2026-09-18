@@ -9,7 +9,7 @@
 # Tourne avec le compte utilisateur (jamais root) ; le mot de passe sudo est
 # demandé une seule fois. Les modules vivent dans $MODULES_DIR (défaut modules/)
 # et suivent le contrat décrit dans lib/module.sh. Journal complet sous
-# ~/.local/state/dotfiles/. Voir openspec/changes/setup-socle/design.md.
+# ~/.local/state/dotfiles/. Voir openspec/changes/archive/2026-09-18-setup-socle/design.md.
 set -euo pipefail
 
 DOTFILES_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)

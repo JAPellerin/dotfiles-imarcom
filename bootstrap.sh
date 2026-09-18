@@ -10,7 +10,7 @@
 #
 # Script autonome : n'utilise rien du dépôt (pas encore cloné) ni gum (pas encore
 # installé). Tourne avec le compte utilisateur ; sudo n'est demandé que pour apt.
-# Voir openspec/changes/setup-socle/specs/bootstrap/spec.md.
+# Voir openspec/specs/bootstrap/spec.md.
 set -euo pipefail
 
 REPO_URL="https://github.com/JAPellerin/dotfiles-imarcom.git"

@@ -4,7 +4,7 @@
 #
 # Chargé (« source ») par setup.sh et par les tests ; jamais exécuté directement.
 # Ne touche pas aux options du shell : `set -euo pipefail` est posé par le runner.
-# Voir openspec/changes/setup-socle/design.md (D3, D7, D9).
+# Voir openspec/changes/archive/2026-09-18-setup-socle/design.md (D3, D7, D9).
 
 # --- Chemins et journal --------------------------------------------------------
 # Toutes ces variables sont surchargeables avant le chargement (utile aux tests).
