@@ -25,6 +25,15 @@ OP_AGENT_SOCK="${OP_AGENT_SOCK:-$HOME/.1password/agent.sock}"
 # op_agent_ready : vrai si le socket de l'agent SSH existe.
 op_agent_ready() { [[ -S $OP_AGENT_SOCK ]]; }
 
+# Dossier des réglages de l'app : créé à l'instant où l'utilisateur termine sa
+# connexion dans l'app (observé en VM le 18 sept 2026 : « Lock state changed:
+# Unlocked » puis « Settings file changed », avant tout réglage), donc signal
+# « app connectée » qui ne sollicite pas l'app. Surchargeable pour les tests.
+OP_APP_SETTINGS_DIR="${OP_APP_SETTINGS_DIR:-$HOME/.config/1Password/settings}"
+
+# op_app_signed_in : vrai si l'app de bureau a déjà été connectée à un compte.
+op_app_signed_in() { [[ -d $OP_APP_SETTINGS_DIR ]]; }
+
 # op_session_active : vrai si `op` est installé et qu'une session est ouverte
 # (intégration avec l'app de bureau ou session ouverte par op_signin_interactive).
 op_session_active() {

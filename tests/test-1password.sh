@@ -52,7 +52,7 @@ export PATH="$TEST_TMP/bin:$PATH"
 
 # Environnement du module : socket, délais courts, config shell et CLI isolées.
 export OP_AGENT_SOCK="$TEST_TMP/agent.sock" OP_WAIT_SECONDS=3 OP_WAIT_INTERVAL=0.1 OP_OPEN_DELAY=0
-export OP_CLI_CONFIG="$TEST_TMP/op-config" SHELL_COMMON_RC="$TEST_TMP/commonrc"
+export OP_CLI_CONFIG="$TEST_TMP/op-config" SHELL_COMMON_RC="$TEST_TMP/commonrc" OP_APP_SETTINGS_DIR="$TEST_TMP/app-settings"
 # shellcheck source=../modules/10-1password.sh
 source "$DOTFILES_DIR/modules/10-1password.sh"
 # Le repli terminal n'est pas testé ici (interactif) : doublure qui se signale.
@@ -60,15 +60,17 @@ source "$DOTFILES_DIR/modules/10-1password.sh"
 op_signin_interactive() { log_info "repli-terminal"; return 1; }
 
 make_socket() { python3 -c "import socket, sys; socket.socket(socket.AF_UNIX).bind(sys.argv[1])" "$OP_AGENT_SOCK"; }
-reset() { rm -f "$OP_AGENT_SOCK" "$TEST_TMP"/{session,xdg-open.log,op.log,gum.log,op-config}; : >"$MANUAL_STEPS_FILE"; }
+reset() { rm -rf "$OP_AGENT_SOCK" "$OP_APP_SETTINGS_DIR" "$TEST_TMP"/{session,xdg-open.log,op.log,gum.log,op-config}; : >"$MANUAL_STEPS_FILE"; }
+# xdg-open est lancé détaché : laisser le temps à la doublure d'écrire sa trace.
+opened() { sleep 0.2; cat "$TEST_TMP/xdg-open.log" 2>/dev/null; }
 
-printf '%s\n' "== agent activé pendant l'attente, op signin réussit =="
+printf '%s\n' "== connexion dans l'app, agent activé pendant l'attente, op signin réussit =="
 reset
-( sleep 0.5; make_socket ) &
+( sleep 0.3; mkdir -p "$OP_APP_SETTINGS_DIR"; sleep 0.4; make_socket ) &
 out=$(FAKE_SIGNIN_OK=1 _op_connect 2>&1); rc=$?
 wait
 assert_eq "succès (code 0)" 0 "$rc"
-assert_eq "les deux pages de réglages sont ouvertes, Security d'abord" $'onepassword://settings/security\nonepassword://settings/developers' "$(cat "$TEST_TMP/xdg-open.log")"
+assert_eq "page Security ouverte au lancement, puis rouverte dès la connexion dans l'app" $'onepassword://settings/security\nonepassword://settings/security' "$(opened)"
 assert_contains "la consigne est affichée en une fois" "$out" "Use the SSH agent"
 assert_contains "la connexion dans l'app fait partie de la consigne" "$out" "Se connecter"
 assert_eq "un seul op signin" 1 "$(grep -c '^signin' "$TEST_TMP/op.log")"
@@ -110,7 +112,7 @@ reset
 out=$(OP_WAIT_SECONDS=0 FAKE_SIGNIN_OK=1 FAKE_CHOICE="Continuer d'attendre (rouvre la page Developer de l'app)" _op_connect 2>&1); rc=$?
 wait
 assert_eq "succès (code 0)" 0 "$rc"
-assert_eq "la page Developer est rouverte à chaque tour" "onepassword://settings/developers" "$(tail -1 "$TEST_TMP/xdg-open.log")"
+assert_eq "la page Developer est rouverte à chaque tour" "onepassword://settings/developers" "$(opened | tail -1)"
 assert_ok "plusieurs tours d'attente ont eu lieu" test "$(grep -c choose "$TEST_TMP/gum.log")" -ge 1
 
 printf '%s\n' "== délai écoulé : connexion en terminal =="
@@ -120,6 +122,15 @@ assert_contains "le repli terminal est appelé" "$out" "repli-terminal"
 assert_eq "échec propagé si le repli échoue" 1 "$rc"
 assert_contains "message d'échec final" "$out" "seront sautés"
 
+printf '%s\n' "== app déjà configurée (agent présent), simplement verrouillée =="
+reset; make_socket
+out=$(FAKE_SIGNIN_OK=1 _op_connect 2>&1); rc=$?
+assert_eq "succès (code 0)" 0 "$rc"
+assert_not_contains "pas de consigne" "$out" "Se connecter"
+assert_eq "aucune page de réglages ouverte" "" "$(opened)"
+assert_contains "déverrouillage annoncé" "$out" "déjà configurée"
+assert_eq "un seul op signin" 1 "$(grep -c '^signin' "$TEST_TMP/op.log")"
+
 printf '%s\n' "== compte CLI résiduel =="
 reset; make_socket
 printf '{"accounts":[{"shorthand":"perso"}]}' >"$OP_CLI_CONFIG"
@@ -127,8 +138,10 @@ out=$(FAKE_SIGNIN_OK=1 _op_connect 2>&1)
 assert_contains "avertissement op account forget" "$out" "op account forget --all"
 
 printf '%s\n' "== xdg-open absent =="
-reset; make_socket; rm "$TEST_TMP/bin/xdg-open"
+reset; rm "$TEST_TMP/bin/xdg-open"
+( sleep 0.3; make_socket ) &
 out=$(FAKE_SIGNIN_OK=1 _op_connect 2>&1); rc=$?
+wait
 assert_eq "l'absence de xdg-open ne fait pas échouer" 0 "$rc"
 assert_contains "avertissement pour ouvrir l'app à la main" "$out" "xdg-open introuvable"
 
