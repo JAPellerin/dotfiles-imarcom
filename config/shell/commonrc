@@ -1,0 +1,15 @@
+# shellcheck shell=sh disable=SC1091  # nvm.sh est hors dépôt
+# ~/.commonrc — configuration commune à bash ET zsh (syntaxe POSIX uniquement).
+# Chargé par ~/.bashrc et ~/.zshrc. Ce qui est propre à un shell (invite,
+# complétion, plugins) reste dans son fichier.
+
+# Binaires utilisateur
+case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) PATH="$HOME/.local/bin:$PATH" ;; esac
+export PATH
+
+# nvm — donne node, npm, pnpm (installés sous ~/.nvm/versions/node/<version>/bin)
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+# Vault Imarcom
+export VAULT_ADDR=https://vault.imarcom.net

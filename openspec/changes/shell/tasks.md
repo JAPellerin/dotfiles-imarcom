@@ -5,8 +5,8 @@
 
 ## 2. Fichiers versionnés (`config/shell/`)
 
-- [ ] 2.1 Copier depuis la WSL `~/.zshrc` → `config/shell/zshrc`, `~/.commonrc` → `config/shell/commonrc`, `~/.p10k.zsh` → `config/shell/p10k.zsh` ; dans `zshrc` : `plugins=(git zsh-autosuggestions zsh-syntax-highlighting)` et intégrations conditionnelles `zoxide` / `fzf` (D3) ; vérifier `zsh -n config/shell/zshrc` et `sh -n config/shell/commonrc` (POSIX)
-- [ ] 2.2 `config/shell/bashrc-extra.sh` : chargement de `.commonrc`, complétion nvm si présente, `__git_ps1` + `PS1` (reprise du `.bashrc` actuel de la WSL) ; vérifier `bash -n` et `bash -c 'source config/shell/bashrc-extra.sh; echo $VAULT_ADDR'`
+- [x] 2.1 Copier depuis la WSL `~/.zshrc` → `config/shell/zshrc`, `~/.commonrc` → `config/shell/commonrc`, `~/.p10k.zsh` → `config/shell/p10k.zsh` ; dans `zshrc` : `plugins=(git zsh-autosuggestions zsh-syntax-highlighting)` et intégrations conditionnelles `zoxide` / `fzf` (D3) ; vérifier `zsh -n config/shell/zshrc` et `sh -n config/shell/commonrc` (POSIX)
+- [x] 2.2 `config/shell/bashrc-extra.sh` : chargement de `.commonrc`, complétion nvm si présente, `__git_ps1` + `PS1` (reprise du `.bashrc` actuel de la WSL) ; vérifier `bash -n` et `bash -c 'source config/shell/bashrc-extra.sh; echo $VAULT_ADDR'`
 
 ## 3. Module `shell`
 
