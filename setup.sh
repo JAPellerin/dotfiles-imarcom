@@ -300,8 +300,12 @@ main() {
         selected+=("$name")
       done ;;
     menu)
-      mapfile -t selected < <(select_from_menu)
-      (( ${#selected[@]} > 0 )) || { log_info "Aucun module sélectionné."; return 0; }
+      # Le `die` d'une sélection annulée ne sort que du sous-shell $(…) : on
+      # propage son code ici, sinon le runner continuerait avec une liste vide.
+      local chosen
+      chosen=$(select_from_menu) || return 1
+      [[ -n $chosen ]] || { log_info "Aucun module sélectionné."; return 0; }
+      mapfile -t selected <<<"$chosen"
       ;;
   esac
 

@@ -20,7 +20,7 @@ Le module SHALL déployer, via le helper de liens du socle, `config/shell/zshrc`
 
 #### Scenario: Déploiement
 - **WHEN** le module se termine
-- **THEN** les trois liens pointent vers le dépôt, `~/.bashrc` contient une seule ligne chargeant `bashrc-extra.sh`, et `bash -lc 'echo $VAULT_ADDR'` comme `zsh -ic 'echo $VAULT_ADDR'` affichent la valeur définie dans `.commonrc`
+- **THEN** les trois liens pointent vers le dépôt, `~/.bashrc` contient une seule ligne chargeant `bashrc-extra.sh`, et `bash -ic 'echo $VAULT_ADDR'` comme `zsh -ic 'echo $VAULT_ADDR'` (shells interactifs : `.bashrc` ne se charge pas en `bash -l` non interactif) affichent la valeur définie dans `.commonrc`
 
 #### Scenario: Outils optionnels absents
 - **WHEN** `fzf` ou `zoxide` n'est pas installé

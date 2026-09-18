@@ -48,4 +48,26 @@ assert_eq "code de sortie 0" 0 "$rc"
 assert_contains "gui installé quand une session graphique existe" "$out" "✔ gui            fait"
 assert_file "marqueur gui posé" "$FIXTURE_STATE_DIR/gui"
 
+printf '%s\n' "== menu (gum factice) : annulation, sélection vide, sélection =="
+# gum choose : FAKE_GUM_RC = code de sortie (130 = Échap/Ctrl-C), FAKE_GUM_OUT = lignes choisies.
+mkdir -p "$TEST_TMP/bin"
+cat >"$TEST_TMP/bin/gum" <<'FAKE'
+#!/usr/bin/env bash
+[[ $1 == choose ]] || exit 0
+[[ -n ${FAKE_GUM_OUT:-} ]] && printf '%s\n' "$FAKE_GUM_OUT"
+exit "${FAKE_GUM_RC:-0}"
+FAKE
+chmod +x "$TEST_TMP/bin/gum"
+out=$(FAKE_GUM_RC=130 setup) && rc=0 || rc=$?
+assert_eq "annulation du menu → code 1" 1 "$rc"
+assert_contains "annulation signalée" "$out" "Sélection annulée"
+assert_not_contains "le runner ne continue pas après l'annulation" "$out" "Aucun module sélectionné"
+out=$(FAKE_GUM_RC=0 setup) && rc=0 || rc=$?
+assert_eq "sélection vide → code 0" 0 "$rc"
+assert_contains "sélection vide signalée" "$out" "Aucun module sélectionné"
+rm -f "$FIXTURE_STATE_DIR/b"
+out=$(FAKE_GUM_OUT="[shell] b — Module b sans dépendance — à faire" setup) && rc=0 || rc=$?
+assert_eq "sélection d'un module → code 0" 0 "$rc"
+assert_contains "le module choisi s'exécute" "$out" "install b"
+
 test_done
