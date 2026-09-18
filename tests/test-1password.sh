@@ -51,7 +51,7 @@ chmod +x "$TEST_TMP/bin/"*
 export PATH="$TEST_TMP/bin:$PATH"
 
 # Environnement du module : socket, délais courts, config shell et CLI isolées.
-export OP_AGENT_SOCK="$TEST_TMP/agent.sock" OP_WAIT_SECONDS=6 OP_WAIT_INTERVAL=0.1 OP_OPEN_DELAY=0 OP_DEV_RESEND=1
+export OP_AGENT_SOCK="$TEST_TMP/agent.sock" OP_WAIT_SECONDS=6 OP_WAIT_INTERVAL=0.1 OP_OPEN_DELAY=0
 export OP_CLI_CONFIG="$TEST_TMP/op-config" SHELL_COMMON_RC="$TEST_TMP/commonrc" OP_APP_SETTINGS_FILE="$TEST_TMP/app-settings.json"
 # shellcheck source=../modules/10-1password.sh
 source "$DOTFILES_DIR/modules/10-1password.sh"
@@ -69,13 +69,12 @@ opened() { sleep 0.2; cat "$TEST_TMP/xdg-open.log" 2>/dev/null; }
 
 printf '%s\n' "== connexion dans l'app, cases cochées pendant l'attente, op signin réussit =="
 reset
-( sleep 0.3; app_setting $SYS; sleep 2.3; app_setting $SYS $CLI; sleep 0.5; app_setting $SYS $CLI $AGENT; make_socket ) &
+( sleep 0.3; app_setting $SYS; sleep 0.3; app_setting $SYS $CLI; sleep 0.3; app_setting $SYS $CLI $AGENT; make_socket ) &
 out=$(FAKE_SIGNIN_OK=1 _op_connect 2>&1); rc=$?
 wait
 assert_eq "succès (code 0)" 0 "$rc"
-assert_eq "Security envoyé deux fois au lancement" $'onepassword://settings/security\nonepassword://settings/security' "$(opened | head -2)"
-assert_eq "Developer envoyé dès l'authentification système cochée, puis renvoyé (toutes les OP_DEV_RESEND s) tant qu'aucune case Developer n'est cochée" $'onepassword://settings/developers\nonepassword://settings/developers\nonepassword://settings/developers' "$(opened | sed -n '3,5p')"
-assert_eq "plus de renvoi une fois une case Developer cochée" 5 "$(opened | wc -l)"
+assert_eq "Security envoyé deux fois au lancement, rien d'autre (un lien fenêtre ouverte est ignoré par l'app)" $'onepassword://settings/security\nonepassword://settings/security' "$(opened)"
+assert_contains "la consigne indique l'onglet Developer" "$out" "onglet Developer"
 assert_contains "la consigne est affichée en une fois" "$out" "Use the SSH agent"
 assert_contains "la connexion dans l'app fait partie de la consigne" "$out" "Se connecter"
 assert_eq "un seul op signin" 1 "$(grep -c '^signin' "$TEST_TMP/op.log")"
@@ -121,10 +120,10 @@ assert_eq "toujours aucune étape manuelle" "" "$(cat "$MANUAL_STEPS_FILE")"
 printf '%s\n' "== délai écoulé : continuer d'attendre puis agent =="
 reset; app_setting $SYS $CLI
 ( sleep 0.5; make_socket ) &
-out=$(OP_WAIT_SECONDS=0 FAKE_SIGNIN_OK=1 FAKE_CHOICE="Continuer d'attendre (rouvre la page Developer de l'app)" _op_connect 2>&1); rc=$?
+out=$(OP_WAIT_SECONDS=0 FAKE_SIGNIN_OK=1 FAKE_CHOICE="Continuer d'attendre" _op_connect 2>&1); rc=$?
 wait
 assert_eq "succès (code 0)" 0 "$rc"
-assert_eq "la page Developer est rouverte à chaque tour" "onepassword://settings/developers" "$(opened | tail -1)"
+assert_eq "aucun lien supplémentaire au tour suivant" 2 "$(opened | wc -l)"
 assert_ok "plusieurs tours d'attente ont eu lieu" test "$(grep -c choose "$TEST_TMP/gum.log")" -ge 1
 
 printf '%s\n' "== délai écoulé : connexion en terminal =="

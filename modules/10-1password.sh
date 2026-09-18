@@ -77,11 +77,10 @@ module_configure() {
 
 # Délais du parcours « intégration app » (surchargeables : tests) : durée d'un
 # tour d'attente, intervalle de sondage, pause entre deux pages ouvertes (le
-# temps que l'app démarre), intervalle de renvoi du lien Developer.
+# temps que l'app démarre).
 OP_WAIT_SECONDS="${OP_WAIT_SECONDS:-300}"
 OP_WAIT_INTERVAL="${OP_WAIT_INTERVAL:-2}"
 OP_OPEN_DELAY="${OP_OPEN_DELAY:-3}"
-OP_DEV_RESEND="${OP_DEV_RESEND:-5}"
 OP_CLI_CONFIG="${OP_CLI_CONFIG:-$HOME/.config/op/config}"
 
 # Connexion : rien à faire si une session est active ; sinon intégration avec
@@ -114,6 +113,8 @@ _op_email() { op whoami 2>/dev/null | sed -n 's/^Email: *//p'; }
 # consigne une fois, attend que l'agent SSH et l'intégration CLI soient actifs
 # (signaux lus sur disque, sans solliciter l'app : toute commande `op`
 # déclencherait une demande d'autorisation), puis un seul `op signin`.
+# Un lien profond ne fait naviguer l'app que lorsqu'il (r)ouvre sa fenêtre
+# (vérifié en VM) : la page Developer reste un clic manuel dans la consigne.
 # Si l'agent est déjà là (app configurée, simplement verrouillée), droit à
 # `op signin`. Renvoie 0 = session active, 1 = abandon, 2 = terminal demandé.
 _op_connect_via_app() {
@@ -126,29 +127,28 @@ _op_connect_via_app() {
     wait=0   # l'agent est là : inutile de sonder, droit au menu de reprise
   else
     # Deux envois du lien Security : le premier lance l'app (écran de connexion,
-    # lien ignoré), le second, reçu par l'app verrouillée, est exécuté au
-    # déverrouillage — l'utilisateur tombe sur le réglage 2 dès sa connexion.
+    # lien ignoré), le second, reçu par l'app verrouillée, est exécuté quand la
+    # fenêtre s'ouvre au déverrouillage — le réglage 2 est proposé dès la connexion.
     _op_open_settings security security
     log_info "Dans l'application 1Password qui vient de s'ouvrir :"
     log_info "  1. Se connecter (adresse du compte, courriel, Secret Key, mot de passe) si ce n'est pas déjà fait."
-    log_info "  2. Settings › Security : cocher « Unlock using system authentication »."
-    log_info "  3. Settings › Developer : cocher « Integrate with 1Password CLI »."
-    log_info "  4. Settings › Developer : cocher « Use the SSH agent »."
+    log_info "  2. Settings › Security : cocher « Unlock using system authentication » (proposé dès la connexion)."
+    log_info "  3. Dans les réglages, onglet Developer : cocher « Integrate with 1Password CLI »."
+    log_info "  4. Même onglet : cocher « Use the SSH agent »."
     log_info "Le script reprend tout seul dès que les cases 3 et 4 sont cochées ; Ctrl-C pour abandonner."
   fi
-  _OP_DEV_SENT=""
   while true; do
-    if (( wait )) && ui_wait "En attente de l'intégration CLI et de l'agent SSH de 1Password" "$OP_WAIT_SECONDS" "$OP_WAIT_INTERVAL" _op_poll_ready; then
+    if (( wait )) && ui_wait "En attente de l'intégration CLI et de l'agent SSH de 1Password" "$OP_WAIT_SECONDS" "$OP_WAIT_INTERVAL" _op_ready; then
       _op_try_signin "$err_file" && return 0
     fi
     wait=1
     choice=$(ui_choose "Pas encore de session 1Password. Que faire ?" \
-      "Continuer d'attendre (rouvre la page Developer de l'app)" \
+      "Continuer d'attendre" \
       "Vérifier maintenant (op signin, même sans agent SSH)" \
       "Connexion en terminal (op account add / op signin, sans l'application)" \
       "Abandonner (les modules qui ont besoin de secrets seront sautés)") || return 1
     case $choice in
-      Continuer*) _op_open_settings developers ;;
+      Continuer*) ;;
       Vérifier*)  _op_try_signin "$err_file" && return 0 ;;
       Connexion*) return 2 ;;
       *)          return 1 ;;
@@ -156,22 +156,8 @@ _op_connect_via_app() {
   done
 }
 
-# Condition sondée par wait_for (dans le shell courant, l'état persiste) : dès
-# que l'authentification système est cochée, envoie le lien Developer, et le
-# renvoie toutes les OP_DEV_RESEND s tant qu'aucune case de cette page n'est
-# cochée — l'app termine l'enrôlement de l'authentification système (durée =
-# saisie du mot de passe de session) en affichant Security, ce qui écrasait un
-# envoi unique (VM, 18 sept) ; un lien vers la page déjà affichée est sans effet.
-# Prêt quand l'intégration CLI et l'agent sont actifs.
-_op_poll_ready() {
-  if op_app_setting_on security.authenticatedUnlock.enabled \
-     && ! op_app_cli_enabled && ! op_app_setting_on sshAgent.enabled \
-     && (( ${_OP_DEV_SENT:--999} + OP_DEV_RESEND <= SECONDS )); then
-    _OP_DEV_SENT=$SECONDS
-    _op_open_settings developers
-  fi
-  op_app_cli_enabled && op_agent_ready
-}
+# Prêt quand l'intégration CLI et l'agent SSH sont actifs (lus sur disque).
+_op_ready() { op_app_cli_enabled && op_agent_ready; }
 
 # _op_open_settings <page...> : ouvre l'app sur onepassword://settings/<page>
 # (liens profonds de la doc d'intégration ; le paquet enregistre le schéma
