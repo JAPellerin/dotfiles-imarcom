@@ -1,7 +1,7 @@
 ## 1. Helper d'attente (`lib/`)
 
-- [ ] 1.1 `lib/core.sh` : `wait_for <secondes> <intervalle> <commande...>` (design D3), sans sollicitation externe ; `tests/test-core.sh` : réussit dès qu'un fichier créé par un sous-shell différé apparaît, expire avec code 1 sinon, et `shellcheck lib/core.sh tests/test-core.sh` propre
-- [ ] 1.2 `lib/op.sh` : `OP_AGENT_SOCK` surchargeable (défaut `$HOME/.1password/agent.sock`) et `op_agent_ready` (`-S`) ; `tests/test-op.sh` : faux avec un chemin absent, vrai avec un socket factice (`socat`/`nc -lU` ou `python3 -c 'socket…'` dans `$TEST_TMP`)
+- [x] 1.1 `lib/core.sh` : `wait_for <secondes> <intervalle> <commande...>` (design D3), sans sollicitation externe ; `tests/test-core.sh` : réussit dès qu'un fichier créé par un sous-shell différé apparaît, expire avec code 1 sinon, et `shellcheck lib/core.sh tests/test-core.sh` propre
+- [x] 1.2 `lib/op.sh` : `OP_AGENT_SOCK` surchargeable (défaut `$HOME/.1password/agent.sock`) et `op_agent_ready` (`-S`) ; `tests/test-op.sh` : faux avec un chemin absent, vrai avec un socket factice (`socat`/`nc -lU` ou `python3 -c 'socket…'` dans `$TEST_TMP`)
 
 ## 2. Module `1password` — parcours intégration app
 

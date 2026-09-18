@@ -43,6 +43,17 @@ if [[ -n ${WSL_DISTRO_NAME:-} ]]; then
   assert_fail "faux dans cette WSL de développement" has_gui
 fi
 
+printf '%s\n' "== wait_for =="
+cible="$TEST_TMP/attendu"
+( sleep 0.5; touch "$cible" ) &
+assert_ok "réussit dès que la condition devient vraie" wait_for 5 0.1 test -e "$cible"
+wait
+assert_ok "réussit tout de suite si la condition est déjà vraie (délai 0)" wait_for 0 1 test -e "$cible"
+debut=$SECONDS
+assert_rc "expire avec le code 1" 1 wait_for 1 0.1 test -e "$TEST_TMP/jamais"
+if (( SECONDS - debut <= 3 )); then _pass "l'expiration respecte le délai"; else _fail "l'expiration respecte le délai" "durée : $((SECONDS - debut)) s"; fi
+assert_eq "la sortie de la commande est ignorée (rien à l'écran)" "" "$(wait_for 0 1 sh -c 'echo bruit; echo bruit >&2' 2>&1)"
+
 printf '%s\n' "== ensure_line =="
 rc="$TEST_TMP/rc"
 # shellcheck disable=SC2016  # la ligne doit rester littérale ($HOME évalué au chargement du shell)
