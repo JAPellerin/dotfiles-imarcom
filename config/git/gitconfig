@@ -1,0 +1,23 @@
+# config/git/gitconfig — lié dans ~/.gitconfig par le module `git`.
+# Réglages propres à une machine : ~/.gitconfig.local (non versionné, inclus
+# en dernier, donc prioritaire ; ignoré s'il n'existe pas).
+[user]
+	name = Joseph-Antony Pellerin
+	email = josephantony.pellerin@imarcom.net
+[init]
+	defaultBranch = main
+
+# delta : pager et diffs colorés — https://github.com/dandavison/delta#get-started
+[core]
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true    # n / N pour sauter d'un fichier à l'autre
+[merge]
+	conflictstyle = zdiff3
+[diff]
+	colorMoved = default
+
+[include]
+	path = ~/.gitconfig.local
