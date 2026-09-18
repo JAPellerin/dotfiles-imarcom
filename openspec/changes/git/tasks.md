@@ -11,5 +11,5 @@
 
 ## 3. Documentation et VM
 
-- [ ] 3.1 `CLAUDE.md` : convention des secrets (D1 : coffre `Private`, item par service, champs 1Password, `?ssh-format=openssh`, `op_read` dans une variable) ; `ROADMAP.md` : `git` fait, `git-delta` installé ici ; `openspec validate git --strict` vert
+- [x] 3.1 `CLAUDE.md` : convention des secrets (D1 : coffre `Private`, item par service, champs 1Password, `?ssh-format=openssh`, `op_read` dans une variable) ; `ROADMAP.md` : `git` fait, `git-delta` installé ici ; `openspec validate git --strict` vert
 - [ ] 3.2 VM (snapshot « vierge ») : bootstrap → `base` + `1password` + `shell` + `git` → dans un nouveau terminal : `ssh -T git@github.com` (via l'agent, sans fichier de clé dans `~/.ssh`), `git clone git@github.com:JAPellerin/dotfiles-imarcom.git /tmp/t`, `git -C /tmp/t diff HEAD~1` affiché par delta, `gh auth status` ; relance → « déjà fait » partout
