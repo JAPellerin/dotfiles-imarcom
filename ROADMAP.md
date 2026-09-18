@@ -15,7 +15,7 @@ Découpage des modules du script de configuration, convenu le 15 septembre 2026.
 |---|---|---|---|---|
 | 00 | `base` | systeme | `apt upgrade`, curl, git, jq, build-essential, … | |
 | 10 | `1password` | systeme | app + CLI `op`, agent SSH | app seulement |
-| 20 | `shell` | shell | zsh, oh-my-zsh, Powerlevel10k, plugins, `.commonrc` / `.zshrc` / `.bashrc`, **mécanisme de déploiement des fichiers de config** (symlinks / stow / chezmoi, à trancher ici) | |
+| 20 | `shell` | shell | zsh, oh-my-zsh, Powerlevel10k, plugins, `.commonrc` / `.zshrc` / `.bashrc`, **mécanisme de déploiement des fichiers de config** — tranché le 18 sept 2026 : liens symboliques depuis `config/<module>/` via `link_config` (`lib/files.sh`), `chezmoi` réévalué si des différences par machine apparaissent | |
 | 21 | `terminal` | shell | Ghostty + config + police Nerd Font | oui |
 | 22 | `cli-tools` | shell | ripgrep, fd, fzf, bat, zoxide, git-delta, lazygit, postgresql-client, yq | |
 | 30 | `git` | dev | `user.*`, delta, clé SSH depuis 1Password (convention `op://` fixée ici), `gh`, known_hosts | |
@@ -37,8 +37,8 @@ Le helper AppImage de `lib/` (déplacement dans `~/Applications`, fichier `.desk
 
 ## Ordre des changes
 
-1. `setup-socle` — bootstrap, runner, contrat, `lib/`, `base`, `1password` (planifié)
-2. `shell` — tranche la gestion des fichiers de config, dont tout le reste dépend
+1. `setup-socle` — bootstrap, runner, contrat, `lib/`, `base`, `1password` — **fait**, archivé le 18 sept 2026 (avec `1password-integration-app` : connexion guidée sans étape manuelle)
+2. `shell` — tranche la gestion des fichiers de config, dont tout le reste dépend — **en cours** (18 sept 2026)
 3. `git` — fixe la convention des secrets `op://<coffre>/<item>/<champ>`
 4. `cli-tools`, `terminal`
 5. `node`, `docker`, `dev-tools`
