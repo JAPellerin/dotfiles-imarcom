@@ -22,7 +22,7 @@ Découpage des modules du script de configuration, convenu le 15 septembre 2026.
 | 40 | `node` | dev | nvm, Node 26, pnpm 11, globaux npm (openspec) | |
 | 41 | `docker` | dev | Docker Engine (dépôt apt officiel), groupe `docker` | |
 | 42 | `dev-tools` | dev | Claude Code, twg CLI | |
-| 50 | `navigateur` | apps | choix Brave / Firefox / Chrome (question interne) | oui |
+| 25 | `navigateur` | apps | choix Brave / Firefox / Chrome (question interne) + **extension 1Password** — placé avant `git` (décision du 18 sept 2026) pour que `gh auth login` puisse se connecter à GitHub via l'extension sur un poste neuf ; pas de dépendance `git → navigateur` (elle ferait sauter `git` sans GUI) | oui |
 | 51 | `vscode` | apps | VS Code (dépôt Microsoft) + extensions + gnome-keyring | oui |
 | 52 | `claude-desktop` | apps | dépôt apt Claude Desktop | oui |
 | 60 | `obsidian` | apps | `.deb` officiel (GitHub releases) | oui |
@@ -40,9 +40,10 @@ Le helper AppImage de `lib/` (déplacement dans `~/Applications`, fichier `.desk
 1. `setup-socle` — bootstrap, runner, contrat, `lib/`, `base`, `1password` — **fait**, archivé le 18 sept 2026 (avec `1password-integration-app` : connexion guidée sans étape manuelle)
 2. `shell` — tranche la gestion des fichiers de config, dont tout le reste dépend — **fait**, archivé le 18 sept 2026
 3. `git` — fixe la convention des secrets `op://Private/<Item>/<champ>` — **fait** (18 sept 2026 ; `gh` depuis le dépôt officiel, clé SSH par l'agent avec l'app ou fichier depuis 1Password sans app)
-4. `cli-tools`, `terminal`
-5. `node`, `docker`, `dev-tools`
-6. `vscode`, `navigateur`, `claude-desktop`
-7. `obsidian`, `rocketchat`, `thunderbird`, `spotify`, `vpn`
-8. `gnome`
-9. `projets`
+4. `navigateur` (+ extension 1Password) — **prochain** : nécessaire avant `gh auth login` sur un poste neuf
+5. `cli-tools`, `terminal`
+6. `node`, `docker`, `dev-tools`
+7. `vscode`, `claude-desktop`
+8. `obsidian`, `rocketchat`, `thunderbird`, `spotify`, `vpn`
+9. `gnome`
+10. `projets`
