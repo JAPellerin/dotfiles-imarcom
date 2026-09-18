@@ -11,7 +11,7 @@
 # /etc/apt/keyrings/, voir design D8/D10). La politique debsig demandée par la doc
 # est installée telle quelle.
 # Voir openspec/specs/module-1password/spec.md (parcours de connexion :
-# openspec/changes/1password-integration-app/design.md).
+# openspec/changes/archive/2026-09-18-1password-integration-app/design.md).
 MODULE_NAME="1password"
 MODULE_DESC="1Password : application de bureau (si GUI) et CLI op ; connexion et agent SSH"
 MODULE_GROUP="systeme"
