@@ -13,7 +13,7 @@
 # Comme le fichier est sourcé par le runner, shellcheck voit ces métadonnées
 # comme inutilisées : chaque module commence par la directive
 #   # shellcheck disable=SC2034  # métadonnées lues par le runner
-# Voir openspec/changes/setup-socle/specs/module-contract/spec.md.
+# Voir openspec/specs/module-contract/spec.md.
 # Dépend de lib/core.sh (log_*, add_cleanup).
 
 MODULES_DIR="${MODULES_DIR:-$DOTFILES_DIR/modules}"

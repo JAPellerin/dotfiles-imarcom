@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034  # métadonnées lues par le runner
 # modules/00-base.sh — paquets de base et mise à jour du système.
-# Voir openspec/changes/setup-socle/specs/module-base/spec.md.
+# Voir openspec/specs/module-base/spec.md.
 MODULE_NAME="base"
 MODULE_DESC="Mise à jour du système et paquets de base (curl git jq build-essential…)"
 MODULE_GROUP="systeme"
