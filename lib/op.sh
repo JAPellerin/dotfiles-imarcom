@@ -25,14 +25,29 @@ OP_AGENT_SOCK="${OP_AGENT_SOCK:-$HOME/.1password/agent.sock}"
 # op_agent_ready : vrai si le socket de l'agent SSH existe.
 op_agent_ready() { [[ -S $OP_AGENT_SOCK ]]; }
 
-# Dossier des réglages de l'app : créé à l'instant où l'utilisateur termine sa
-# connexion dans l'app (observé en VM le 18 sept 2026 : « Lock state changed:
-# Unlocked » puis « Settings file changed », avant tout réglage), donc signal
-# « app connectée » qui ne sollicite pas l'app. Surchargeable pour les tests.
-OP_APP_SETTINGS_DIR="${OP_APP_SETTINGS_DIR:-$HOME/.config/1Password/settings}"
+# Fichier des réglages de l'app : créé à l'instant où l'utilisateur termine sa
+# première connexion dans l'app (observé deux fois en VM le 18 sept 2026 : absent
+# au lancement — « Settings file missing, using defaults » —, écrit sur « Lock
+# state changed: Unlocked »). Il contient les réglages en clair (signés par
+# l'app, mais lisibles) : on y lit l'état des cases sans solliciter l'app.
+# Surchargeable pour les tests.
+OP_APP_SETTINGS_FILE="${OP_APP_SETTINGS_FILE:-$HOME/.config/1Password/settings/settings.json}"
 
 # op_app_signed_in : vrai si l'app de bureau a déjà été connectée à un compte.
-op_app_signed_in() { [[ -d $OP_APP_SETTINGS_DIR ]]; }
+op_app_signed_in() { [[ -f $OP_APP_SETTINGS_FILE ]]; }
+
+# op_app_setting_on <clé> : vrai si le réglage <clé> vaut true dans l'app, ex.
+#   security.authenticatedUnlock.enabled   Unlock using system authentication
+#   developers.cliSharedLockState.enabled  Integrate with 1Password CLI
+#   sshAgent.enabled                       Use the SSH agent
+op_app_setting_on() {
+  [[ -f $OP_APP_SETTINGS_FILE ]] && grep -qE "\"$1\": *true" "$OP_APP_SETTINGS_FILE"
+}
+
+# op_app_cli_enabled : vrai si l'intégration app ↔ CLI est activée. Sans elle,
+# `op signin` retombe sur la connexion manuelle (saisie d'adresse) : à vérifier
+# avant tout `op signin` dans le parcours app.
+op_app_cli_enabled() { op_app_setting_on developers.cliSharedLockState.enabled; }
 
 # op_session_active : vrai si `op` est installé et qu'une session est ouverte
 # (intégration avec l'app de bureau ou session ouverte par op_signin_interactive).
