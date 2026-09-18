@@ -110,12 +110,11 @@ _op_no_session() {
 _op_email() { op whoami 2>/dev/null | sed -n 's/^Email: *//p'; }
 
 # Parcours « intégration app » : lance l'app sur ses réglages, affiche la
-# consigne une fois, attend que l'agent SSH apparaisse (signal qui ne sollicite
-# pas l'app, contrairement à toute commande `op`), puis un seul `op signin`.
-# Pendant l'attente, dès que l'app est connectée, la page Security est rouverte
-# (un lien profond ne navigue que dans une app déverrouillée). Si l'agent est
-# déjà là (app configurée, simplement verrouillée), on passe droit à `op signin`.
-# Renvoie 0 = session active, 1 = abandon, 2 = l'utilisateur veut le terminal.
+# consigne une fois, attend que l'agent SSH et l'intégration CLI soient actifs
+# (signaux lus sur disque, sans solliciter l'app : toute commande `op`
+# déclencherait une demande d'autorisation), puis un seul `op signin`.
+# Si l'agent est déjà là (app configurée, simplement verrouillée), droit à
+# `op signin`. Renvoie 0 = session active, 1 = abandon, 2 = terminal demandé.
 _op_connect_via_app() {
   local err_file choice wait=1
   err_file=$(mktemp -t dotfiles-op-err.XXXXXX)
@@ -125,17 +124,20 @@ _op_connect_via_app() {
     _op_try_signin "$err_file" && return 0
     wait=0   # l'agent est là : inutile de sonder, droit au menu de reprise
   else
-    _op_open_settings security
+    # Deux envois du lien Security : le premier lance l'app (écran de connexion,
+    # lien ignoré), le second, reçu par l'app verrouillée, est exécuté au
+    # déverrouillage — l'utilisateur tombe sur le réglage 2 dès sa connexion.
+    _op_open_settings security security
     log_info "Dans l'application 1Password qui vient de s'ouvrir :"
     log_info "  1. Se connecter (adresse du compte, courriel, Secret Key, mot de passe) si ce n'est pas déjà fait."
     log_info "  2. Settings › Security : cocher « Unlock using system authentication »."
     log_info "  3. Settings › Developer : cocher « Integrate with 1Password CLI »."
     log_info "  4. Settings › Developer : cocher « Use the SSH agent »."
-    log_info "Le script reprend tout seul dès que l'agent SSH est actif (dernière case) ; Ctrl-C pour abandonner."
+    log_info "Le script reprend tout seul dès que les cases 3 et 4 sont cochées ; Ctrl-C pour abandonner."
   fi
-  _OP_SETTINGS_REOPENED=""
+  _OP_DEV_OPENED=""
   while true; do
-    if (( wait )) && ui_wait "En attente de l'agent SSH de 1Password" "$OP_WAIT_SECONDS" "$OP_WAIT_INTERVAL" _op_poll_agent; then
+    if (( wait )) && ui_wait "En attente de l'intégration CLI et de l'agent SSH de 1Password" "$OP_WAIT_SECONDS" "$OP_WAIT_INTERVAL" _op_poll_ready; then
       _op_try_signin "$err_file" && return 0
     fi
     wait=1
@@ -153,14 +155,15 @@ _op_connect_via_app() {
   done
 }
 
-# Condition sondée par wait_for (dans le shell courant, l'état persiste) : rouvre
-# la page Security une seule fois dès que l'app est connectée, puis teste l'agent.
-_op_poll_agent() {
-  if [[ -z $_OP_SETTINGS_REOPENED ]] && op_app_signed_in; then
-    _OP_SETTINGS_REOPENED=1
-    _op_open_settings security
+# Condition sondée par wait_for (dans le shell courant, l'état persiste) : dès
+# que l'authentification système est cochée, ouvre une seule fois la page
+# Developer (cases 3 et 4) ; prêt quand l'intégration CLI et l'agent sont actifs.
+_op_poll_ready() {
+  if [[ -z $_OP_DEV_OPENED ]] && op_app_setting_on security.authenticatedUnlock.enabled; then
+    _OP_DEV_OPENED=1
+    _op_open_settings developers
   fi
-  op_agent_ready
+  op_app_cli_enabled && op_agent_ready
 }
 
 # _op_open_settings <page...> : ouvre l'app sur onepassword://settings/<page>
@@ -190,6 +193,10 @@ _op_open_settings() {
 # jamais journalisé) ; stderr gardé pour le diagnostic.
 _op_try_signin() {
   local err_file=$1
+  if ! op_app_cli_enabled; then
+    log_warn "« Integrate with 1Password CLI » n'est pas coché dans l'app (Settings › Developer) : op signin ne peut pas passer par l'application."
+    return 1
+  fi
   log_info "Vérification : op signin (autoriser la demande dans l'application)…"
   op signin >/dev/null 2>"$err_file" </dev/null || true
   if op_session_active; then

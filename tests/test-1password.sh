@@ -52,7 +52,7 @@ export PATH="$TEST_TMP/bin:$PATH"
 
 # Environnement du module : socket, délais courts, config shell et CLI isolées.
 export OP_AGENT_SOCK="$TEST_TMP/agent.sock" OP_WAIT_SECONDS=3 OP_WAIT_INTERVAL=0.1 OP_OPEN_DELAY=0
-export OP_CLI_CONFIG="$TEST_TMP/op-config" SHELL_COMMON_RC="$TEST_TMP/commonrc" OP_APP_SETTINGS_DIR="$TEST_TMP/app-settings"
+export OP_CLI_CONFIG="$TEST_TMP/op-config" SHELL_COMMON_RC="$TEST_TMP/commonrc" OP_APP_SETTINGS_FILE="$TEST_TMP/app-settings.json"
 # shellcheck source=../modules/10-1password.sh
 source "$DOTFILES_DIR/modules/10-1password.sh"
 # Le repli terminal n'est pas testé ici (interactif) : doublure qui se signale.
@@ -60,17 +60,20 @@ source "$DOTFILES_DIR/modules/10-1password.sh"
 op_signin_interactive() { log_info "repli-terminal"; return 1; }
 
 make_socket() { python3 -c "import socket, sys; socket.socket(socket.AF_UNIX).bind(sys.argv[1])" "$OP_AGENT_SOCK"; }
-reset() { rm -rf "$OP_AGENT_SOCK" "$OP_APP_SETTINGS_DIR" "$TEST_TMP"/{session,xdg-open.log,op.log,gum.log,op-config}; : >"$MANUAL_STEPS_FILE"; }
+reset() { rm -rf "$OP_AGENT_SOCK" "$OP_APP_SETTINGS_FILE" "$TEST_TMP"/{session,xdg-open.log,op.log,gum.log,op-config}; : >"$MANUAL_STEPS_FILE"; }
+# app_setting <clé>... : (ré)écrit le settings.json factice avec ces clés à true.
+app_setting() { { printf '{"version": 1'; for k in "$@"; do printf ', "%s": true' "$k"; done; printf '}\n'; } >"$OP_APP_SETTINGS_FILE"; }
+SYS=security.authenticatedUnlock.enabled CLI=developers.cliSharedLockState.enabled AGENT=sshAgent.enabled
 # xdg-open est lancé détaché : laisser le temps à la doublure d'écrire sa trace.
 opened() { sleep 0.2; cat "$TEST_TMP/xdg-open.log" 2>/dev/null; }
 
-printf '%s\n' "== connexion dans l'app, agent activé pendant l'attente, op signin réussit =="
+printf '%s\n' "== connexion dans l'app, cases cochées pendant l'attente, op signin réussit =="
 reset
-( sleep 0.3; mkdir -p "$OP_APP_SETTINGS_DIR"; sleep 0.4; make_socket ) &
+( sleep 0.3; app_setting $SYS; sleep 0.4; app_setting $SYS $CLI; sleep 0.2; app_setting $SYS $CLI $AGENT; make_socket ) &
 out=$(FAKE_SIGNIN_OK=1 _op_connect 2>&1); rc=$?
 wait
 assert_eq "succès (code 0)" 0 "$rc"
-assert_eq "page Security ouverte au lancement, puis rouverte dès la connexion dans l'app" $'onepassword://settings/security\nonepassword://settings/security' "$(opened)"
+assert_eq "Security envoyé deux fois au lancement, puis Developer dès l'authentification système cochée" $'onepassword://settings/security\nonepassword://settings/security\nonepassword://settings/developers' "$(opened)"
 assert_contains "la consigne est affichée en une fois" "$out" "Use the SSH agent"
 assert_contains "la connexion dans l'app fait partie de la consigne" "$out" "Se connecter"
 assert_eq "un seul op signin" 1 "$(grep -c '^signin' "$TEST_TMP/op.log")"
@@ -86,7 +89,7 @@ _op_ssh_agent >/dev/null 2>&1
 assert_eq "SSH_AUTH_SOCK écrit une seule fois" 1 "$(grep -c SSH_AUTH_SOCK "$SHELL_COMMON_RC")"
 
 printf '%s\n' "== agent présent mais op signin échoue, puis abandon =="
-reset; make_socket
+reset; make_socket; app_setting $SYS $CLI $AGENT
 out=$(FAKE_CHOICE="Abandonner (les modules qui ont besoin de secrets seront sautés)" _op_connect 2>&1); rc=$?
 assert_eq "échec (code 1)" 1 "$rc"
 assert_contains "l'erreur de op est affichée" "$out" "authorization denied"
@@ -96,8 +99,15 @@ assert_eq "op signin lancé une seule fois (pas de relance d'office)" 1 "$(grep 
 assert_contains "message d'abandon" "$out" "les modules qui ont besoin de secrets seront sautés"
 assert_not_contains "pas de repli terminal sur abandon" "$out" "repli-terminal"
 
+printf '%s\n' "== agent présent mais intégration CLI non cochée : pas de op signin =="
+reset; make_socket; app_setting $SYS $AGENT
+out=$(OP_WAIT_SECONDS=0 FAKE_SIGNIN_OK=1 _op_connect 2>&1); rc=$?   # menu → Abandonner (défaut de la doublure)
+assert_eq "échec (abandon)" 1 "$rc"
+assert_eq "op signin jamais lancé sans intégration CLI" 0 "$(grep -c '^signin' "$TEST_TMP/op.log" 2>/dev/null || true)"
+assert_contains "le réglage manquant est nommé" "$out" "Integrate with 1Password CLI » n'est pas coché"
+
 printf '%s\n' "== délai écoulé : vérifier maintenant sans agent =="
-reset
+reset; app_setting $CLI
 out=$(OP_WAIT_SECONDS=0 FAKE_SIGNIN_OK=1 FAKE_CHOICE="Vérifier maintenant (op signin, même sans agent SSH)" _op_connect 2>&1); rc=$?
 assert_eq "succès (code 0)" 0 "$rc"
 assert_contains "délai écoulé signalé comme avertissement" "$out" "délai de 0 s écoulé"
@@ -107,7 +117,7 @@ assert_contains "agent inactif signalé en avertissement" "$out" "Agent SSH 1Pas
 assert_eq "toujours aucune étape manuelle" "" "$(cat "$MANUAL_STEPS_FILE")"
 
 printf '%s\n' "== délai écoulé : continuer d'attendre puis agent =="
-reset
+reset; app_setting $SYS $CLI
 ( sleep 0.5; make_socket ) &
 out=$(OP_WAIT_SECONDS=0 FAKE_SIGNIN_OK=1 FAKE_CHOICE="Continuer d'attendre (rouvre la page Developer de l'app)" _op_connect 2>&1); rc=$?
 wait
@@ -123,7 +133,7 @@ assert_eq "échec propagé si le repli échoue" 1 "$rc"
 assert_contains "message d'échec final" "$out" "seront sautés"
 
 printf '%s\n' "== app déjà configurée (agent présent), simplement verrouillée =="
-reset; make_socket
+reset; make_socket; app_setting $SYS $CLI $AGENT
 out=$(FAKE_SIGNIN_OK=1 _op_connect 2>&1); rc=$?
 assert_eq "succès (code 0)" 0 "$rc"
 assert_not_contains "pas de consigne" "$out" "Se connecter"
@@ -132,14 +142,14 @@ assert_contains "déverrouillage annoncé" "$out" "déjà configurée"
 assert_eq "un seul op signin" 1 "$(grep -c '^signin' "$TEST_TMP/op.log")"
 
 printf '%s\n' "== compte CLI résiduel =="
-reset; make_socket
+reset; make_socket; app_setting $CLI
 printf '{"accounts":[{"shorthand":"perso"}]}' >"$OP_CLI_CONFIG"
 out=$(FAKE_SIGNIN_OK=1 _op_connect 2>&1)
 assert_contains "avertissement op account forget" "$out" "op account forget --all"
 
 printf '%s\n' "== xdg-open absent =="
 reset; rm "$TEST_TMP/bin/xdg-open"
-( sleep 0.3; make_socket ) &
+( sleep 0.3; app_setting $CLI; make_socket ) &
 out=$(FAKE_SIGNIN_OK=1 _op_connect 2>&1); rc=$?
 wait
 assert_eq "l'absence de xdg-open ne fait pas échouer" 0 "$rc"
