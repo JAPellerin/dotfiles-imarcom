@@ -77,10 +77,11 @@ module_configure() {
 
 # Délais du parcours « intégration app » (surchargeables : tests) : durée d'un
 # tour d'attente, intervalle de sondage, pause entre deux pages ouvertes (le
-# temps que l'app démarre).
+# temps que l'app démarre), stabilisation exigée avant `op signin`.
 OP_WAIT_SECONDS="${OP_WAIT_SECONDS:-300}"
 OP_WAIT_INTERVAL="${OP_WAIT_INTERVAL:-2}"
 OP_OPEN_DELAY="${OP_OPEN_DELAY:-3}"
+OP_SETTLE="${OP_SETTLE:-3}"
 OP_CLI_CONFIG="${OP_CLI_CONFIG:-$HOME/.config/op/config}"
 
 # Connexion : rien à faire si une session est active ; sinon intégration avec
@@ -137,6 +138,7 @@ _op_connect_via_app() {
     log_info "  4. Même onglet : cocher « Use the SSH agent »."
     log_info "Le script reprend tout seul dès que les cases 3 et 4 sont cochées ; Ctrl-C pour abandonner."
   fi
+  _OP_READY_SINCE=""
   while true; do
     if (( wait )) && ui_wait "En attente de l'intégration CLI et de l'agent SSH de 1Password" "$OP_WAIT_SECONDS" "$OP_WAIT_INTERVAL" _op_ready; then
       _op_try_signin "$err_file" && return 0
@@ -156,8 +158,22 @@ _op_connect_via_app() {
   done
 }
 
-# Prêt quand l'intégration CLI et l'agent SSH sont actifs (lus sur disque).
-_op_ready() { op_app_cli_enabled && op_agent_ready; }
+# Prêt quand l'intégration CLI et l'agent SSH sont actifs (lus sur disque) depuis
+# au moins OP_SETTLE s d'affilée : un `op signin` lancé 0,2 s après le démarrage
+# de l'agent a fait planter l'app (trap int3, VM du 18 sept), qui a alors perdu
+# ses réglages et ses sockets ; 1 s et 60 s après, aucun problème.
+# Sondée par wait_for dans le shell courant : _OP_READY_SINCE persiste
+# (millisecondes via EPOCHREALTIME ; SECONDS n'a qu'une résolution d'une seconde).
+_op_ready() {
+  local now=$(( ${EPOCHREALTIME/./} / 1000 ))
+  if op_app_cli_enabled && op_agent_ready; then
+    : "${_OP_READY_SINCE:=$now}"
+    (( now - _OP_READY_SINCE >= OP_SETTLE * 1000 ))
+  else
+    _OP_READY_SINCE=""
+    return 1
+  fi
+}
 
 # _op_open_settings <page...> : ouvre l'app sur onepassword://settings/<page>
 # (liens profonds de la doc d'intégration ; le paquet enregistre le schéma
