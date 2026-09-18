@@ -13,7 +13,7 @@
 - [x] 3.1 `modules/20-shell.sh` (`MODULE_GROUP=shell`, `MODULE_DEPS="base"`) — `module_install` : `apt_install zsh`, `ensure_git_clone` oh-my-zsh (complet), Powerlevel10k et les deux plugins (`--depth 1`) ; vérifier dans la WSL que la réexécution ne reclone rien
 - [x] 3.2 `module_configure` : trois `link_config`, `ensure_line` de la ligne `bashrc-extra` dans `~/.bashrc`, `run_sudo chsh`, `log_info` nouvelle session + Nerd Font, `log_warn` si le `.bashrc` contient encore les anciens ajouts manuels ; `module_check` selon D6
 - [x] 3.3 `tests/test-shell.sh` : `HOME` isolé et doublures (`dpkg-query`, `git`, `chsh`, `sudo`, `getent`) — première application (liens, `.bak`, ligne unique, `chsh` une fois), réexécution → `module_check` 0 et aucune commande relancée ; `bash tests/run-all.sh` vert, `shellcheck` propre sur tout
-- [ ] 3.4 Exécution réelle dans la WSL : `./setup.sh shell` → « fait », `ls -l ~/.zshrc ~/.commonrc ~/.p10k.zsh` pointent vers le dépôt, `.bak` présents, `zsh -ic true` silencieux, `bash -lc 'echo $VAULT_ADDR'` et `zsh -ic 'echo $VAULT_ADDR'` corrects, nouvelle fenêtre avec l'invite p10k intacte ; relance → « déjà fait »
+- [x] 3.4 Exécution réelle dans la WSL : `./setup.sh shell` → « fait », `ls -l ~/.zshrc ~/.commonrc ~/.p10k.zsh` pointent vers le dépôt, `.bak` présents, `zsh -ic true` silencieux, `bash -lc 'echo $VAULT_ADDR'` et `zsh -ic 'echo $VAULT_ADDR'` corrects, nouvelle fenêtre avec l'invite p10k intacte ; relance → « déjà fait » — fait le 18 sept 2026 : 2 plugins clonés, rien d'autre retéléchargé, liens + .bak, `zsh -ic true` silencieux sous pty, VAULT_ADDR OK dans bash et zsh, prompt p10k inchangé + autosuggestions/coloration, `--list` → déjà fait
 
 ## 4. Documentation et VM
 
