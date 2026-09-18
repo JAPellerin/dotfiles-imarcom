@@ -38,7 +38,7 @@ Le helper AppImage de `lib/` (déplacement dans `~/Applications`, fichier `.desk
 ## Ordre des changes
 
 1. `setup-socle` — bootstrap, runner, contrat, `lib/`, `base`, `1password` — **fait**, archivé le 18 sept 2026 (avec `1password-integration-app` : connexion guidée sans étape manuelle)
-2. `shell` — tranche la gestion des fichiers de config, dont tout le reste dépend — **en cours** (18 sept 2026)
+2. `shell` — tranche la gestion des fichiers de config, dont tout le reste dépend — **fait**, archivé le 18 sept 2026
 3. `git` — fixe la convention des secrets `op://<coffre>/<item>/<champ>`
 4. `cli-tools`, `terminal`
 5. `node`, `docker`, `dev-tools`
