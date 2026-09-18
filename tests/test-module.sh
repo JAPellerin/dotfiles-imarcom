@@ -34,7 +34,10 @@ assert_fail "les fonctions du module ne fuient pas" declare -F module_install
 
 printf '%s\n' "== module_call =="
 assert_rc "module_check du factice → 1 (à faire)" 1 module_call "$MODULES_DIR/02-valide.sh" module_check
-assert_eq "module_install s'exécute avec ses variables" "install-valide" "$(module_call "$MODULES_DIR/02-valide.sh" module_install 2>/dev/null)"
+assert_eq "module_install s'exécute avec ses variables" "install-valide" "$(FIXTURE_STATE_DIR=$TEST_TMP module_call "$MODULES_DIR/02-valide.sh" module_install 2>/dev/null)"
+tmp_path=$(cat "$TEST_TMP/valide.tmp-path")
+assert_fail "les fichiers temporaires du module sont nettoyés à la fin de module_call" test -e "$tmp_path"
+assert_eq "la liste de nettoyage du runner n'a pas été touchée par le module" 0 "$(printf '%s\n' "${_CLEANUP_CMDS[@]}" | grep -c dotfiles-fixture-valide || true)"
 assert_ok "module_configure déclare une étape manuelle" module_call "$MODULES_DIR/02-valide.sh" module_configure
 assert_file "fichier des étapes manuelles présent" "$MANUAL_STEPS_FILE"
 assert_eq "étape manuelle consignée « module<TAB>texte »" $'valide\tActiver quelque chose à la main' "$(cat "$MANUAL_STEPS_FILE")"
