@@ -28,4 +28,9 @@ log_ok "ui_password → ${#secret} caractère(s)"
 
 ui_spin "Spinner — commande qui réussit (2 s)" run sleep 2
 ui_spin "Spinner — commande qui échoue" run sh -c 'echo "détail de l erreur"; exit 4' || true
+cible=$(mktemp -t demo-ui.XXXXXX); rm -f "$cible"
+( sleep 2; touch "$cible" ) &
+ui_wait "Attente — condition vraie dans 2 s" 10 0.2 test -e "$cible"
+rm -f "$cible"
+ui_wait "Attente — délai de 3 s écoulé (Ctrl-C pour tester l'abandon)" 3 0.2 false || true
 log_info "Fin de la démo."
