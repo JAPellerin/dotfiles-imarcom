@@ -16,6 +16,15 @@ OP_SESSION_FILE="${OP_SESSION_FILE:-$(mktemp -t dotfiles-op-session.XXXXXX)}"
 export OP_SESSION_FILE
 add_cleanup "rm -f '$OP_SESSION_FILE'"
 
+# Socket de l'agent SSH de l'application de bureau : créé par l'app dès que
+# « Use the SSH agent » est activé et l'app déverrouillée. Sa présence se teste
+# sans solliciter l'app (aucune demande d'autorisation), contrairement à `op`.
+# Surchargeable pour les tests.
+OP_AGENT_SOCK="${OP_AGENT_SOCK:-$HOME/.1password/agent.sock}"
+
+# op_agent_ready : vrai si le socket de l'agent SSH existe.
+op_agent_ready() { [[ -S $OP_AGENT_SOCK ]]; }
+
 # op_session_active : vrai si `op` est installé et qu'une session est ouverte
 # (intégration avec l'app de bureau ou session ouverte par op_signin_interactive).
 op_session_active() {

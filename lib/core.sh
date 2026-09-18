@@ -136,6 +136,21 @@ _run_report_failure() {
   printf '%sJournal complet : %s%s\n' "$_C_DIM" "$LOG_FILE" "$_C_RESET" >&2
 }
 
+# --- Attente d'une condition -----------------------------------------------------------------
+# wait_for <secondes> <intervalle> <commande...> : réexécute la commande toutes
+# les <intervalle> secondes (fraction acceptée) jusqu'à ce qu'elle réussisse
+# (code 0) ou que <secondes> soient écoulées (code 1). Première évaluation sans
+# attendre. La sortie de la commande est ignorée et rien n'est journalisé : à
+# envelopper dans ui_spin pour l'animation. Ctrl-C interrompt comme d'habitude.
+wait_for() {
+  local deadline=$(( SECONDS + $1 )) interval=$2
+  shift 2
+  while ! "$@" >/dev/null 2>&1; do
+    (( SECONDS < deadline )) || return 1
+    sleep "$interval"
+  done
+}
+
 # --- Fichiers de configuration --------------------------------------------------------------
 # Config shell commune bash/zsh (POSIX uniquement), chargée par .bashrc et .zshrc.
 SHELL_COMMON_RC="${SHELL_COMMON_RC:-$HOME/.commonrc}"

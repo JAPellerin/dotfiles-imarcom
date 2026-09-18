@@ -59,4 +59,18 @@ printf 'export OP_SESSION_test=jeton\n' >"$OP_SESSION_FILE"
 ( op_session_active >/dev/null; printf '%s' "${OP_SESSION_test:-}" ) >"$TEST_TMP/vu"
 assert_eq "op_session_active recharge la session dans un sous-shell" "jeton" "$(cat "$TEST_TMP/vu")"
 
+printf '%s\n' "== op_agent_ready =="
+assert_eq "OP_AGENT_SOCK pointe par défaut sur l'agent de l'app" "$HOME/.1password/agent.sock" "$OP_AGENT_SOCK"
+OP_AGENT_SOCK="$TEST_TMP/agent.sock"
+assert_fail "faux quand le socket n'existe pas" op_agent_ready
+: >"$OP_AGENT_SOCK"
+assert_fail "faux si le chemin est un fichier ordinaire, pas un socket" op_agent_ready
+rm -f "$OP_AGENT_SOCK"
+if command -v python3 >/dev/null 2>&1; then
+  python3 -c "import socket, sys; socket.socket(socket.AF_UNIX).bind(sys.argv[1])" "$OP_AGENT_SOCK"
+  assert_ok "vrai avec un socket Unix factice" op_agent_ready
+else
+  printf '  (python3 absent : socket factice non testé)\n'
+fi
+
 test_done
