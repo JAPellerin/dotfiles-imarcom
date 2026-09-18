@@ -65,8 +65,10 @@ git init -q "$TEST_TMP/etranger" && git -C "$TEST_TMP/etranger" remote add origi
 out=$(ensure_git_clone "$url" "$TEST_TMP/etranger" 2>&1); rc=$?
 assert_eq "dossier étranger → échec" 1 "$rc"
 assert_contains "le dossier est nommé" "$out" "$TEST_TMP/etranger"
-mkdir -p "$TEST_TMP/pasgit"
-assert_fail "dossier non git → échec" ensure_git_clone "$url" "$TEST_TMP/pasgit"
+mkdir -p "$TEST_TMP/clone/pasgit"   # sous un dépôt git : git -C ne doit pas remonter au parent
+out=$(ensure_git_clone "$url" "$TEST_TMP/clone/pasgit" 2>&1); rc=$?
+assert_eq "dossier non git → échec" 1 "$rc"
+assert_contains "dossier non git nommé comme tel, même sous un dépôt git" "$out" "n'est pas un dépôt git"
 assert_ok "options passées à git clone (--depth 1)" ensure_git_clone "$url" "$TEST_TMP/clone2" --depth 1
 assert_ok "URL avec ou sans .git considérées identiques" ensure_git_clone "$url.git" "$TEST_TMP/clone"
 

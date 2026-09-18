@@ -24,7 +24,7 @@ Le socle SHALL fournir un helper qui, pour un fichier `config/<module>/<nom>` du
 - **THEN** le helper échoue avec un message nommant le fichier attendu, sans toucher à la cible
 
 ### Requirement: Clonage idempotent de dépôt git
-Le socle SHALL fournir un helper qui clone un dépôt git HTTPS dans un dossier donné s'il n'existe pas, et ne fait rien (ou un `git pull --ff-only` si demandé) s'il est déjà cloné depuis la même URL. Si le dossier existe mais n'est pas un clone de cette URL, le helper MUST échouer en nommant le dossier, sans rien écraser. La sortie de git SHALL aller au journal.
+Le socle SHALL fournir un helper qui clone un dépôt git HTTPS dans un dossier donné s'il n'existe pas, et ne fait rien s'il est déjà cloné depuis la même URL (pas de mise à jour automatique : elle reste une décision explicite du module). Si le dossier existe mais n'est pas un clone de cette URL, le helper MUST échouer en nommant le dossier, sans rien écraser. La sortie de git SHALL aller au journal.
 
 #### Scenario: Premier clonage
 - **WHEN** `~/.oh-my-zsh` n'existe pas
