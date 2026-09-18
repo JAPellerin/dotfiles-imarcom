@@ -53,8 +53,10 @@ ensure_git_clone() {
   local url=$1 dir=$2 origin
   shift 2
   if [[ -e $dir ]]; then
-    origin=$(git -C "$dir" remote get-url origin 2>/dev/null) || {
-      log_error "$dir existe mais n'est pas un dépôt git : le déplacer avant de relancer."; return 1; }
+    # Garde sur .git : sans elle, `git -C` remonterait dans les dossiers parents.
+    if [[ ! -d $dir/.git ]] || ! origin=$(git -C "$dir" remote get-url origin 2>/dev/null); then
+      log_error "$dir existe mais n'est pas un dépôt git : le déplacer avant de relancer."; return 1
+    fi
     if [[ ${origin%.git} == "${url%.git}" ]]; then
       log_ok "Déjà cloné : $dir"
       return 0
