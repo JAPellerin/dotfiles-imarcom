@@ -78,7 +78,7 @@ module_configure() {
 # Délais du parcours « intégration app » (surchargeables : tests) : durée d'un
 # tour d'attente de l'agent SSH, intervalle de sondage, pause entre les deux
 # pages ouvertes (le temps que l'app démarre).
-OP_WAIT_SECONDS="${OP_WAIT_SECONDS:-120}"
+OP_WAIT_SECONDS="${OP_WAIT_SECONDS:-300}"
 OP_WAIT_INTERVAL="${OP_WAIT_INTERVAL:-2}"
 OP_OPEN_DELAY="${OP_OPEN_DELAY:-3}"
 OP_CLI_CONFIG="${OP_CLI_CONFIG:-$HOME/.config/op/config}"
@@ -109,25 +109,36 @@ _op_no_session() {
 
 _op_email() { op whoami 2>/dev/null | sed -n 's/^Email: *//p'; }
 
-# Parcours « intégration app » : ouvre l'app sur ses réglages, affiche la
+# Parcours « intégration app » : lance l'app sur ses réglages, affiche la
 # consigne une fois, attend que l'agent SSH apparaisse (signal qui ne sollicite
 # pas l'app, contrairement à toute commande `op`), puis un seul `op signin`.
+# Pendant l'attente, dès que l'app est connectée, la page Security est rouverte
+# (un lien profond ne navigue que dans une app déverrouillée). Si l'agent est
+# déjà là (app configurée, simplement verrouillée), on passe droit à `op signin`.
 # Renvoie 0 = session active, 1 = abandon, 2 = l'utilisateur veut le terminal.
 _op_connect_via_app() {
-  local err_file choice
+  local err_file choice wait=1
   err_file=$(mktemp -t dotfiles-op-err.XXXXXX)
   add_cleanup "rm -f '$err_file'"
-  _op_open_settings security developers
-  log_info "Dans l'application 1Password qui vient de s'ouvrir :"
-  log_info "  1. Se connecter (adresse du compte, courriel, Secret Key, mot de passe) si ce n'est pas déjà fait."
-  log_info "  2. Settings › Security : cocher « Unlock using system authentication »."
-  log_info "  3. Settings › Developer : cocher « Integrate with 1Password CLI »."
-  log_info "  4. Settings › Developer : cocher « Use the SSH agent »."
-  log_info "Le script reprend tout seul dès que l'agent SSH est actif (dernière case) ; Ctrl-C pour abandonner."
+  if op_agent_ready; then
+    log_info "Application 1Password déjà configurée (agent SSH actif) : déverrouillage via op signin."
+    _op_try_signin "$err_file" && return 0
+    wait=0   # l'agent est là : inutile de sonder, droit au menu de reprise
+  else
+    _op_open_settings security
+    log_info "Dans l'application 1Password qui vient de s'ouvrir :"
+    log_info "  1. Se connecter (adresse du compte, courriel, Secret Key, mot de passe) si ce n'est pas déjà fait."
+    log_info "  2. Settings › Security : cocher « Unlock using system authentication »."
+    log_info "  3. Settings › Developer : cocher « Integrate with 1Password CLI »."
+    log_info "  4. Settings › Developer : cocher « Use the SSH agent »."
+    log_info "Le script reprend tout seul dès que l'agent SSH est actif (dernière case) ; Ctrl-C pour abandonner."
+  fi
+  _OP_SETTINGS_REOPENED=""
   while true; do
-    if ui_wait "En attente de l'agent SSH de 1Password" "$OP_WAIT_SECONDS" "$OP_WAIT_INTERVAL" op_agent_ready; then
+    if (( wait )) && ui_wait "En attente de l'agent SSH de 1Password" "$OP_WAIT_SECONDS" "$OP_WAIT_INTERVAL" _op_poll_agent; then
       _op_try_signin "$err_file" && return 0
     fi
+    wait=1
     choice=$(ui_choose "Pas encore de session 1Password. Que faire ?" \
       "Continuer d'attendre (rouvre la page Developer de l'app)" \
       "Vérifier maintenant (op signin, même sans agent SSH)" \
@@ -142,9 +153,21 @@ _op_connect_via_app() {
   done
 }
 
+# Condition sondée par wait_for (dans le shell courant, l'état persiste) : rouvre
+# la page Security une seule fois dès que l'app est connectée, puis teste l'agent.
+_op_poll_agent() {
+  if [[ -z $_OP_SETTINGS_REOPENED ]] && op_app_signed_in; then
+    _OP_SETTINGS_REOPENED=1
+    _op_open_settings security
+  fi
+  op_agent_ready
+}
+
 # _op_open_settings <page...> : ouvre l'app sur onepassword://settings/<page>
 # (liens profonds de la doc d'intégration ; le paquet enregistre le schéma
-# onepassword://). Échec non bloquant : la consigne donne aussi les menus.
+# onepassword://). Lancement détaché, sorties vers /dev/null : l'app hériterait
+# sinon du journal et y écrirait ses propres logs tant qu'elle tourne (vu en VM).
+# Échec non bloquant : la consigne donne aussi les menus.
 _op_open_settings() {
   local page
   if ! command -v xdg-open >/dev/null 2>&1; then
@@ -154,7 +177,8 @@ _op_open_settings() {
   for page in "$@"; do
     # Pause entre deux pages seulement (le temps que l'app démarre).
     [[ $page == "$1" ]] || sleep "$OP_OPEN_DELAY"
-    run xdg-open "onepassword://settings/$page" \
+    printf '[%s] $ xdg-open onepassword://settings/%s (détaché)\n' "$(date +%H:%M:%S)" "$page" >>"$LOG_FILE"
+    setsid -f xdg-open "onepassword://settings/$page" >/dev/null 2>&1 </dev/null \
       || log_warn "Impossible d'ouvrir onepassword://settings/$page : aller dans les réglages de l'app à la main."
   done
 }
