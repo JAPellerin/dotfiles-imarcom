@@ -13,8 +13,8 @@
 
 ## 3. Documentation
 
-- [ ] 3.1 `openspec/changes/setup-socle/design.md` : D8 complété (aucune automatisation des réglages signés, renvoi vers ce change) et risque « intégration impossible sans clic » reformulé (ouverture guidée + attente) ; `CLAUDE.md` : remplacer « activation = étape manuelle affichée en fin d'exécution » par « activation guidée et vérifiée par le module » ; vérifier que `openspec validate setup-socle --strict` reste vert
-- [ ] 3.2 `openspec validate 1password-integration-app --strict` vert (specs de `setup-socle` synchronisées le 18 sept 2026)
+- [x] 3.1 `openspec/changes/setup-socle/design.md` : D8 complété (aucune automatisation des réglages signés, renvoi vers ce change) et risque « intégration impossible sans clic » reformulé (ouverture guidée + attente) ; `CLAUDE.md` : remplacer « activation = étape manuelle affichée en fin d'exécution » par « activation guidée et vérifiée par le module » ; vérifier que `openspec validate setup-socle --strict` reste vert — fait le 18 sept 2026, `setup-socle` valide en strict
+- [x] 3.2 `openspec validate 1password-integration-app --strict` vert (specs de `setup-socle` synchronisées le 18 sept 2026) — fait le 18 sept 2026 (`validate --specs` 5/5 aussi)
 
 ## 4. Vérification en VM
 
