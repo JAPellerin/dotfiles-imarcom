@@ -17,5 +17,5 @@
 
 ## 4. Documentation et VM
 
-- [ ] 4.1 `ROADMAP.md` : `setup-socle` fait (archivé le 18 sept 2026), mécanisme de déploiement tranché (liens, `lib/files.sh`) ; `CLAUDE.md` : mention de `config/<module>/` + `link_config` dans le contrat de module ; `openspec validate shell --strict` vert
+- [x] 4.1 `ROADMAP.md` : `setup-socle` fait (archivé le 18 sept 2026), mécanisme de déploiement tranché (liens, `lib/files.sh`) ; `CLAUDE.md` : mention de `config/<module>/` + `link_config` dans le contrat de module ; `openspec validate shell --strict` vert
 - [ ] 4.2 VM (snapshot « vierge ») : `curl … bootstrap.sh | bash` → menu avec `shell` précoché → après exécution, ouvrir un nouveau terminal : zsh + p10k (glyphes cassés attendus sans Nerd Font), `echo $VAULT_ADDR`, `bash` puis `echo $VAULT_ADDR` et invite git ; relance → « déjà fait » partout
