@@ -49,39 +49,70 @@ ui_password() {
   gum input --password --header "$1" --placeholder ""
 }
 
-# ui_spin <titre> <commande...> : affiche un spinner pendant la commande, puis
-# « ✔ titre » ou l'échec avec l'extrait du journal. À utiliser avec `run` /
-# `run_sudo` (la sortie de la commande doit aller au journal, pas à l'écran) :
-#   ui_spin "Installation de jq" run_sudo apt-get install -y jq
-# Le spinner est une boucle Bash plutôt que `gum spin` afin de pouvoir envelopper
-# des fonctions du socle (run, run_sudo, apt_*) et pas seulement des exécutables.
-# Sans terminal (journal, tests), pas d'animation : une ligne d'info suffit.
-ui_spin() {
+# _ui_spinner <titre> <commande...> : exécute la commande derrière un spinner
+# animé (ou une simple ligne d'info sans terminal) et renvoie son code sans
+# commenter le résultat : ui_spin et ui_wait s'en chargent. Le spinner est une
+# boucle Bash plutôt que `gum spin` afin de pouvoir envelopper des fonctions du
+# socle (run, run_sudo, apt_*, wait_for) et pas seulement des exécutables.
+_ui_spinner() {
   local title=$1 rc=0
   shift
   if [[ ! -t 2 ]]; then
     log_info "$title"
     _UI_SPINNING=1 "$@" || rc=$?
-  else
-    local frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏') i=0
-    printf '\033[?25l' >&2
-    (
-      while true; do
-        printf '\r%s%s%s %s' "$_C_MAGENTA" "${frames[i]}" "$_C_RESET" "$title" >&2
-        i=$(( (i + 1) % ${#frames[@]} ))
-        sleep 0.1
-      done
-    ) &
-    local spinner_pid=$!
-    _UI_SPINNING=1 "$@" || rc=$?
-    kill "$spinner_pid" 2>/dev/null
-    wait "$spinner_pid" 2>/dev/null || true
-    printf '\r\033[K\033[?25h' >&2
+    return "$rc"
   fi
+  local frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏') i=0
+  # Un Ctrl-C pendant le spinner tue le processus avant la restauration du
+  # curseur : elle est aussi enregistrée au nettoyage de sortie (le trap EXIT
+  # s'exécute sur Ctrl-C), une fois par processus (sous-shell de module inclus).
+  if [[ ${_UI_CURSOR_CLEANUP_PID:-} != "$BASHPID" ]]; then
+    add_cleanup "printf '\\033[?25h' >&2"
+    _UI_CURSOR_CLEANUP_PID=$BASHPID
+  fi
+  printf '\033[?25l' >&2
+  (
+    while true; do
+      printf '\r%s%s%s %s' "$_C_MAGENTA" "${frames[i]}" "$_C_RESET" "$title" >&2
+      i=$(( (i + 1) % ${#frames[@]} ))
+      sleep 0.1
+    done
+  ) &
+  local spinner_pid=$!
+  _UI_SPINNING=1 "$@" || rc=$?
+  kill "$spinner_pid" 2>/dev/null
+  wait "$spinner_pid" 2>/dev/null || true
+  printf '\r\033[K\033[?25h' >&2
+  return "$rc"
+}
+
+# ui_spin <titre> <commande...> : spinner pendant la commande, puis « ✔ titre »
+# ou l'échec avec l'extrait du journal. À utiliser avec `run` / `run_sudo` (la
+# sortie de la commande doit aller au journal, pas à l'écran) :
+#   ui_spin "Installation de jq" run_sudo apt-get install -y jq
+ui_spin() {
+  local title=$1 rc=0
+  shift
+  _ui_spinner "$title" "$@" || rc=$?
   if (( rc == 0 )); then
     log_ok "$title"
   else
     _run_report_failure "$rc" "$title"
+  fi
+  return "$rc"
+}
+
+# ui_wait <titre> <secondes> <intervalle> <commande...> : spinner pendant
+# wait_for (attente d'une condition), puis « ✔ titre » ou un avertissement de
+# délai écoulé (code 1) — pas un rapport d'échec, ce n'est pas une erreur.
+ui_wait() {
+  local title=$1 timeout=$2 interval=$3 rc=0
+  shift 3
+  _ui_spinner "$title" wait_for "$timeout" "$interval" "$@" || rc=$?
+  if (( rc == 0 )); then
+    log_ok "$title"
+  else
+    log_warn "$title : délai de $timeout s écoulé."
   fi
   return "$rc"
 }

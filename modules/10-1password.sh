@@ -10,7 +10,8 @@
 # Même dépôt et même clé que la doc ; seul le format change (deb822 + clé dans
 # /etc/apt/keyrings/, voir design D8/D10). La politique debsig demandée par la doc
 # est installée telle quelle.
-# Voir openspec/changes/setup-socle/specs/module-1password/spec.md.
+# Voir openspec/specs/module-1password/spec.md (parcours de connexion :
+# openspec/changes/1password-integration-app/design.md).
 MODULE_NAME="1password"
 MODULE_DESC="1Password : application de bureau (si GUI) et CLI op ; connexion et agent SSH"
 MODULE_GROUP="systeme"
@@ -74,50 +75,119 @@ module_configure() {
   _op_ssh_agent
 }
 
+# Délais du parcours « intégration app » (surchargeables : tests) : durée d'un
+# tour d'attente de l'agent SSH, intervalle de sondage, pause entre les deux
+# pages ouvertes (le temps que l'app démarre).
+OP_WAIT_SECONDS="${OP_WAIT_SECONDS:-120}"
+OP_WAIT_INTERVAL="${OP_WAIT_INTERVAL:-2}"
+OP_OPEN_DELAY="${OP_OPEN_DELAY:-3}"
+OP_CLI_CONFIG="${OP_CLI_CONFIG:-$HOME/.config/op/config}"
+
 # Connexion : rien à faire si une session est active ; sinon intégration avec
-# l'app de bureau (si installée) puis, en repli ou sans app, `op account add` /
-# `op signin`. Échec explicite si aucune session à la fin.
+# l'app de bureau (si installée), puis, sur demande ou sans app, `op account add` /
+# `op signin` en terminal. Échec explicite si aucune session à la fin.
 _op_connect() {
+  local rc=0
   if op_session_active; then
-    log_ok "Session 1Password déjà active ($(op whoami 2>/dev/null | sed -n 's/^Email: *//p'))"
+    log_ok "Session 1Password déjà active ($(_op_email))"
     return 0
   fi
   if pkg_installed 1password; then
-    local err_file
-    err_file=$(mktemp -t dotfiles-op-err.XXXXXX)
-    add_cleanup "rm -f '$err_file'"
-    log_info "Activer l'intégration entre l'application 1Password et le CLI :"
-    log_info "  1. Ouvrir et déverrouiller l'application 1Password (Applications › 1Password)."
-    log_info "  2. Settings › Security : activer « Unlock using system authentication »."
-    log_info "  3. Settings › Developer : cocher « Integrate with 1Password CLI »."
-    while true; do
-      if ui_confirm "Intégration activée ? (op signin sera lancé ; autoriser la demande dans l'app)" oui; then
-        # Avec l'intégration, c'est `op signin` qui déclenche la demande
-        # d'autorisation dans l'app ; `op whoami` seul échoue tant qu'elle
-        # n'a pas été accordée. Sortie standard ignorée : sans intégration, op
-        # y écrirait un jeton de session (jamais journalisé).
-        op signin >/dev/null 2>"$err_file" </dev/tty || true
-        if op_session_active; then
-          log_ok "Session 1Password active via l'application."
-          return 0
-        fi
-        log_warn "Session toujours inactive : $(op whoami 2>&1 >/dev/null | head -1)"
-        [[ -s $err_file ]] && log_warn "op signin : $(head -1 "$err_file")"
-        ui_confirm "Réessayer ? (« Non » bascule sur la connexion en terminal)" oui || break
-      else
-        break
-      fi
-    done
-    log_info "Connexion en terminal (op account add / op signin)."
+    _op_connect_via_app || rc=$?
+    case $rc in
+      0) return 0 ;;
+      2) log_info "Connexion en terminal (op account add / op signin)." ;;
+      *) _op_no_session; return 1 ;;
+    esac
   fi
-  if ! op_signin_interactive; then
-    log_error "Aucune session 1Password : les modules qui ont besoin de secrets seront sautés. Relancer « setup.sh 1password » pour réessayer."
-    return 1
+  op_signin_interactive || { _op_no_session; return 1; }
+}
+
+_op_no_session() {
+  log_error "Aucune session 1Password : les modules qui ont besoin de secrets seront sautés. Relancer « setup.sh 1password » pour réessayer."
+}
+
+_op_email() { op whoami 2>/dev/null | sed -n 's/^Email: *//p'; }
+
+# Parcours « intégration app » : ouvre l'app sur ses réglages, affiche la
+# consigne une fois, attend que l'agent SSH apparaisse (signal qui ne sollicite
+# pas l'app, contrairement à toute commande `op`), puis un seul `op signin`.
+# Renvoie 0 = session active, 1 = abandon, 2 = l'utilisateur veut le terminal.
+_op_connect_via_app() {
+  local err_file choice
+  err_file=$(mktemp -t dotfiles-op-err.XXXXXX)
+  add_cleanup "rm -f '$err_file'"
+  _op_open_settings security developers
+  log_info "Dans l'application 1Password qui vient de s'ouvrir :"
+  log_info "  1. Se connecter (adresse du compte, courriel, Secret Key, mot de passe) si ce n'est pas déjà fait."
+  log_info "  2. Settings › Security : cocher « Unlock using system authentication »."
+  log_info "  3. Settings › Developer : cocher « Integrate with 1Password CLI »."
+  log_info "  4. Settings › Developer : cocher « Use the SSH agent »."
+  log_info "Le script reprend tout seul dès que l'agent SSH est actif (dernière case) ; Ctrl-C pour abandonner."
+  while true; do
+    if ui_wait "En attente de l'agent SSH de 1Password" "$OP_WAIT_SECONDS" "$OP_WAIT_INTERVAL" op_agent_ready; then
+      _op_try_signin "$err_file" && return 0
+    fi
+    choice=$(ui_choose "Pas encore de session 1Password. Que faire ?" \
+      "Continuer d'attendre (rouvre la page Developer de l'app)" \
+      "Vérifier maintenant (op signin, même sans agent SSH)" \
+      "Connexion en terminal (op account add / op signin, sans l'application)" \
+      "Abandonner (les modules qui ont besoin de secrets seront sautés)") || return 1
+    case $choice in
+      Continuer*) _op_open_settings developers ;;
+      Vérifier*)  _op_try_signin "$err_file" && return 0 ;;
+      Connexion*) return 2 ;;
+      *)          return 1 ;;
+    esac
+  done
+}
+
+# _op_open_settings <page...> : ouvre l'app sur onepassword://settings/<page>
+# (liens profonds de la doc d'intégration ; le paquet enregistre le schéma
+# onepassword://). Échec non bloquant : la consigne donne aussi les menus.
+_op_open_settings() {
+  local page
+  if ! command -v xdg-open >/dev/null 2>&1; then
+    log_warn "xdg-open introuvable : ouvrir l'application 1Password à la main (Applications › 1Password)."
+    return 0
+  fi
+  for page in "$@"; do
+    run xdg-open "onepassword://settings/$page" \
+      || log_warn "Impossible d'ouvrir onepassword://settings/$page : aller dans les réglages de l'app à la main."
+    sleep "$OP_OPEN_DELAY"
+  done
+}
+
+# _op_try_signin <fichier-erreur> : un seul `op signin`. Avec l'intégration,
+# c'est lui qui déclenche la demande d'autorisation dans l'app (`op whoami`
+# seul échoue avant). stdin fermé (l'autorisation se fait dans l'app, pas au
+# clavier) ; stdout ignoré (sans intégration, op y écrirait un jeton de session,
+# jamais journalisé) ; stderr gardé pour le diagnostic.
+_op_try_signin() {
+  local err_file=$1
+  log_info "Vérification : op signin (autoriser la demande dans l'application)…"
+  op signin >/dev/null 2>"$err_file" </dev/null || true
+  if op_session_active; then
+    log_ok "Session 1Password active via l'application ($(_op_email))."
+    _op_warn_cli_account
+    return 0
+  fi
+  log_warn "Session toujours inactive${err_file:+ : $(head -1 "$err_file" 2>/dev/null)}"
+  log_warn "Vérifier dans l'app : « Unlock using system authentication » (Settings › Security) et « Integrate with 1Password CLI » (Settings › Developer)."
+  return 1
+}
+
+# Un compte ajouté au CLI (`op account add`, présent dans sa config) est inutile
+# une fois l'intégration active et peut la perturber ; la doc recommande
+# `op account forget --all`. Décision laissée à l'utilisateur.
+_op_warn_cli_account() {
+  if [[ -f $OP_CLI_CONFIG ]] && grep -q '"shorthand"' "$OP_CLI_CONFIG" 2>/dev/null; then
+    log_warn "Un compte ajouté au CLI subsiste dans $OP_CLI_CONFIG ; avec l'intégration app il est inutile : « op account forget --all » pour le retirer."
   fi
 }
 
 # Agent SSH de l'application (D8) : SSH_AUTH_SOCK dans la config shell commune,
-# une seule fois ; l'activation dans l'app reste manuelle.
+# une seule fois. L'activation a été obtenue dans _op_connect ; on constate.
 _op_ssh_agent() {
   pkg_installed 1password || return 0
   if ensure_line "$SHELL_COMMON_RC" "$OP_AGENT_SOCK_LINE"; then
@@ -125,5 +195,9 @@ _op_ssh_agent() {
   else
     log_ok "SSH_AUTH_SOCK déjà configuré dans $SHELL_COMMON_RC"
   fi
-  manual_step "Activer l'agent SSH dans 1Password : Settings › Developer › « Use the SSH agent », puis ouvrir un nouveau terminal."
+  if op_agent_ready; then
+    log_info "Agent SSH 1Password actif ; SSH_AUTH_SOCK prend effet dans un nouveau terminal."
+  else
+    log_warn "Agent SSH 1Password inactif (« Use the SSH agent » non coché ou app fermée) : SSH_AUTH_SOCK ne servira qu'une fois l'agent activé."
+  fi
 }
