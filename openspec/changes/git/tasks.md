@@ -1,6 +1,6 @@
 ## 1. Fichier versionné
 
-- [ ] 1.1 `config/git/gitconfig` : reprise de `~/.gitconfig` (identité, `init.defaultBranch`), section `delta` (`core.pager`, `interactive.diffFilter`, `delta.navigate`, `merge.conflictstyle=zdiff3`, `diff.colorMoved=default`), `[include] path = ~/.gitconfig.local` ; vérifier `git config --file config/git/gitconfig --list` et qu'un `~/.gitconfig.local` de test surcharge `user.email` (`GIT_CONFIG_GLOBAL`)
+- [x] 1.1 `config/git/gitconfig` : reprise de `~/.gitconfig` (identité, `init.defaultBranch`), section `delta` (`core.pager`, `interactive.diffFilter`, `delta.navigate`, `merge.conflictstyle=zdiff3`, `diff.colorMoved=default`), `[include] path = ~/.gitconfig.local` ; vérifier `git config --file config/git/gitconfig --list` et qu'un `~/.gitconfig.local` de test surcharge `user.email` (`GIT_CONFIG_GLOBAL`)
 
 ## 2. Module `git`
 
