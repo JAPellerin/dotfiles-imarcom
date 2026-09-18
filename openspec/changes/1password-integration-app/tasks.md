@@ -1,0 +1,21 @@
+## 1. Helper d'attente (`lib/`)
+
+- [ ] 1.1 `lib/core.sh` : `wait_for <secondes> <intervalle> <commande...>` (design D3), sans sollicitation externe ; `tests/test-core.sh` : réussit dès qu'un fichier créé par un sous-shell différé apparaît, expire avec code 1 sinon, et `shellcheck lib/core.sh tests/test-core.sh` propre
+- [ ] 1.2 `lib/op.sh` : `OP_AGENT_SOCK` surchargeable (défaut `$HOME/.1password/agent.sock`) et `op_agent_ready` (`-S`) ; `tests/test-op.sh` : faux avec un chemin absent, vrai avec un socket factice (`socat`/`nc -lU` ou `python3 -c 'socket…'` dans `$TEST_TMP`)
+
+## 2. Module `1password` — parcours intégration app
+
+- [ ] 2.1 `_op_connect` : remplacer le guidage + `ui_confirm` par l'ouverture des pages (`run xdg-open onepassword://settings/security`, court délai, `run xdg-open onepassword://settings/developers`, échecs non bloquants) et la consigne en une fois (connexion dans l'app + trois réglages, avec le chemin des menus en secours) ; vérifier dans la WSL (sans app, `pkg_installed 1password` simulé par doublure de `dpkg-query` ou variable de test) que la consigne s'affiche et que l'absence de `xdg-open` ne fait pas échouer le module
+- [ ] 2.2 `_op_connect` : attente `ui_spin … wait_for 120 2 op_agent_ready`, puis un seul `op signin` (stderr capturé, stdout ignoré) et `op_session_active` ; diagnostic D4 en cas d'échec (erreur de `op`, rappel des réglages, avertissement `op account forget --all` si un compte CLI existe) ; vérifier avec des doublures : socket factice créé après 3 s + `op` factice qui réussit → succès sans question ; `op` factice qui échoue → message de diagnostic et menu de reprise
+- [ ] 2.3 `_op_connect` : menu de reprise à l'expiration (`ui_choose` : continuer d'attendre / vérifier maintenant / connexion en terminal / abandonner) et Ctrl-C = abandon ; vérifier manuellement dans la WSL (`tests/demo-ui.sh` ou appel direct avec `wait_for` à 5 s) que chaque choix mène au bon chemin et que l'abandon produit le message « les modules qui ont besoin de secrets seront sautés » avec échec du module
+- [ ] 2.4 `_op_ssh_agent` : supprimer `manual_step`, garder `ensure_line`, `log_info` « nouveau terminal », `log_warn` si terminé sans socket ; vérifier que `MANUAL_STEPS_FILE` reste vide après un parcours simulé et que la ligne `SSH_AUTH_SOCK` n'est écrite qu'une fois (`tests/test-core.sh` ensure_line déjà couvert)
+- [ ] 2.5 `shellcheck modules/10-1password.sh lib/*.sh tests/*.sh` sans avertissement et `bash tests/run-all.sh` vert
+
+## 3. Documentation
+
+- [ ] 3.1 `openspec/changes/setup-socle/design.md` : D8 complété (aucune automatisation des réglages signés, renvoi vers ce change) et risque « intégration impossible sans clic » reformulé (ouverture guidée + attente) ; `CLAUDE.md` : remplacer « activation = étape manuelle affichée en fin d'exécution » par « activation guidée et vérifiée par le module » ; vérifier que `openspec validate setup-socle --strict` reste vert
+- [ ] 3.2 `openspec validate 1password-integration-app --strict` vert (specs de `setup-socle` synchronisées le 18 sept 2026)
+
+## 4. Vérification en VM
+
+- [ ] 4.1 Dans la VM Hyper-V (snapshot « vierge ») : `setup.sh 1password` → l'app s'ouvre sur ses réglages, connexion + trois cases, le script reprend seul, une seule invite d'autorisation, `op whoami` réussit, résumé sans étape manuelle, `source ~/.commonrc && ssh-add -l` liste les clés ; noter la réponse à la question ouverte du design (lien `developers` après lancement) et si l'app redemande l'autorisation à chaque `op` (risque 2), puis relancer pour vérifier « déjà fait »
