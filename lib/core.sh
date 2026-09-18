@@ -64,18 +64,30 @@ require_not_root() {
 # --- Nettoyage à la sortie -----------------------------------------------------------
 # add_cleanup <commande> : enregistre une commande exécutée à la sortie du runner
 # (arrêt du keepalive sudo, suppression de fichiers temporaires…).
-# Les sous-shells `( … )` n'héritent pas du trap EXIT ; le garde-fou sur BASHPID
-# évite de toute façon qu'un sous-shell nettoie à la place du processus principal.
+# Les sous-shells `( … )` n'héritent pas du trap EXIT et copient la liste ; le
+# garde-fou sur le propriétaire évite qu'un sous-shell passager (`$(…)`) nettoie
+# à la place du processus principal. Un sous-shell durable qui enregistre ses
+# propres nettoyages (module_call) ouvre sa portée avec cleanup_scope.
 _CLEANUP_CMDS=()
+_CLEANUP_OWNER=$BASHPID
 add_cleanup() { _CLEANUP_CMDS+=("$*"); }
 _run_cleanup() {
-  [[ $BASHPID -eq $$ ]] || return 0
+  [[ $BASHPID -eq $_CLEANUP_OWNER ]] || return 0
   local cmd
   for cmd in "${_CLEANUP_CMDS[@]}"; do
     eval "$cmd" || true
   done
 }
 trap _run_cleanup EXIT
+
+# cleanup_scope : à appeler en tête d'un sous-shell `( … )` : repart d'une liste
+# vide (celle du parent reste au parent) et rétablit le trap EXIT pour que les
+# nettoyages enregistrés dans ce sous-shell s'exécutent à sa sortie.
+cleanup_scope() {
+  _CLEANUP_CMDS=()
+  _CLEANUP_OWNER=$BASHPID
+  trap _run_cleanup EXIT
+}
 
 # --- sudo : une seule saisie, ticket rafraîchi en tâche de fond (D3) --------------------
 # La boucle est détachée de stdout/stderr (sinon `$(setup.sh …)` attendrait la

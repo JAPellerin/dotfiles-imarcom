@@ -83,10 +83,12 @@ module_meta() {
 
 # module_call <fichier> <fonction> : exécute module_<fonction> dans un sous-shell
 # (isolation : les variables et fonctions du module ne fuient pas, un échec ne tue
-# pas le runner). Renvoie le code de la fonction.
+# pas le runner). Les fichiers temporaires que le module enregistre via
+# add_cleanup sont supprimés à la fin de l'appel. Renvoie le code de la fonction.
 module_call() {
   local file=$1 fn=$2
   (
+    cleanup_scope
     # shellcheck source=/dev/null
     source "$file" || exit 1
     "$fn"

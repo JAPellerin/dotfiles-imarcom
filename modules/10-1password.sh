@@ -48,12 +48,16 @@ module_install() {
 # Politique debsig-verify de 1Password (vérification de signature des .deb),
 # idempotente : les fichiers ne sont réécrits que s'ils diffèrent.
 _op_install_debsig_policy() {
-  local tmp_pol tmp_key
+  local tmp_pol tmp_asc tmp_key
   tmp_pol=$(mktemp -t 1password-pol.XXXXXX)
+  tmp_asc=$(mktemp -t 1password-asc.XXXXXX)
   tmp_key=$(mktemp -t 1password-debsig.XXXXXX)
-  add_cleanup "rm -f '$tmp_pol' '$tmp_key'"
+  add_cleanup "rm -f '$tmp_pol' '$tmp_asc' '$tmp_key'"
   run curl -fsSL "$OP_DEBSIG_POLICY_URL" -o "$tmp_pol" || return 1
-  run sh -c "curl -fsSL '$OP_KEY_URL' | gpg --dearmor > '$tmp_key'" || return 1
+  # Clé téléchargée puis convertie en deux étapes (un tube `curl | gpg` masquerait
+  # l'échec de curl et installerait un trousseau vide).
+  run curl -fsSL "$OP_KEY_URL" -o "$tmp_asc" || return 1
+  run gpg --batch --yes --dearmor -o "$tmp_key" "$tmp_asc" || return 1
   if ! cmp -s "$tmp_pol" "$OP_DEBSIG_POLICY"; then
     run_sudo install -m 0755 -d "$(dirname "$OP_DEBSIG_POLICY")" || return 1
     run_sudo install -m 0644 "$tmp_pol" "$OP_DEBSIG_POLICY" || return 1
