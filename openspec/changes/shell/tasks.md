@@ -1,7 +1,7 @@
 ## 1. Helpers de déploiement (`lib/files.sh`)
 
-- [ ] 1.1 `lib/files.sh` chargé par `setup.sh` : `link_config <rel> <cible>` (lien absolu, sauvegarde `.bak` puis datée, lien étranger remplacé, source absente → échec nommé) et `config_linked <rel> <cible>` ; `tests/test-files.sh` couvre les cinq cas de la spec, `shellcheck` propre
-- [ ] 1.2 `ensure_git_clone <url> <dossier> [--depth 1]` : clone via `run`, déjà cloné → rien, dossier étranger → échec nommé ; `tests/test-files.sh` avec un dépôt local `file://` (premier clonage, réexécution, dossier étranger)
+- [x] 1.1 `lib/files.sh` chargé par `setup.sh` : `link_config <rel> <cible>` (lien absolu, sauvegarde `.bak` puis datée, lien étranger remplacé, source absente → échec nommé) et `config_linked <rel> <cible>` ; `tests/test-files.sh` couvre les cinq cas de la spec, `shellcheck` propre
+- [x] 1.2 `ensure_git_clone <url> <dossier> [--depth 1]` : clone via `run`, déjà cloné → rien, dossier étranger → échec nommé ; `tests/test-files.sh` avec un dépôt local `file://` (premier clonage, réexécution, dossier étranger)
 
 ## 2. Fichiers versionnés (`config/shell/`)
 

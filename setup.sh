@@ -22,6 +22,8 @@ source "$DOTFILES_DIR/lib/ui.sh"
 source "$DOTFILES_DIR/lib/apt.sh"
 # shellcheck source=lib/op.sh
 source "$DOTFILES_DIR/lib/op.sh"
+# shellcheck source=lib/files.sh
+source "$DOTFILES_DIR/lib/files.sh"
 # shellcheck source=lib/module.sh
 source "$DOTFILES_DIR/lib/module.sh"
 
