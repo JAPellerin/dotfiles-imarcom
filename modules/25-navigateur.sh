@@ -51,7 +51,7 @@ NAV_BIP39_LIST="$DOTFILES_DIR/config/navigateur/bip39-english.txt"
 NAV_BRAVE_EPOCH=1652140800
 NAV_BRAVE_PREFS="${NAV_BRAVE_PREFS:-$HOME/.config/BraveSoftware/Brave-Browser/Default/Preferences}"
 # Chemin jq de la graine dans Preferences (présente une fois la chaîne rejointe ;
-# candidat à confirmer en VM, voir design D9).
+# confirmée en VM le 21 sept 2026, voir design D9).
 NAV_BRAVE_SYNC_KEY='.brave_sync_v2.seed'
 NAV_WAIT_SECONDS="${NAV_WAIT_SECONDS:-300}"
 NAV_WAIT_INTERVAL="${NAV_WAIT_INTERVAL:-2}"
@@ -341,8 +341,11 @@ _nav_brave_word25() {
 
 # _nav_open_brave <url> : Brave détaché, sorties vers /dev/null (il hériterait
 # sinon du journal et y écrirait ses propres traces tant qu'il tourne).
+# --no-first-run : au premier lancement, l'assistant de bienvenue (navigateur par
+# défaut, thème, télémétrie) prenait la place de l'URL demandée (vu en VM le
+# 21 sept 2026) ; le navigateur par défaut est déjà réglé par le module.
 _nav_open_brave() {
-  printf '[%s] $ brave-browser %s (détaché)\n' "$(date +%H:%M:%S)" "$1" >>"$LOG_FILE"
-  setsid -f brave-browser "$1" >/dev/null 2>&1 </dev/null \
+  printf '[%s] $ brave-browser --no-first-run %s (détaché)\n' "$(date +%H:%M:%S)" "$1" >>"$LOG_FILE"
+  setsid -f brave-browser --no-first-run "$1" >/dev/null 2>&1 </dev/null \
     || log_warn "Impossible de lancer Brave : ouvrir $1 à la main."
 }
