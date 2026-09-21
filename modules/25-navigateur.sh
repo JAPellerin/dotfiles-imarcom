@@ -49,7 +49,8 @@ NAV_BRAVE_SYNC_REF="op://Imarcom/Brave Sync Code/notesPlain"
 NAV_BIP39_LIST="$DOTFILES_DIR/config/navigateur/bip39-english.txt"
 # Origine du compteur de jours de Brave : mardi 10 mai 2022 00:00:00 UTC.
 NAV_BRAVE_EPOCH=1652140800
-NAV_BRAVE_PREFS="${NAV_BRAVE_PREFS:-$HOME/.config/BraveSoftware/Brave-Browser/Default/Preferences}"
+NAV_BRAVE_DIR="${NAV_BRAVE_DIR:-$HOME/.config/BraveSoftware/Brave-Browser}"
+NAV_BRAVE_PREFS="${NAV_BRAVE_PREFS:-$NAV_BRAVE_DIR/Default/Preferences}"
 # Chemin jq de la graine dans Preferences (présente une fois la chaîne rejointe ;
 # confirmée en VM le 21 sept 2026, voir design D9).
 NAV_BRAVE_SYNC_KEY='.brave_sync_v2.seed'
@@ -255,15 +256,14 @@ _nav_policies() {
 # installé. Status « user » et non « default » : la valeur par défaut posée par
 # la stratégie arrive après le choix de la langue d'interface (jamais à temps,
 # vu en VM le 21 sept 2026) ; la valeur utilisateur est écrite dans prefs.js et
-# lue tôt au démarrage suivant. Le paquet de langue livré par Mozilla n'est
-# activé qu'au premier lancement : Firefox passe en français au second.
+# lue tôt au démarrage suivant (en VM, Firefox était en français dès son
+# premier lancement).
 _nav_firefox_policy() {
   local base="$DOTFILES_DIR/config/navigateur/firefox-policies.json" tmp
   tmp=$(mktemp -t dotfiles-firefox-policies.XXXXXX)
   add_cleanup "rm -f '$tmp'"
   if pkg_installed firefox-l10n-fr; then
     jq '.policies.Preferences["intl.locale.requested"] = {"Value": "fr", "Status": "user"}' "$base" >"$tmp" || return 1
-    log_info "Firefox en français : effectif à partir du second lancement (activation du paquet de langue au premier)."
   else
     cp -- "$base" "$tmp" || return 1
   fi
@@ -307,10 +307,11 @@ _nav_brave_sync() {
     return 0
   fi
   unset seed
-  _nav_open_brave "brave://settings/braveSync/setup"
-  log_info "Dans Brave qui vient de s'ouvrir (Settings › Sync) :"
-  log_info "  1. « I have a sync code » → coller le code (Ctrl-V, il est dans le presse-papiers) → Confirm."
-  log_info "  2. Choisir les données à synchroniser (Sync everything, ou au choix)."
+  _nav_open_brave
+  log_info "Dans Brave qui vient de s'ouvrir :"
+  log_info "  1. Barre d'adresse : brave://settings/braveSync/setup (ou Menu ☰ › Settings › Sync)."
+  log_info "  2. « I have a sync code » → coller le code (Ctrl-V, il est dans le presse-papiers) → Confirm."
+  log_info "  3. Choisir les données à synchroniser (Sync everything, ou au choix)."
   log_info "Le script reprend dès que la chaîne est rejointe ; Ctrl-C pour abandonner."
   while true; do
     if ui_wait "En attente que Brave rejoigne la chaîne de synchronisation" "$NAV_WAIT_SECONDS" "$NAV_WAIT_INTERVAL" _nav_brave_synced; then
@@ -344,13 +345,19 @@ _nav_brave_word25() {
   printf '%s\n' "$word"
 }
 
-# _nav_open_brave <url> : Brave détaché, sorties vers /dev/null (il hériterait
-# sinon du journal et y écrirait ses propres traces tant qu'il tourne).
-# --no-first-run : au premier lancement, l'assistant de bienvenue (navigateur par
-# défaut, thème, télémétrie) prenait la place de l'URL demandée (vu en VM le
-# 21 sept 2026) ; le navigateur par défaut est déjà réglé par le module.
+# _nav_open_brave : Brave détaché, sorties vers /dev/null (il hériterait sinon
+# du journal et y écrirait ses propres traces tant qu'il tourne). Sans URL :
+# Chromium ignore les URL brave:// reçues en ligne de commande (vu en VM le
+# 21 sept 2026), la consigne donne le chemin. L'assistant de bienvenue (navigateur
+# par défaut, thème, télémétrie) est supprimé par le fichier sentinelle « First
+# Run » du profil (mécanisme Chromium) en plus de --no-first-run : le navigateur
+# par défaut est déjà réglé par le module.
 _nav_open_brave() {
-  printf '[%s] $ brave-browser --no-first-run %s (détaché)\n' "$(date +%H:%M:%S)" "$1" >>"$LOG_FILE"
-  setsid -f brave-browser --no-first-run "$1" >/dev/null 2>&1 </dev/null \
-    || log_warn "Impossible de lancer Brave : ouvrir $1 à la main."
+  if [[ ! -e "$NAV_BRAVE_DIR/First Run" ]]; then
+    [[ -d $NAV_BRAVE_DIR ]] || { mkdir -p -- "$NAV_BRAVE_DIR" && chmod 0700 "$NAV_BRAVE_DIR"; }
+    : >"$NAV_BRAVE_DIR/First Run"
+  fi
+  printf '[%s] $ brave-browser --no-first-run (détaché)\n' "$(date +%H:%M:%S)" >>"$LOG_FILE"
+  setsid -f brave-browser --no-first-run >/dev/null 2>&1 </dev/null \
+    || log_warn "Impossible de lancer Brave : l'ouvrir à la main."
 }

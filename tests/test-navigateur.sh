@@ -117,7 +117,7 @@ chmod +x "$TEST_TMP/bin/"*
 export PATH="$TEST_TMP/bin:$PATH"
 
 export NAV_ETC="$TEST_TMP/root" APT_KEYRINGS_DIR="$TEST_TMP/root/etc/apt/keyrings" APT_SOURCES_DIR="$TEST_TMP/root/etc/apt/sources.list.d"
-export NAV_BRAVE_PREFS="$TEST_TMP/prefs.json" NAV_WAIT_SECONDS=3 NAV_WAIT_INTERVAL=0.1
+export NAV_BRAVE_DIR="$TEST_TMP/brave-profile" NAV_BRAVE_PREFS="$TEST_TMP/prefs.json" NAV_WAIT_SECONDS=3 NAV_WAIT_INTERVAL=0.1
 export OP_SESSION_FILE="$TEST_TMP/op-session"
 mkdir -p "$APT_SOURCES_DIR"
 # shellcheck source=../modules/25-navigateur.sh
@@ -125,7 +125,7 @@ source "$DOTFILES_DIR/modules/25-navigateur.sh"
 
 # reset [paquets installés…] : remet l'environnement à zéro (lignes « paquet<TAB>version »).
 reset() {
-  : >"$EVENTS"; : >"$TEST_TMP/installed"; rm -rf "$NAV_ETC" "$TEST_TMP"/{default-browser,snap-firefox,session,note,clipboard,brave.log,prefs.json,gum-multi,gum-args}
+  : >"$EVENTS"; : >"$TEST_TMP/installed"; rm -rf "$NAV_ETC" "$TEST_TMP"/{default-browser,snap-firefox,session,note,clipboard,brave.log,prefs.json,gum-multi,gum-args,brave-profile}
   mkdir -p "$APT_SOURCES_DIR"; : >"$MANUAL_STEPS_FILE"; _APT_UPDATED=1
   local p; for p in "$@"; do printf '%b\n' "$p" >>"$TEST_TMP/installed"; done
 }
@@ -249,7 +249,9 @@ assert_eq "presse-papiers vidé après la chaîne rejointe" "" "$(cat "$TEST_TMP
 assert_contains "chaîne rejointe signalée" "$out" "chaîne rejointe"
 assert_not_contains "aucune étape manuelle" "$(cat "$MANUAL_STEPS_FILE")" "Brave Sync"
 sleep 0.3
-assert_contains "Brave ouvert sur la page de sync" "$(cat "$TEST_TMP/brave.log")" "brave://settings/braveSync/setup"
+assert_eq "Brave lancé sans assistant ni URL (ignorée par Chromium)" "--no-first-run" "$(cat "$TEST_TMP/brave.log")"
+assert_file "sentinelle First Run créée dans le profil" "$TEST_TMP/brave-profile/First Run"
+assert_eq "profil créé en 0700" 700 "$(stat -c %a "$TEST_TMP/brave-profile")"
 assert_not_contains "la graine n'est pas dans le journal" "$(cat "$LOG_FILE")" "mot1 mot2"
 assert_not_contains "la graine n'est pas à l'écran" "$out" "mot1 mot2"
 # Même parcours sans que la chaîne n'arrive : contenu du presse-papiers et « Passer ».
