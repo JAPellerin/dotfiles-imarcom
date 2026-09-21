@@ -50,11 +50,13 @@ apt_install() {
 # paquet ou le bascule vers la version que la politique apt sélectionne
 # (épinglage : le firefox de Mozilla par-dessus le paquet de transition d'Ubuntu,
 # voir openspec/changes/navigateur/design.md D3), même si un paquet du même nom
-# est déjà installé. Dans le cas courant, apt_install suffit.
+# est déjà installé. `--allow-downgrades` : sans lui, `-y` refuse un déclassement
+# (constaté en VM le 21 sept 2026 : « 1:1snap1 » → « 154.0 » est un déclassement
+# d'époque). Dans le cas courant, apt_install suffit.
 apt_install_pinned() {
   apt_update_once || return $?
   ui_spin "Installation apt (version épinglée) : $*" \
-    run_sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q "$@"
+    run_sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q --allow-downgrades "$@"
 }
 
 # apt_remove <paquet...> : retire uniquement les paquets présents, sans question.

@@ -155,11 +155,11 @@ assert_file "clé Mozilla armurée (.asc)" "$APT_KEYRINGS_DIR/mozilla.asc"
 assert_contains "suite mozilla" "$(cat "$APT_SOURCES_DIR/mozilla.sources")" "Suites: mozilla"
 assert_eq "épinglage Mozilla en place" "$(cat "$DOTFILES_DIR/config/navigateur/mozilla.pref")" "$(cat "$NAV_ETC/etc/apt/preferences.d/mozilla")"
 assert_eq "brave-browser installé" 1 "$(events 'apt-get install -y -q brave-browser')"
-assert_eq "firefox : apt_install_pinned (paquet de transition présent)" 1 "$(events 'apt-get install -y -q firefox$')"
+assert_eq "firefox : apt_install_pinned (paquet de transition présent)" 1 "$(events 'apt-get install -y -q --allow-downgrades firefox$')"
 assert_eq "firefox-l10n-fr installé (français)" 1 "$(events 'apt-get install -y -q firefox-l10n-fr')"
 assert_ok "le paquet installé est celui de Mozilla" grep -qP '^firefox\t154' "$TEST_TMP/installed"
 assert_eq "snap firefox retiré après le .deb" 1 "$(events 'snap remove firefox')"
-assert_ok "snap remove vient après apt-get install firefox" bash -c "[[ \$(grep -n 'apt-get install -y -q firefox\$' '$EVENTS' | cut -d: -f1) -lt \$(grep -n 'snap remove' '$EVENTS' | cut -d: -f1) ]]"
+assert_ok "snap remove vient après apt-get install firefox" bash -c "[[ \$(grep -n 'allow-downgrades firefox\$' '$EVENTS' | cut -d: -f1) -lt \$(grep -n 'snap remove' '$EVENTS' | cut -d: -f1) ]]"
 assert_fail "snap firefox absent ensuite" test -f "$TEST_TMP/snap-firefox"
 assert_eq "navigateur par défaut : Brave" "brave-browser.desktop" "$(cat "$TEST_TMP/default-browser")"
 assert_eq "aucun dépôt ni paquet Chrome" 0 "$(events 'google-chrome')"
@@ -219,7 +219,7 @@ assert_eq "stratégie sans intl.locale.requested" null "$(jq -r '.policies.Prefe
 reset 'firefox\t154.0' 'firefox-l10n-fr\t154.0'
 FAKE_BROWSERS=Firefox FAKE_LANG=Anglais module_install >/dev/null 2>&1
 assert_eq "anglais avec l10n-fr présent → retiré" 1 "$(events 'apt-get remove -y -q firefox-l10n-fr')"
-assert_eq "firefox (.deb Mozilla déjà là) non réinstallé" 0 "$(events 'apt-get install -y -q firefox$')"
+assert_eq "firefox (.deb Mozilla déjà là) non réinstallé" 0 "$(events 'allow-downgrades firefox$')"
 module_configure >/dev/null 2>&1
 assert_eq "la préférence de langue disparaît" null "$(jq -r '.policies.Preferences' "$NAV_ETC/etc/firefox/policies/policies.json")"
 reset; export LANG=de_DE.UTF-8

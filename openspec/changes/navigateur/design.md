@@ -49,7 +49,7 @@ Alternatives rejetées : copier le code de 1Password tel quel (refusé par Brave
 ## Risks / Trade-offs
 
 - [Le `postinst` de Chrome crée `google-chrome.list` malgré `repo_add_once=false`] → constaté en VM ; suppression du `.list` par le module en secours (le `.sources` couvre le même dépôt).
-- [Déclassement `1:1snap1` → `154.0` refusé par `apt-get`] → priorité 1000 (autorise le déclassement selon `apt_preferences(5)`) ; si besoin `--allow-downgrades` dans `apt_install_pinned`, constaté en VM.
+- [Déclassement `1:1snap1` → `154.0` refusé par `apt-get`] → priorité 1000 (autorise le déclassement selon `apt_preferences(5)`) ; **constaté en VM le 21 sept 2026** : apt sélectionne bien la version de Mozilla mais `-y` exige `--allow-downgrades` (« Packages were downgraded and -y was used without --allow-downgrades ») → ajouté dans `apt_install_pinned`.
 - [`snap remove firefox` lent ou bloqué par un Firefox ouvert] → exécuté sous spinner, après le `.deb` ; échec → module en échec avec l'extrait du journal, relance possible.
 - [Stratégie « managed » affichée comme « géré par votre organisation » dans le navigateur] → assumé : c'est le mécanisme officiel de pré-installation ; `normal_installed` laisse l'utilisateur désactiver l'extension.
 - [Extension installée mais pas connectée à l'app] → premier usage : l'extension demande à déverrouiller via l'app (messagerie native fournie par le paquet `1password`) ; sans app, connexion classique dans l'extension.

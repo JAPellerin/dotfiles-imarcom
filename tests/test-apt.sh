@@ -46,7 +46,7 @@ assert_contains "installation non interactive" "$(cat "$CALLS")" "DEBIAN_FRONTEN
 printf '%s\n' "== apt_install_pinned =="
 : >"$CALLS"; _APT_UPDATED=1
 apt_install_pinned bash 2>/dev/null
-assert_eq "apt-get install lancé même si le paquet est installé" 1 "$(count_calls 'apt-get install -y -q bash')"
+assert_eq "apt-get install lancé même si le paquet est installé" 1 "$(count_calls 'apt-get install -y -q --allow-downgrades bash')"
 assert_contains "installation non interactive" "$(cat "$CALLS")" "DEBIAN_FRONTEND=noninteractive"
 : >"$CALLS"; _APT_UPDATED=0
 apt_install_pinned bash 2>/dev/null
