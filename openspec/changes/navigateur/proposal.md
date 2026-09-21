@@ -27,7 +27,7 @@ _Aucune._
 ## Impact
 
 - Nouveaux `modules/25-navigateur.sh`, `config/navigateur/` (stratégies JSON, épinglage Mozilla, `/etc/default/google-chrome`, liste BIP39 anglaise), `tests/test-navigateur.sh` ; `lib/apt.sh` et `lib/files.sh` étendus (+ cas dans `tests/test-apt.sh`, `tests/test-files.sh`).
-- Secret lu : `op://Private/Brave Sync/code` (graine de 24 mots ; nom de l'item à confirmer dans 1Password) — jamais journalisé ; passe par le presse-papiers (`wl-clipboard`), vidé une fois la chaîne rejointe.
+- Secret lu : `op://Imarcom/Brave Sync Code/notesPlain` (note sécurisée, coffre `Imarcom` — exception à la convention `Private`, assouplie le 21 sept 2026 ; graine de 24 mots) — jamais journalisé ; passe par le presse-papiers (`wl-clipboard`), vidé une fois la chaîne rejointe.
 - Dépôts apt tiers : Brave (clé binaire `.gpg`), Mozilla (clé armurée `.asc` + `/etc/apt/preferences.d/mozilla`), Google (clé armurée `.asc`, `amd64`).
 - Fichiers système hors apt : `/etc/brave/policies/managed/1password.json`, `/etc/opt/chrome/policies/managed/1password.json`, `/etc/firefox/policies/policies.json`, `/etc/default/google-chrome`.
 - Snap : `snap remove firefox` quand Firefox est choisi (données du snap dans `~/snap/firefox` laissées en place).
