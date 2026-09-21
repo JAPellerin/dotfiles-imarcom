@@ -25,7 +25,7 @@ Procédure Mozilla : clé `packages.mozilla.org/apt/repo-signing-key.gpg` (armur
 Alternative rejetée : laisser coexister snap et `.deb` (deux Firefox dans le menu, snap par défaut pour les liens).
 
 ### D4. Chrome : dépôt deb822 + `/etc/default/google-chrome`
-La doc de Google propose le `.deb` (`dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb`), dont le `postinst` crée `/etc/apt/sources.list.d/google-chrome.list` et pose la clé lui-même. Pour rester sur le format deb822 du socle : `apt_add_repo google-chrome https://dl.google.com/linux/linux_signing_key.pub https://dl.google.com/linux/chrome/deb/ stable main amd64` puis `apt_install google-chrome-stable`, précédé de `install_system_file config/navigateur/google-chrome.default /etc/default/google-chrome` (`repo_add_once="false"`, `repo_reenable_on_distupgrade="false"`) : la doc « Linux Software Repositories » de Google documente ces clés pour empêcher le paquet d'ajouter son dépôt. Le comportement du `postinst` face à un `.sources` existant sera constaté en VM (tâche 3.2) : s'il crée quand même `google-chrome.list`, le module le supprime après l'installation (doublon du même dépôt).
+La doc de Google propose le `.deb` (`dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb`), dont le `postinst` crée `/etc/apt/sources.list.d/google-chrome.list` et pose la clé lui-même. Pour rester sur le format deb822 du socle : `apt_add_repo google-chrome https://dl.google.com/linux/linux_signing_key.pub https://dl.google.com/linux/chrome/deb/ stable main amd64` puis `apt_install google-chrome-stable`, précédé de `install_system_file config/navigateur/google-chrome.default /etc/default/google-chrome` (`repo_add_once="false"`, `repo_reenable_on_distupgrade="false"`) : la doc « Linux Software Repositories » de Google documente ces clés pour empêcher le paquet d'ajouter son dépôt. **Constaté en VM le 21 sept 2026** : avec `repo_add_once="false"` écrit avant l'installation, le `postinst` ne crée aucun `google-chrome.list` ; le `.sources` du socle est le seul dépôt Google.
 `arm64` : Google ne publie pas Chrome pour cette architecture ; option cachée si `dpkg --print-architecture` ≠ `amd64`.
 
 ### D5. Stratégies d'entreprise pour l'extension 1Password
@@ -48,7 +48,7 @@ Alternatives rejetées : copier le code de 1Password tel quel (refusé par Brave
 
 ## Risks / Trade-offs
 
-- [Le `postinst` de Chrome crée `google-chrome.list` malgré `repo_add_once=false`] → constaté en VM ; suppression du `.list` par le module en secours (le `.sources` couvre le même dépôt).
+- [Le `postinst` de Chrome crée `google-chrome.list` malgré `repo_add_once=false`] → infirmé en VM le 21 sept 2026 (aucun `.list`).
 - [Déclassement `1:1snap1` → `154.0` refusé par `apt-get`] → priorité 1000 (autorise le déclassement selon `apt_preferences(5)`) ; **constaté en VM le 21 sept 2026** : apt sélectionne bien la version de Mozilla mais `-y` exige `--allow-downgrades` (« Packages were downgraded and -y was used without --allow-downgrades ») → ajouté dans `apt_install_pinned`.
 - [`snap remove firefox` lent ou bloqué par un Firefox ouvert] → exécuté sous spinner, après le `.deb` ; échec → module en échec avec l'extrait du journal, relance possible.
 - [Stratégie « managed » affichée comme « géré par votre organisation » dans le navigateur] → assumé : c'est le mécanisme officiel de pré-installation ; `normal_installed` laisse l'utilisateur désactiver l'extension.
