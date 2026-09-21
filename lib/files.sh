@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # lib/files.sh — déploiement des fichiers de configuration du dépôt vers ~ (liens
-# symboliques, sauvegarde, vérification) et clonage idempotent de dépôts git.
+# symboliques, sauvegarde, vérification), clonage idempotent de dépôts git et
+# copie idempotente de fichiers système (/etc, avec sudo).
 #
 # Les fichiers de config vivent dans config/<module>/ (sans point initial) ; un
 # module les amène dans ~ par link_config et constate leur état par config_linked.
-# Voir openspec/specs/config-files/spec.md et openspec/changes/archive/2026-09-18-shell/design.md (D1, D2).
-# Dépend de lib/core.sh (DOTFILES_DIR, log_*, run).
+# Voir openspec/specs/config-files/spec.md et openspec/changes/archive/2026-09-18-shell/design.md (D1, D2) ;
+# install_system_file : openspec/changes/navigateur/design.md (D6).
+# Dépend de lib/core.sh (DOTFILES_DIR, log_*, run, run_sudo).
 
 # _config_source <rel> : chemin absolu du fichier <rel> du dépôt, ou échec nommé.
 _config_source() {
@@ -66,4 +68,22 @@ ensure_git_clone() {
   fi
   run git clone --quiet "$@" -- "$url" "$dir" || return 1
   log_ok "Cloné : $url → $dir"
+}
+
+# install_system_file <source> <cible> [mode] : copie <source> vers <cible>, un
+# chemin système (/etc/…), avec sudo ; dossiers parents créés, mode 0644 par
+# défaut. <source> est relatif au dépôt (config/navigateur/mozilla.pref) ou
+# absolu (fichier temporaire généré par le module). Idempotent : rien n'est
+# réécrit si le contenu est identique. Copie et non lien : apt et les
+# navigateurs exigent des fichiers appartenant à root.
+install_system_file() {
+  local src=$1 target=$2 mode=${3:-0644}
+  [[ $src == /* ]] || { src=$(_config_source "$src") || return 1; }
+  [[ -f $src ]] || { log_error "Fichier source introuvable : $src"; return 1; }
+  if cmp -s -- "$src" "$target" 2>/dev/null; then
+    log_ok "Déjà à jour : $target"
+    return 0
+  fi
+  run_sudo install -m "$mode" -D -- "$src" "$target" || return 1
+  log_ok "Écrit : $target"
 }

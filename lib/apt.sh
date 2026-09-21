@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# lib/apt.sh — helpers apt : paquets manquants seulement, `apt update` au plus une
-# fois par exécution, dépôts tiers au format deb822 avec clé dans /etc/apt/keyrings/.
+# lib/apt.sh — helpers apt : paquets manquants seulement (ou version épinglée,
+# retrait), `apt update` au plus une fois par exécution, dépôts tiers au format
+# deb822 avec clé dans /etc/apt/keyrings/.
 #
 # Références : sources.list(5) (format deb822 `.sources`, champ Signed-By) et la
 # pratique d'Ubuntu 26.04 (/etc/apt/sources.list.d/ubuntu.sources). Voir D10.
@@ -43,6 +44,32 @@ apt_install() {
   apt_update_once || return $?
   ui_spin "Installation apt : ${missing[*]}" \
     run_sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q "${missing[@]}"
+}
+
+# apt_install_pinned <paquet...> : `apt-get install` inconditionnel — installe le
+# paquet ou le bascule vers la version que la politique apt sélectionne
+# (épinglage : le firefox de Mozilla par-dessus le paquet de transition d'Ubuntu,
+# voir openspec/changes/navigateur/design.md D3), même si un paquet du même nom
+# est déjà installé. Dans le cas courant, apt_install suffit.
+apt_install_pinned() {
+  apt_update_once || return $?
+  ui_spin "Installation apt (version épinglée) : $*" \
+    run_sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q "$@"
+}
+
+# apt_remove <paquet...> : retire uniquement les paquets présents, sans question.
+# Renvoie 0 si rien à faire.
+apt_remove() {
+  local pkg present=()
+  for pkg in "$@"; do
+    pkg_installed "$pkg" && present+=("$pkg")
+  done
+  if (( ${#present[@]} == 0 )); then
+    log_ok "Paquets déjà absents : $*"
+    return 0
+  fi
+  ui_spin "Retrait apt : ${present[*]}" \
+    run_sudo env DEBIAN_FRONTEND=noninteractive apt-get remove -y -q "${present[@]}"
 }
 
 # apt_add_repo <nom> <url-clé> <url-dépôt> <suite> <composants> [architectures]

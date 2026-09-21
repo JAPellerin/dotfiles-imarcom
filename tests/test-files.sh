@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # tests/test-files.sh — lib/files.sh : liens de config (sauvegarde, réapplication,
-# source absente) et clonage git idempotent, avec un dépôt local file://.
+# source absente), clonage git idempotent (dépôt local file://) et copie de
+# fichiers système (faux sudo, /etc dans le dossier temporaire).
 # shellcheck source=lib.sh
 source "$(dirname -- "${BASH_SOURCE[0]}")/lib.sh"
 # shellcheck source=../lib/files.sh
@@ -71,5 +72,31 @@ assert_eq "dossier non git → échec" 1 "$rc"
 assert_contains "dossier non git nommé comme tel, même sous un dépôt git" "$out" "n'est pas un dépôt git"
 assert_ok "options passées à git clone (--depth 1)" ensure_git_clone "$url" "$TEST_TMP/clone2" --depth 1
 assert_ok "URL avec ou sans .git considérées identiques" ensure_git_clone "$url.git" "$TEST_TMP/clone"
+
+printf '%s\n' "== install_system_file =="
+fake_sudo
+etc="$TEST_TMP/etc"
+printf 'Pin-Priority: 1000\n' >"$DOTFILES_DIR/config/shell/mozilla.pref"
+nb_install() { grep -c 'install -m' "$LOG_FILE" || true; }
+assert_ok "première écriture (dossiers parents créés)" install_system_file config/shell/mozilla.pref "$etc/apt/preferences.d/mozilla"
+assert_eq "contenu copié" "Pin-Priority: 1000" "$(cat "$etc/apt/preferences.d/mozilla")"
+assert_eq "mode 0644 par défaut" 644 "$(stat -c %a "$etc/apt/preferences.d/mozilla")"
+assert_fail "la cible est une copie, pas un lien" test -L "$etc/apt/preferences.d/mozilla"
+n=$(nb_install)
+out=$(install_system_file config/shell/mozilla.pref "$etc/apt/preferences.d/mozilla" 2>&1); rc=$?
+assert_eq "contenu identique : réussit" 0 "$rc"
+assert_contains "contenu identique : « déjà à jour »" "$out" "Déjà à jour"
+assert_eq "contenu identique : aucun install" "$n" "$(nb_install)"
+printf 'Pin-Priority: 900\n' >"$DOTFILES_DIR/config/shell/mozilla.pref"
+assert_ok "contenu différent : réécrit" install_system_file config/shell/mozilla.pref "$etc/apt/preferences.d/mozilla"
+assert_eq "nouveau contenu en place" "Pin-Priority: 900" "$(cat "$etc/apt/preferences.d/mozilla")"
+printf 'repo_add_once="false"\n' >"$TEST_TMP/tmp-default"
+assert_ok "source absolue (fichier temporaire) et mode explicite" install_system_file "$TEST_TMP/tmp-default" "$etc/default/google-chrome" 0600
+assert_eq "mode explicite appliqué" 600 "$(stat -c %a "$etc/default/google-chrome")"
+out=$(install_system_file config/shell/inexistant "$etc/jamais" 2>&1); rc=$?
+assert_eq "source relative absente → échec" 1 "$rc"
+assert_contains "source absente nommée" "$out" "config/shell/inexistant"
+assert_fail "cible intacte (non créée)" test -e "$etc/jamais"
+assert_fail "source absolue absente → échec" install_system_file "$TEST_TMP/nexiste-pas" "$etc/jamais"
 
 test_done
