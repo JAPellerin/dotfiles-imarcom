@@ -5,7 +5,7 @@
 
 ## 2. Fichiers versionnés
 
-- [ ] 2.1 `config/navigateur/chromium-1password.json` (ExtensionSettings, `normal_installed`, `update_url` du Chrome Web Store), `config/navigateur/firefox-policies.json` (`policies.ExtensionSettings` avec l'ID AMO et `install_url` `latest.xpi`), `config/navigateur/mozilla.pref` (épinglage `Pin-Priority: 1000`), `config/navigateur/google-chrome.default` (`repo_add_once="false"`, `repo_reenable_on_distupgrade="false"`), `config/navigateur/bip39-english.txt` (liste officielle BIP-0039, `bitcoin/bips`, 2048 lignes, avec la source en commentaire dans le module) ; vérifier `jq . config/navigateur/*.json` et `wc -l` = 2048
+- [x] 2.1 `config/navigateur/chromium-1password.json` (ExtensionSettings, `normal_installed`, `update_url` du Chrome Web Store), `config/navigateur/firefox-policies.json` (`policies.ExtensionSettings` avec l'ID AMO et `install_url` `latest.xpi`), `config/navigateur/mozilla.pref` (épinglage `Pin-Priority: 1000`), `config/navigateur/google-chrome.default` (`repo_add_once="false"`, `repo_reenable_on_distupgrade="false"`), `config/navigateur/bip39-english.txt` (liste officielle BIP-0039, `bitcoin/bips`, 2048 lignes, avec la source en commentaire dans le module) ; vérifier `jq . config/navigateur/*.json` et `wc -l` = 2048
 
 ## 3. Module `navigateur`
 
