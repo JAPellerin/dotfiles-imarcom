@@ -43,6 +43,24 @@ assert_contains "seuls les paquets manquants sont passés" "$(cat "$CALLS")" "ap
 assert_not_contains "les paquets présents ne sont pas réinstallés" "$(grep 'apt-get install' "$CALLS")" "bash"
 assert_contains "installation non interactive" "$(cat "$CALLS")" "DEBIAN_FRONTEND=noninteractive"
 
+printf '%s\n' "== apt_install_pinned =="
+: >"$CALLS"; _APT_UPDATED=1
+apt_install_pinned bash 2>/dev/null
+assert_eq "apt-get install lancé même si le paquet est installé" 1 "$(count_calls 'apt-get install -y -q bash')"
+assert_contains "installation non interactive" "$(cat "$CALLS")" "DEBIAN_FRONTEND=noninteractive"
+: >"$CALLS"; _APT_UPDATED=0
+apt_install_pinned bash 2>/dev/null
+assert_eq "apt-get update d'abord si les index sont périmés" 1 "$(count_calls 'apt-get update')"
+
+printf '%s\n' "== apt_remove =="
+: >"$CALLS"
+assert_ok "paquet absent : réussit" apt_remove paquet-fictif-dotfiles
+assert_eq "paquet absent : aucun apt-get remove" 0 "$(count_calls 'apt-get remove')"
+apt_remove bash paquet-fictif-dotfiles 2>/dev/null
+assert_eq "apt-get remove lancé pour les présents" 1 "$(count_calls 'apt-get remove')"
+assert_contains "seuls les paquets présents sont retirés" "$(cat "$CALLS")" "apt-get remove -y -q bash"
+assert_not_contains "les absents ne sont pas passés" "$(grep 'apt-get remove' "$CALLS")" "paquet-fictif"
+
 printf '%s\n' "== apt_add_repo =="
 : >"$CALLS"; _APT_UPDATED=1
 KEY="$TEST_TMP/cle.asc"
