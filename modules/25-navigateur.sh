@@ -252,13 +252,18 @@ _nav_policies() {
 }
 
 # Firefox : stratégie versionnée + préférence de langue déduite du paquet de langue
-# installé (Status « default » : valeur initiale, modifiable dans Firefox).
+# installé. Status « user » et non « default » : la valeur par défaut posée par
+# la stratégie arrive après le choix de la langue d'interface (jamais à temps,
+# vu en VM le 21 sept 2026) ; la valeur utilisateur est écrite dans prefs.js et
+# lue tôt au démarrage suivant. Le paquet de langue livré par Mozilla n'est
+# activé qu'au premier lancement : Firefox passe en français au second.
 _nav_firefox_policy() {
   local base="$DOTFILES_DIR/config/navigateur/firefox-policies.json" tmp
   tmp=$(mktemp -t dotfiles-firefox-policies.XXXXXX)
   add_cleanup "rm -f '$tmp'"
   if pkg_installed firefox-l10n-fr; then
-    jq '.policies.Preferences["intl.locale.requested"] = {"Value": "fr", "Status": "default"}' "$base" >"$tmp" || return 1
+    jq '.policies.Preferences["intl.locale.requested"] = {"Value": "fr", "Status": "user"}' "$base" >"$tmp" || return 1
+    log_info "Firefox en français : effectif à partir du second lancement (activation du paquet de langue au premier)."
   else
     cp -- "$base" "$tmp" || return 1
   fi

@@ -172,7 +172,7 @@ assert_eq "stratégie Brave : normal_installed" normal_installed "$(jq -r '.Exte
 assert_file "stratégie Firefox" "$NAV_ETC/etc/firefox/policies/policies.json"
 assert_eq "Firefox : extension 1Password normal_installed" normal_installed "$(jq -r '.policies.ExtensionSettings["{d634138d-c276-4fc8-924b-40a0ea21d284}"].installation_mode' "$NAV_ETC/etc/firefox/policies/policies.json")"
 assert_eq "Firefox : intl.locale.requested = fr (l10n-fr installé)" fr "$(jq -r '.policies.Preferences["intl.locale.requested"].Value' "$NAV_ETC/etc/firefox/policies/policies.json")"
-assert_eq "Firefox : statut default (modifiable)" default "$(jq -r '.policies.Preferences["intl.locale.requested"].Status' "$NAV_ETC/etc/firefox/policies/policies.json")"
+assert_eq "Firefox : statut user (lu tôt au démarrage suivant)" user "$(jq -r '.policies.Preferences["intl.locale.requested"].Status' "$NAV_ETC/etc/firefox/policies/policies.json")"
 assert_fail "aucune stratégie Chrome (absent)" test -e "$NAV_ETC/etc/opt/chrome"
 assert_contains "Brave Sync sans session : étape manuelle" "$(cat "$MANUAL_STEPS_FILE")" "Brave Sync"
 assert_eq "aucune lecture op sans session" 0 "$(events 'op read')"
