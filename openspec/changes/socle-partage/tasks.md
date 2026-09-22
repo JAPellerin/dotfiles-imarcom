@@ -11,8 +11,8 @@
 
 ## 3. Helper de police
 
-- [ ] 3.1 `lib/fonts.sh` : nouveau fichier avec `FONTS_DIR` surchargeable et `install_font <url> <famille> [dossier]` selon D5 (appoint `fontconfig`, garde `fc-list`, extraction en temporaire puis copie des `*.ttf`/`*.otf`, `fc-cache -f`, re-vérification) ; le charger dans `setup.sh` à la suite des autres fichiers de `lib/` ; vérifier `shellcheck lib/fonts.sh setup.sh` propre et `./setup.sh --list` inchangé
-- [ ] 3.2 `tests/test-fonts.sh` : nouveau, `FONTS_DIR` dans `$TEST_TMP`, doublures `fc-list`/`fc-cache`, archive `.zip` fabriquée sur place, servie en `file://` ; les trois cas de D6 (première installation → fichiers sous `FONTS_DIR` et cache rafraîchi ; famille déjà connue → aucun téléchargement ; archive illisible → échec et aucun dossier de police laissé) ; vérifier `bash tests/test-fonts.sh` vert
+- [x] 3.1 `lib/fonts.sh` : nouveau fichier avec `FONTS_DIR` surchargeable et `install_font <url> <famille> [dossier]` selon D5 (appoint `fontconfig`, garde `fc-list`, extraction en temporaire puis copie des `*.ttf`/`*.otf`, `fc-cache -f`, re-vérification) ; le charger dans `setup.sh` à la suite des autres fichiers de `lib/` ; vérifier `shellcheck lib/fonts.sh setup.sh` propre et `./setup.sh --list` inchangé
+- [x] 3.2 `tests/test-fonts.sh` : nouveau, `FONTS_DIR` dans `$TEST_TMP`, doublures `fc-list`/`fc-cache`, archive `.zip` fabriquée sur place, servie en `file://` ; les trois cas de D6 (première installation → fichiers sous `FONTS_DIR` et cache rafraîchi ; famille déjà connue → aucun téléchargement ; archive illisible → échec et aucun dossier de police laissé) ; vérifier `bash tests/test-fonts.sh` vert
 
 ## 4. Vérification d'ensemble et documentation
 
