@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # lib/fonts.sh — installation d'une police pour l'utilisateur courant à partir
-# d'une archive `.zip` (releases Nerd Fonts, fonderies qui publient un zip).
+# d'archives `.zip` (releases Nerd Fonts) ou de fichiers `.ttf`/`.otf` publiés
+# tels quels (Powerlevel10k publie ainsi les quatre fichiers de MesloLGS NF).
 #
 # Installation utilisateur (~/.local/share/fonts), jamais avec sudo : une police
-# par utilisateur suffit. L'archive est extraite dans un dossier temporaire et
-# n'est recopiée qu'une fois lue en entier, pour ne jamais laisser un dossier de
+# par utilisateur suffit. Tout est reçu dans un dossier temporaire et n'est
+# recopié qu'une fois l'ensemble obtenu, pour ne jamais laisser un dossier de
 # police à moitié rempli. Voir openspec/specs/module-contract/spec.md (D5).
 # Dépend de lib/core.sh (run, log_*, add_cleanup) et lib/apt.sh (apt_install).
 # Chemin surchargeable (tests) : FONTS_DIR.
@@ -25,17 +26,39 @@ font_installed() {
   fc-list : family 2>/dev/null | tr ',' '\n' | tr -d '\\' | grep -qixF -- "$1"
 }
 
-# install_font <url> <famille> [dossier] : installe la police de l'archive .zip
-# <url> sous $FONTS_DIR/<dossier> (par défaut <famille> sans espaces) et
-# rafraîchit le cache de polices. Ne fait rien si <famille> est déjà connue.
-# Échoue en nommant l'URL si l'archive est injoignable, illisible ou dépourvue de
-# fichier de police ; dans ce cas aucun dossier de police n'est laissé derrière.
+# _font_basename <url> : nom de fichier lisible tiré de l'URL, pourcents décodés
+# (« MesloLGS%20NF%20Regular.ttf » → « MesloLGS NF Regular.ttf »). Le nom n'a
+# aucune portée fonctionnelle — fontconfig lit la famille dans la table de noms
+# du fichier, pas dans son nom — mais un dossier de polices se relit.
+_font_basename() {
+  local name=${1##*/}
+  name=${name%%\?*}
+  case $name in
+    # Décodage seulement en présence d'un vrai %XX, pour ne pas maltraiter un
+    # nom qui contiendrait un pourcent isolé.
+    *%[0-9A-Fa-f][0-9A-Fa-f]*) printf '%b' "${name//%/\\x}" ;;
+    *) printf '%s' "$name" ;;
+  esac
+}
+
+# install_font <famille> <dossier> <url...> : installe la police <famille> sous
+# $FONTS_DIR/<dossier> à partir d'une ou plusieurs URL, puis rafraîchit le cache.
+# Chaque URL est traitée selon son extension : `.zip` extraite (tous ses fichiers
+# de police sont pris), `.ttf` ou `.otf` installée telle quelle. Ne fait rien si
+# <famille> est déjà connue de fontconfig. Échoue en nommant l'URL fautive si un
+# téléchargement ou une extraction échoue, ou si une archive ne contient aucune
+# police ; dans ce cas aucun dossier de police n'est laissé derrière.
 install_font() {
-  local url=${1:-} family=${2:-} dir=${3:-} tmp target f
+  # Contrôle avant tout `shift` : sans lui, un appel à un seul argument ferait
+  # passer la famille pour une URL.
+  if (( $# < 3 )) || [[ -z ${1:-} || -z ${2:-} ]]; then
+    log_error "install_font : arguments manquants (famille, dossier, url...)"
+    return 1
+  fi
+  local family=$1 dir=$2
+  shift 2
+  local tmp target url name recu n=0 f
   local files=()
-  [[ -n $url && -n $family ]] \
-    || { log_error "install_font : arguments manquants (url, famille)"; return 1; }
-  [[ -n $dir ]] || dir=${family// /}
 
   command -v fc-list >/dev/null 2>&1 || apt_install fontconfig || return 1
   if font_installed "$family"; then
@@ -45,16 +68,41 @@ install_font() {
 
   tmp=$(mktemp -d -t "font-$dir.XXXXXX") || return 1
   add_cleanup "rm -rf '$tmp'"
-  run curl -fsSL "$url" -o "$tmp/police.zip" \
-    || { log_error "Archive de police introuvable : $url"; return 1; }
-  run unzip -q -o "$tmp/police.zip" -d "$tmp/extrait" \
-    || { log_error "Archive de police illisible : $url"; return 1; }
+  recu="$tmp/recu"
+  mkdir -p -- "$recu" || return 1
+
+  for url in "$@"; do
+    n=$(( n + 1 ))
+    case ${url##*/} in
+      *.zip|*.ZIP)
+        # Chaque archive dans son propre sous-dossier : c'est ce qui permet de
+        # nommer l'archive fautive quand elle ne contient aucune police.
+        run curl -fsSL "$url" -o "$tmp/archive-$n.zip" \
+          || { log_error "Archive de police introuvable : $url"; return 1; }
+        run unzip -q -o "$tmp/archive-$n.zip" -d "$recu/z$n" \
+          || { log_error "Archive de police illisible : $url"; return 1; }
+        if [[ -z $(find "$recu/z$n" -type f \( -iname '*.ttf' -o -iname '*.otf' \) -print -quit) ]]; then
+          log_error "Aucun fichier de police (.ttf/.otf) dans l'archive : $url"
+          return 1
+        fi
+        ;;
+      *.ttf|*.TTF|*.otf|*.OTF)
+        name=$(_font_basename "$url")
+        run curl -fsSL "$url" -o "$recu/$name" \
+          || { log_error "Fichier de police introuvable : $url"; return 1; }
+        ;;
+      *)
+        log_error "URL de police non reconnue (.zip, .ttf ou .otf attendu) : $url"
+        return 1
+        ;;
+    esac
+  done
 
   # Les archives Nerd Fonts contiennent aussi licences et README : on ne copie
-  # que les fichiers de police, et seulement s'il y en a.
-  mapfile -t files < <(find "$tmp/extrait" -type f \( -iname '*.ttf' -o -iname '*.otf' \))
+  # que les fichiers de police.
+  mapfile -t files < <(find "$recu" -type f \( -iname '*.ttf' -o -iname '*.otf' \))
   if (( ${#files[@]} == 0 )); then
-    log_error "Aucun fichier de police (.ttf/.otf) dans l'archive : $url"
+    log_error "Aucun fichier de police obtenu pour « $family »."
     return 1
   fi
   target="$FONTS_DIR/$dir"
