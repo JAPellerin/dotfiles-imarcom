@@ -77,6 +77,12 @@ apt_install_deb_url() {
   fi
   tmp=$(mktemp -d -t "apt-deb-$pkg.XXXXXX") || return 1
   add_cleanup "rm -rf '$tmp'"
+  # mktemp crée le dossier en 0700 : apt, qui abandonne ses privilèges au profit
+  # de l'utilisateur `_apt` pour lire le fichier, ne pourrait pas le traverser et
+  # s'en plaindrait à chaque appel (« Download is performed unsandboxed as root
+  # … couldn't be accessed by user '_apt' »). Le dossier ne contient qu'un
+  # paquet public, le rendre traversable ne coûte rien.
+  chmod 0755 "$tmp" || return 1
   deb="$tmp/$pkg.deb"
   run curl -fsSL "$url" -o "$deb" || { log_error "Paquet .deb introuvable : $url"; return 1; }
   # Contrôle local, hors `run` : la fiche du paquet n'a rien à faire au journal.

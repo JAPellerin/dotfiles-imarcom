@@ -13,9 +13,16 @@ FONTS_DIR="${FONTS_DIR:-$HOME/.local/share/fonts}"
 
 # font_installed <famille> : vrai si fontconfig connaît la famille. Sans effet de
 # bord : utilisable comme critère par module_check.
+# `fc-list : family` sort une famille par ligne, ses alias séparés par des
+# virgules et certains caractères échappés (« Unifont\-JP ») : on découpe sur la
+# virgule et on retire les contre-obliques avant de comparer. Comparaison
+# **exacte** (`-x`) et non par sous-chaîne : « JetBrainsMono Nerd Font » ne doit
+# pas être tenue pour installée par la seule présence de « JetBrainsMono Nerd
+# Font Mono ».
 font_installed() {
   command -v fc-list >/dev/null 2>&1 || return 1
-  fc-list : family 2>/dev/null | grep -qiF -- "$1"
+  # shellcheck disable=SC1003  # '\\' : contre-oblique littérale pour tr, pas une apostrophe échappée
+  fc-list : family 2>/dev/null | tr ',' '\n' | tr -d '\\' | grep -qixF -- "$1"
 }
 
 # install_font <url> <famille> [dossier] : installe la police de l'archive .zip
@@ -24,7 +31,7 @@ font_installed() {
 # Échoue en nommant l'URL si l'archive est injoignable, illisible ou dépourvue de
 # fichier de police ; dans ce cas aucun dossier de police n'est laissé derrière.
 install_font() {
-  local url=${1:-} family=${2:-} dir=${3:-} tmp target created=0
+  local url=${1:-} family=${2:-} dir=${3:-} tmp target f
   local files=()
   [[ -n $url && -n $family ]] \
     || { log_error "install_font : arguments manquants (url, famille)"; return 1; }
@@ -51,13 +58,16 @@ install_font() {
     return 1
   fi
   target="$FONTS_DIR/$dir"
-  [[ -d $target ]] || created=1
   mkdir -p -- "$target" || return 1
   cp -f -- "${files[@]}" "$target/" || return 1
   run fc-cache -f "$FONTS_DIR" || return 1
 
   if ! font_installed "$family"; then
-    (( created == 1 )) && rm -rf -- "$target"
+    # Ne rien laisser d'incomplet derrière : on retire les fichiers que l'on
+    # vient de copier, puis le dossier s'il est devenu vide (s'il contenait déjà
+    # une autre police, elle reste en place).
+    for f in "${files[@]}"; do rm -f -- "$target/${f##*/}"; done
+    rmdir -- "$target" 2>/dev/null || true
     log_error "Police copiée, mais fontconfig ne connaît pas la famille « $family » : vérifier son nom exact (fc-list : family)."
     return 1
   fi

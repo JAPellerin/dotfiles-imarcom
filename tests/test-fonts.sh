@@ -49,8 +49,16 @@ printf 'pas une archive\n' >"$TEST_TMP/casse.zip"
 
 printf '%s\n' "== font_installed =="
 assert_fail "famille inconnue" font_installed "Police Test"
-printf 'Police Test:style=Regular\n' >"$FAMILIES"
+printf 'Police Test\n' >"$FAMILIES"
 assert_ok "famille connue de fontconfig" font_installed "Police Test"
+assert_fail "correspondance exacte : un préfixe ne suffit pas" font_installed "Police"
+printf 'Police Test Mono\n' >"$FAMILIES"
+assert_fail "…ni une famille plus longue" font_installed "Police Test"
+printf 'Autre Police,Police Test\n' >"$FAMILIES"
+assert_ok "alias séparés par des virgules" font_installed "Police Test"
+printf 'Police\\-Test\n' >"$FAMILIES"
+assert_ok "caractère échappé par fontconfig" font_installed "Police-Test"
+printf 'Police Test\n' >"$FAMILIES"
 
 printf '%s\n' "== police déjà installée =="
 : >"$CALLS"
@@ -60,7 +68,7 @@ assert_fail "aucun dossier de police créé" test -e "$FONTS_DIR/PoliceTest"
 
 printf '%s\n' "== première installation =="
 : >"$CALLS"; : >"$FAMILIES"
-printf 'Police Test:style=Regular\n' >"$NEXT"
+printf 'Police Test\n' >"$NEXT"
 assert_ok "réussit" install_font "$ZIP_URL" "Police Test"
 assert_file ".ttf copié" "$FONTS_DIR/PoliceTest/PoliceTest-Regular.ttf"
 assert_file ".otf copié" "$FONTS_DIR/PoliceTest/PoliceTest-Bold.otf"
@@ -91,6 +99,13 @@ printf '%s\n' "== famille absente après rafraîchissement =="
 out=$(install_font "$ZIP_URL" "Famille Inexistante" 2>&1)
 assert_contains "échec en nommant la famille" "$out" "Famille Inexistante"
 assert_fail "le dossier créé est retiré" test -e "$FONTS_DIR/FamilleInexistante"
+# Dossier préexistant : seuls les fichiers copiés par ce helper sont retirés,
+# la police déjà en place y reste.
+mkdir -p "$FONTS_DIR/DossierPartage"
+printf 'autre police\n' >"$FONTS_DIR/DossierPartage/AutrePolice-Regular.ttf"
+assert_fail "dossier préexistant → échec" install_font "$ZIP_URL" "Famille Inexistante" DossierPartage
+assert_fail "les fichiers copiés sont retirés" test -e "$FONTS_DIR/DossierPartage/PoliceTest-Regular.ttf"
+assert_file "la police déjà présente est conservée" "$FONTS_DIR/DossierPartage/AutrePolice-Regular.ttf"
 
 printf '%s\n' "== arguments =="
 assert_fail "arguments manquants → échec" install_font "$ZIP_URL"
