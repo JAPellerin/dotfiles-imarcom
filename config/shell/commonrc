@@ -13,3 +13,18 @@ export NVM_DIR="$HOME/.nvm"
 
 # Vault Imarcom
 export VAULT_ADDR=https://vault.imarcom.net
+
+# Fragments déposés par les modules (~/.commonrc.d/<module>.sh, un lien par
+# module). En dernier : un fragment peut surcharger une valeur ci-dessus.
+# Dossier absent ou vide : bash et dash laissent le motif littéral, que `[ -r ]`
+# écarte sans message ; zsh, lui, traite un motif sans correspondance comme une
+# erreur (option NOMATCH, vue le 22 sept 2026), d'où la garde ci-dessous — elle
+# rétablit ensuite l'option, que notre .zshrc laisse à sa valeur par défaut.
+# Voir openspec/specs/config-files/spec.md.
+[ -n "${ZSH_VERSION:-}" ] && setopt no_nomatch
+for _rc in "$HOME/.commonrc.d"/*.sh; do
+  # shellcheck source=/dev/null  # fragments hors dépôt, connus seulement à l'exécution
+  [ -r "$_rc" ] && . "$_rc"
+done
+[ -n "${ZSH_VERSION:-}" ] && unsetopt no_nomatch
+unset _rc

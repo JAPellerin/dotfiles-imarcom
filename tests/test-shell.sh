@@ -48,6 +48,10 @@ cat >"$TEST_TMP/bin/zsh" <<'FAKE'
 exit 0
 FAKE
 chmod +x "$TEST_TMP/bin/"*
+# zsh réel, relevé avant que la doublure ci-dessus n'entre dans le PATH
+# (fake_sudo y met déjà $TEST_TMP/bin ; les cas « fragments » plus bas ont
+# besoin d'un vrai shell, pas de la doublure qui se contente de sortir en 0).
+REAL_ZSH=$(command -v zsh || true)
 fake_sudo
 export PATH="$TEST_TMP/bin:$PATH"
 # shellcheck source=../modules/20-shell.sh
@@ -104,5 +108,33 @@ assert_fail "lien manquant → à faire" module_check
 module_configure >/dev/null 2>&1
 printf '/bin/bash' >"$TEST_TMP/login-shell"
 assert_fail "shell de connexion revenu à bash → à faire" module_check
+
+printf '%s\n' "== fragments ~/.commonrc.d =="
+# Le fichier versionné est chargé tel quel par des shells réels, avec un HOME à
+# part : on vérifie la boucle de chargement, pas le module. `sh` (dash) et `bash`
+# laissent un motif sans correspondance littéral ; zsh le refuse (NOMATCH), d'où
+# la garde dans commonrc — ces cas la verrouillent.
+RC_HOME="$TEST_TMP/rc-home"; mkdir -p "$RC_HOME"
+RC_FILE="$DOTFILES_DIR/config/shell/commonrc"
+RC_SHELLS=(sh bash)
+[[ -n $REAL_ZSH ]] && RC_SHELLS+=("$REAL_ZSH")
+# rc_stderr <shell> : sortie d'erreur du chargement de commonrc, HOME isolé.
+rc_stderr() { { env -i HOME="$RC_HOME" PATH=/usr/bin:/bin "$1" -c ". '$RC_FILE'" >/dev/null; } 2>&1; }
+# rc_value <shell> : « <ESSAI> <VAULT_ADDR> » après chargement.
+rc_value() { env -i HOME="$RC_HOME" PATH=/usr/bin:/bin "$1" -c ". '$RC_FILE'; printf '%s %s' \"\$ESSAI\" \"\$VAULT_ADDR\"" 2>/dev/null; }
+
+for rc_sh in "${RC_SHELLS[@]}"; do
+  assert_eq "$(basename -- "$rc_sh") : dossier absent, aucun message" "" "$(rc_stderr "$rc_sh")"
+done
+mkdir -p "$RC_HOME/.commonrc.d"
+for rc_sh in "${RC_SHELLS[@]}"; do
+  assert_eq "$(basename -- "$rc_sh") : dossier vide, aucun message" "" "$(rc_stderr "$rc_sh")"
+done
+printf 'ESSAI=fragment\nVAULT_ADDR=surcharge\n' >"$RC_HOME/.commonrc.d/zz-essai.sh"
+for rc_sh in "${RC_SHELLS[@]}"; do
+  assert_eq "$(basename -- "$rc_sh") : fragment chargé, et il surcharge commonrc" \
+    "fragment surcharge" "$(rc_value "$rc_sh")"
+done
+[[ -n $REAL_ZSH ]] || printf '  %s zsh absent : cas zsh non joués\n' "-"
 
 test_done
