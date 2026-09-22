@@ -33,17 +33,32 @@ Découpage des modules du script de configuration, convenu le 15 septembre 2026.
 | 70 | `gnome` | bureau | réglages dconf, thème, clavier, raccourcis | oui |
 | 80 | `projets` | projets | clones Bitbucket Desjardins, `make setup` | |
 
-Le helper AppImage de `lib/` (déplacement dans `~/Applications`, fichier `.desktop` avec icône) est introduit par le premier module qui en a besoin.
+Le helper AppImage de `lib/` (déplacement dans `~/Applications`, fichier `.desktop` avec icône) est introduit par la **vague 0**, avec les autres helpers partagés — et non plus par le premier module qui en a besoin (révisé le 22 sept 2026 : deux modules d'une même vague l'écriraient en double).
 
 ## Ordre des changes
+
+Les quatre premiers changes ont été faits un à un. La suite est organisée en **vagues** : les modules d'une vague ne dépendent pas les uns des autres et peuvent être implémentés en parallèle, dans des worktrees git séparés (voir « Vagues et parallélisme »).
 
 1. `setup-socle` — bootstrap, runner, contrat, `lib/`, `base`, `1password` — **fait**, archivé le 18 sept 2026 (avec `1password-integration-app` : connexion guidée sans étape manuelle)
 2. `shell` — tranche la gestion des fichiers de config, dont tout le reste dépend — **fait**, archivé le 18 sept 2026
 3. `git` — fixe la convention des secrets `op://Private/<Item>/<champ>` — **fait** (18 sept 2026 ; `gh` depuis le dépôt officiel, clé SSH par l'agent avec l'app ou fichier depuis 1Password sans app)
-4. `navigateur` (+ extension 1Password, Brave Sync) — **fait** (21 sept 2026 ; validé en VM), nécessaire avant `gh auth login` sur un poste neuf
-5. `cli-tools`, `terminal`
-6. `node`, `docker`, `dev-tools`
-7. `vscode`, `claude-desktop`
-8. `obsidian`, `rocketchat`, `thunderbird`, `spotify`, `vpn`
-9. `gnome`
-10. `projets`
+4. `navigateur` (+ extension 1Password, Brave Sync) — **fait** (21 sept 2026 ; validé en VM, archivé le 22 sept 2026), nécessaire avant `gh auth login` sur un poste neuf
+5. **Vague 0** — `socle-partage`, un change **sans module** : `config/shell/commonrc.d/` (chaque module y dépose son fragment au lieu d'éditer `commonrc`) et les helpers `lib/` que les vagues suivantes partagent — installation d'un `.deb` depuis une URL, AppImage (`~/Applications` + `.desktop` avec icône), police, `dconf`. **À faire seule** : c'est elle qui rend les vagues suivantes parallélisables.
+6. **Vague 1** — `cli-tools`, `terminal`, `docker`
+7. **Vague 2** — `node`, puis `dev-tools` (seule vraie dépendance : Claude Code et twg CLI passent par npm) ; `vscode` et `claude-desktop` en parallèle
+8. **Vague 3** — `obsidian`, `rocketchat`, `thunderbird`, `spotify`, `vpn` — la plus parallélisable : mêmes helpers, périmètres indépendants
+9. **Vague 4** — `gnome` (après `terminal`, pour le raccourci du terminal par défaut), puis `projets` (après `git`, `node`, `docker`)
+
+## Vagues et parallélisme
+
+Convenu le 22 septembre 2026. Une vague = des modules sans dépendance entre eux, specés ensemble dans une même session (pour que les décisions croisées restent cohérentes), puis implémentés en parallèle.
+
+**Règle : on ne spece qu'une vague d'avance, et on ne la lance qu'une fois la précédente validée en VM.** Raison mesurée sur `navigateur` : après le premier commit de code, `spec.md` n'a été corrigé qu'une seule fois, mais `design.md` cinq fois, dont trois explicitement « vu en VM » (`--allow-downgrades`, sentinelle `First Run`, `Preferences` en `Status: user`). Le *quoi* se spece d'avance ; le *comment* ne survit pas au contact de la machine. Specer plusieurs vagues d'avance revient à corriger autant de designs à chaque découverte.
+
+**Trois ressources partagées** — à connaître avant de toucher quoi que ce soit depuis un worktree :
+
+1. `config/shell/commonrc` — plusieurs modules veulent y ajouter des lignes (fzf, zoxide, bat, nvm, docker). Une fois la vague 0 faite, **ne plus l'éditer** : déposer un fragment dans `config/shell/commonrc.d/`.
+2. `lib/` — les helpers sont communs à tous les modules. Un helper manquant se rajoute dans la vague 0, ou dans un change à part ; jamais en double dans deux modules d'une même vague.
+3. **La VM Hyper-V** — un seul snapshot « vierge », un seul `ssh vm`. Le développement se parallélise, **la validation de bout en bout se fait en file**.
+
+Sans conflit, donc sans précaution particulière : `modules/NN-*.sh` (préfixes déjà attribués par le tableau ci-dessus), `tests/test-*.sh` (`run-all.sh` fait un glob, pas de registre à éditer), `openspec/specs/<capacité>/` et `openspec/changes/`. Seul `ROADMAP.md` produira des conflits, triviaux.
