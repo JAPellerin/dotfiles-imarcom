@@ -15,7 +15,7 @@ Relevé sur Ubuntu 26.04.1 (resolute), la même version que la machine cible : l
 ### D1. `bat` et `fd` par des liens dans `~/.local/bin`, pas par des alias
 Un alias (`alias bat=batcat` dans le fragment) n'existe que dans un shell interactif : il ne sert ni dans un script, ni dans un `xargs`, ni dans l'aperçu que `fzf` lance dans un sous-processus — or cet aperçu appelle justement `bat`. Le lien `~/.local/bin/bat → /usr/bin/batcat` fonctionne partout, sans dépendre du shell.
 Alternatives rejetées : les alias (cassent l'aperçu `fzf`, cas concret et immédiat) ; `dpkg-divert` ou un lien dans `/usr/local/bin` (écriture système avec `sudo` pour un confort utilisateur, et conflit potentiel avec un vrai paquet `bat` futur).
-Garde-fou : si `~/.local/bin/bat` existe et n'est pas le lien attendu, le module le **laisse intact** et le signale (`log_warn`). Le poste peut avoir un vrai binaire installé à la main ; l'écraser serait une perte silencieuse. `module_check` renvoie alors « à faire », ce qui est exact : la configuration attendue n'est pas en place.
+Garde-fou (**confirmé par l'utilisateur le 22 sept 2026**, contre la sauvegarde en `.bak` du reste du projet) : si `~/.local/bin/bat` existe et n'est pas le lien attendu, le module le **laisse intact** et le signale (`log_warn`). Le poste peut avoir un vrai binaire installé à la main ; l'écraser serait une perte silencieuse. `module_check` renvoie alors « à faire », ce qui est exact : la configuration attendue n'est pas en place.
 
 ### D2. Le lien vise le binaire réel, résolu à l'exécution
 La cible est lue par `command -v batcat` plutôt qu'écrite en dur (`/usr/bin/batcat`) : le chemin appartient au paquet, pas au script, et un binaire déplacé par une version future d'Ubuntu n'oblige pas à corriger le module. Si la commande est introuvable après l'installation, le module échoue en la nommant — c'est le symptôme d'un paquet qui a changé de forme, pas quelque chose à contourner en silence.
@@ -32,7 +32,7 @@ export FZF_DEFAULT_COMMAND FZF_CTRL_T_COMMAND FZF_DEFAULT_OPTS
 Rien d'autre ne va dans le fragment : `ripgrep`, `lazygit` et `psql` n'ont besoin d'aucune variable, et `zoxide` comme `fzf` s'initialisent par shell (D4).
 Le fragment MUST NOT contenir de garde `command -v` : le lien n'existe que si le module est installé, ce qui est précisément l'intérêt d'un lien par fragment (`openspec/specs/config-files/spec.md`).
 
-### D4. Initialisation propre à chaque shell : `bashrc-extra.sh` rattrape `zshrc`
+### D4. Initialisation propre à chaque shell : `bashrc-extra.sh` rattrape `zshrc` (confirmé le 22 sept 2026)
 `fzf` et `zoxide` s'initialisent par une forme différente selon le shell (`fzf --bash` / `fzf --zsh`, `zoxide init bash` / `zoxide init zsh`) : cela ne peut pas vivre dans un fragment POSIX commun. `zshrc` le fait déjà ; on ajoute les deux lignes équivalentes à `bashrc-extra.sh`, sous la même garde `command -v`.
 Pourquoi ici et pas dans le module `shell` : ces lignes n'ont d'effet que si `cli-tools` a installé les outils, et c'est ce module qui rend l'asymétrie visible. Elle est antérieure (constatée le 22 sept 2026 en écrivant la vague 0) mais n'avait aucun effet tant que ni `fzf` ni `zoxide` n'étaient installés.
 
@@ -52,7 +52,7 @@ Le contenu du fragment est vérifié par un chargement réel dans `sh`, `bash` e
 - [Un `~/.local/bin/bat` laissé intact bloque `module_check` à « à faire » indéfiniment] → c'est voulu et visible : le message nomme le fichier et l'action à faire (le retirer). Écraser silencieusement serait pire.
 - [`FZF_DEFAULT_OPTS` défini dans le fragment écrase un réglage personnel posé ailleurs] → le fragment est chargé en dernier, donc il gagne. C'est le prix de la convention ; un réglage personnel a sa place dans `~/.commonrc.d/` sous un nom qui passe après (`zz-perso.sh`), ce que l'ordre lexicographique garantit.
 - [`fd --hidden` explore des dossiers volumineux (`node_modules`, `.venv`) et ralentit `fzf`] → `fd` respecte `.gitignore` par défaut, ce qui écarte ces dossiers dans un dépôt ; hors dépôt le cas reste possible, à corriger dans le fragment si l'usage le montre.
-- [`lazygit` et `postgresql-client` n'ont, comme `yq`, aucun besoin consigné derrière eux] → ils restent au `ROADMAP.md` ; à retirer d'un mot si la relecture de cette proposition conclut la même chose que pour `yq`.
+- [`lazygit` et `postgresql-client` avaient, comme `yq`, été proposés sans besoin consigné derrière eux] → question posée le 22 sept 2026 : l'utilisateur **garde les deux**, contrairement à `yq`. Le doute est levé, ils font partie du module.
 
 ## Migration Plan
 
