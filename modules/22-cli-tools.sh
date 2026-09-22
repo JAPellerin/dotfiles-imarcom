@@ -10,12 +10,16 @@
 # annoncée dans la description des paquets Debian. Le module rétablit les noms
 # usuels par des liens dans ~/.local/bin, et non par des alias : l'aperçu de fzf
 # appelle `bat` dans un sous-processus non interactif, où un alias n'existe pas
-# (design D1). ~/.local/bin est déjà en tête du PATH par config/shell/commonrc.
+# (design D1). ~/.local/bin est mis en tête du PATH par config/shell/commonrc.
+#
+# Dépend de `shell` et pas seulement de `base` (D7) : sans lui, ~/.commonrc
+# n'existe pas, le fragment déposé ici n'est jamais chargé, et les initialisations
+# de fzf et zoxide — qui vivent dans zshrc et bashrc-extra.sh — non plus.
 # Voir openspec/changes/cli-tools/specs/module-cli-tools/spec.md et design.md.
 MODULE_NAME="cli-tools"
 MODULE_DESC="trousse CLI : ripgrep / fd / fzf / bat / zoxide / lazygit / client PostgreSQL"
 MODULE_GROUP="shell"
-MODULE_DEPS="base"
+MODULE_DEPS="base shell"
 
 CLI_TOOLS_PACKAGES=(ripgrep fd-find fzf bat zoxide lazygit postgresql-client)
 # commande réellement installée|nom usuel rétabli dans ~/.local/bin
@@ -85,7 +89,11 @@ _cli_tools_rename() {
     return 0
   fi
   if [[ -e $target || -L $target ]]; then
-    log_warn "$target existe et ne pointe pas vers $src : laissé intact. Le retirer puis relancer le module pour disposer de « $usual »."
+    # Rien n'est écrasé (D1), mais le module se terminera « fait » alors que
+    # module_check dira « à faire » : sans étape manuelle, l'écart ne se voit
+    # que dans le journal qui a défilé.
+    log_warn "$target existe et ne pointe pas vers $src : laissé intact."
+    manual_step "Retirer $target (il ne pointe pas vers $src), puis relancer ./setup.sh cli-tools pour disposer de « $usual »."
     return 0
   fi
   mkdir -p -- "$CLI_TOOLS_BIN_DIR" || return 1
