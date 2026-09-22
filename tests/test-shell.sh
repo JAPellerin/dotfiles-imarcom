@@ -137,4 +137,51 @@ for rc_sh in "${RC_SHELLS[@]}"; do
 done
 [[ -n $REAL_ZSH ]] || printf '  %s zsh absent : cas zsh non joués\n' "-"
 
+printf '%s\n' "== outils optionnels : fzf et zoxide =="
+# Chaque shell active fzf et zoxide sous garde `command -v`, dans sa forme propre
+# (`fzf --bash` / `fzf --zsh`). On charge les vrais fichiers versionnés dans un
+# HOME à part : zshrc n'exige que $ZSH/oh-my-zsh.sh, tout le reste y est gardé.
+# Les doublures émettent le code d'initialisation, réduit à un marqueur nommant
+# le shell demandé — ce qui vérifie aussi que chacun reçoit la bonne forme.
+OPT_HOME="$TEST_TMP/opt-home"
+mkdir -p "$OPT_HOME/.oh-my-zsh" "$TEST_TMP/optbin"
+: >"$OPT_HOME/.oh-my-zsh/oh-my-zsh.sh"
+ln -sfn "$DOTFILES_DIR/config/shell/commonrc" "$OPT_HOME/.commonrc"
+cat >"$TEST_TMP/optbin/fzf" <<'FAKE'
+#!/usr/bin/env bash
+printf 'MARQUEUR_FZF=%s\n' "${1#--}"
+FAKE
+cat >"$TEST_TMP/optbin/zoxide" <<'FAKE'
+#!/usr/bin/env bash
+printf 'MARQUEUR_ZOXIDE=%s\n' "$2"
+FAKE
+chmod +x "$TEST_TMP/optbin/"*
+
+# opt_run <shell> <fichier à charger> <PATH> : marqueurs après chargement.
+opt_run() {
+  env -i HOME="$OPT_HOME" PATH="$3" "$1" -c \
+    ". '$2'; printf '%s %s' \"\$MARQUEUR_FZF\" \"\$MARQUEUR_ZOXIDE\"" 2>/dev/null
+}
+# opt_stderr <shell> <fichier> <PATH> : sortie d'erreur du chargement.
+opt_stderr() { { env -i HOME="$OPT_HOME" PATH="$3" "$1" -c ". '$2'" >/dev/null; } 2>&1; }
+
+OPT_PATH="$TEST_TMP/optbin:/usr/bin:/bin"
+BASH_EXTRA="$DOTFILES_DIR/config/shell/bashrc-extra.sh"
+assert_eq "bash : fzf et zoxide initialisés dans leur forme bash" \
+  "bash bash" "$(opt_run bash "$BASH_EXTRA" "$OPT_PATH")"
+assert_eq "bash : aucun message" "" "$(opt_stderr bash "$BASH_EXTRA" "$OPT_PATH")"
+assert_eq "bash : rien d'initialisé si les outils sont absents" \
+  " " "$(opt_run bash "$BASH_EXTRA" /usr/bin:/bin)"
+assert_eq "bash : toujours aucun message sans les outils" "" "$(opt_stderr bash "$BASH_EXTRA" /usr/bin:/bin)"
+
+if [[ -n $REAL_ZSH ]]; then
+  ZSHRC="$DOTFILES_DIR/config/shell/zshrc"
+  assert_eq "zsh : fzf et zoxide initialisés dans leur forme zsh" \
+    "zsh zsh" "$(opt_run "$REAL_ZSH" "$ZSHRC" "$OPT_PATH")"
+  assert_eq "zsh : aucun message" "" "$(opt_stderr "$REAL_ZSH" "$ZSHRC" "$OPT_PATH")"
+  assert_eq "zsh : rien d'initialisé si les outils sont absents" \
+    " " "$(opt_run "$REAL_ZSH" "$ZSHRC" /usr/bin:/bin)"
+  assert_eq "zsh : toujours aucun message sans les outils" "" "$(opt_stderr "$REAL_ZSH" "$ZSHRC" /usr/bin:/bin)"
+fi
+
 test_done

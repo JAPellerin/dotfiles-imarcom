@@ -8,6 +8,11 @@
 [ -f "$HOME/.commonrc" ] && . "$HOME/.commonrc"
 [ -s "${NVM_DIR:-$HOME/.nvm}/bash_completion" ] && . "${NVM_DIR:-$HOME/.nvm}/bash_completion"   # complétion nvm
 
+# Outils optionnels (installés par le module `cli-tools`) : activés seulement
+# s'ils sont là. Formes propres à bash — zshrc a les siennes (`fzf --zsh`).
+command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash)"   # `z <dossier>` — https://github.com/ajeetdsouza/zoxide
+command -v fzf >/dev/null 2>&1 && eval "$(fzf --bash)"            # Ctrl-R, Ctrl-T, Alt-C — fzf ≥ 0.48
+
 # Branche git dans l'invite : __git_ps1 vient de /usr/lib/git-core/git-sh-prompt (paquet git).
 if [ -f /usr/lib/git-core/git-sh-prompt ]; then
     . /usr/lib/git-core/git-sh-prompt

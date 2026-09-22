@@ -1,8 +1,8 @@
 ## 1. Fragment et intégration shell
 
-- [ ] 1.1 `config/cli-tools/commonrc.sh` : les trois variables `FZF_*` de D3, en POSIX, sans garde `command -v` ; vérifier `shellcheck config/cli-tools/commonrc.sh` propre (le motif `git ls-files` de la ligne de lint le prend désormais) et qu'un chargement dans `sh`, `bash` et `zsh` définit `FZF_DEFAULT_COMMAND`
-- [ ] 1.2 `config/shell/bashrc-extra.sh` : activation de `zoxide` et `fzf` sous garde `command -v` (D4, formes `zoxide init bash` et `fzf --bash`), à l'image des lignes 123-124 de `zshrc` ; vérifier `shellcheck` propre, `bash -ic true` sans message avec et sans les outils installés
-- [ ] 1.3 `tests/test-shell.sh` : ajouter le cas « outils optionnels présents » de la spec modifiée (doublures `fzf` et `zoxide` dans le `PATH` → les deux shells démarrent sans erreur et l'initialisation a bien eu lieu) ; vérifier `bash tests/test-shell.sh` vert
+- [x] 1.1 `config/cli-tools/commonrc.sh` : les trois variables `FZF_*` de D3, en POSIX, sans garde `command -v` ; vérifier `shellcheck config/cli-tools/commonrc.sh` propre (le motif `git ls-files` de la ligne de lint le prend désormais) et qu'un chargement dans `sh`, `bash` et `zsh` définit `FZF_DEFAULT_COMMAND`
+- [x] 1.2 `config/shell/bashrc-extra.sh` : activation de `zoxide` et `fzf` sous garde `command -v` (D4, formes `zoxide init bash` et `fzf --bash`), à l'image des lignes 123-124 de `zshrc` ; vérifier `shellcheck` propre, `bash -ic true` sans message avec et sans les outils installés
+- [x] 1.3 `tests/test-shell.sh` : ajouter le cas « outils optionnels présents » de la spec modifiée (doublures `fzf` et `zoxide` dans le `PATH` → les deux shells démarrent sans erreur et l'initialisation a bien eu lieu) ; vérifier `bash tests/test-shell.sh` vert
 
 ## 2. Module `cli-tools`
 
