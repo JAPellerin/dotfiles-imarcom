@@ -24,6 +24,8 @@ source "$DOTFILES_DIR/lib/apt.sh"
 source "$DOTFILES_DIR/lib/op.sh"
 # shellcheck source=lib/files.sh
 source "$DOTFILES_DIR/lib/files.sh"
+# shellcheck source=lib/fonts.sh
+source "$DOTFILES_DIR/lib/fonts.sh"
 # shellcheck source=lib/module.sh
 source "$DOTFILES_DIR/lib/module.sh"
 
