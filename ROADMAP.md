@@ -17,7 +17,7 @@ Découpage des modules du script de configuration, convenu le 15 septembre 2026.
 | 10 | `1password` | systeme | app + CLI `op`, agent SSH | app seulement |
 | 20 | `shell` | shell | zsh, oh-my-zsh, Powerlevel10k, plugins, `.commonrc` / `.zshrc` / `.bashrc`, **mécanisme de déploiement des fichiers de config** — tranché le 18 sept 2026 : liens symboliques depuis `config/<module>/` via `link_config` (`lib/files.sh`), `chezmoi` réévalué si des différences par machine apparaissent | |
 | 21 | `terminal` | shell | Ghostty + config + police Nerd Font | oui |
-| 22 | `cli-tools` | shell | ripgrep, fd, fzf, bat, zoxide, lazygit, postgresql-client, yq (`git-delta` est installé par `git`) | |
+| 22 | `cli-tools` | shell | ripgrep, fd, fzf, bat, zoxide, lazygit, postgresql-client (`git-delta` est installé par `git`) — **`yq` retiré le 22 sept 2026** : arrivé dans la liste avec la trousse « CLI moderne » standard, sans besoin de l'utilisateur derrière ; à rajouter le jour où un YAML demande à être modifié en script (une ligne, ou `apt_install_deb_url` pour le `yq` v4 de mikefarah, le paquet `yq` d'Ubuntu étant l'enveloppe jq de kislyuk) | |
 | 30 | `git` | dev | `user.*`, delta, clé SSH depuis 1Password (convention `op://` fixée ici), `gh`, known_hosts | |
 | 40 | `node` | dev | nvm, Node 26, pnpm 11, globaux npm (openspec) | |
 | 41 | `docker` | dev | Docker Engine (dépôt apt officiel), groupe `docker` | |
