@@ -37,6 +37,8 @@ Dans `lib/apt.sh`, à côté des autres helpers apt. `pkg_installed` en garde ; 
 `run_sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q "$tmp/paquet.deb"` sous `ui_spin`.
 `apt-get install <fichier>` (chemin absolu) résout et installe les dépendances en une passe.
 Alternative rejetée : `dpkg -i` suivi de `apt-get -f install` — deux étapes, avec un système en état cassé entre les deux si la seconde échoue.
+
+**Correction du 22 sept 2026 (contre-vérification)** : `mktemp -d` crée le dossier en `0700`. apt abandonne ses privilèges au profit de l'utilisateur `_apt` pour lire le fichier qu'on lui désigne ; ne pouvant pas traverser le dossier, il se rabat sur une acquisition non sandboxée et l'annonce à chaque appel (« Download is performed unsandboxed as root as file … couldn't be accessed by user '_apt' »). D'où un `chmod 0755` sur le dossier temporaire : il ne contient qu'un paquet public, déjà téléchargé depuis une URL publique.
 Choix assumé : **pas de vérification de version**. Le helper ne fait rien si le paquet est installé, quelle que soit sa version ; une mise à jour reste une décision du module (le cas se posera pour `obsidian` en vague 3, pas avant).
 
 ### D5. `install_font <url> <famille> [dossier]` : extraction en temporaire, copie finale
@@ -44,6 +46,10 @@ Nouveau fichier `lib/fonts.sh` (chargé par `setup.sh` comme les autres), plutô
 Déroulé : `apt_install fontconfig` si `fc-list` manque ; garde `fc-list : family | grep -qiF "<famille>"` ; sinon `mktemp -d` + `add_cleanup`, `curl` de l'archive, `unzip -q` dans le temporaire, copie des seuls `*.ttf`/`*.otf` vers `$FONTS_DIR/<dossier>/`, puis `fc-cache -f "$FONTS_DIR"` et re-vérification de la famille. `FONTS_DIR="${FONTS_DIR:-$HOME/.local/share/fonts}"`, surchargeable pour les tests.
 L'extraction en temporaire d'abord donne gratuitement l'exigence « pas de dossier de police incomplet » : le dossier final n'est créé qu'une fois l'archive lue avec succès. Installation **utilisateur**, jamais `sudo` : une police par utilisateur suffit et évite `/usr/local/share/fonts`.
 `<dossier>` par défaut = `<famille>` sans espaces. Pas de format autre que `.zip` : c'est celui des *releases* Nerd Fonts, et un second format s'ajoutera quand un module en aura besoin.
+
+**Corrections du 22 sept 2026 (contre-vérification)**, deux écarts à la spec :
+- la garde comparait la famille **par sous-chaîne** (`grep -qiF`) : « JetBrainsMono Nerd Font » aurait été tenue pour installée par la seule présence de « JetBrainsMono Nerd Font Mono ». `fc-list : family` sort une famille par ligne, ses alias séparés par des virgules et certains caractères échappés (« Unifont\-JP ») : d'où `tr ',' '\n' | tr -d '\\' | grep -qixF`, comparaison exacte champ par champ ;
+- le dossier de police n'était retiré, quand `fontconfig` ne reconnaissait pas la famille après copie, que s'il venait d'être créé — un dossier préexistant restait modifié, ce que « MUST NOT laisser de dossier de police incomplet » interdit. Désormais les fichiers copiés sont retirés un à un, puis le dossier par `rmdir` s'il est devenu vide : une police déjà en place dans le même dossier survit.
 
 ### D6. Tests hors ligne
 `curl` accepte `file://` : les deux helpers se testent avec une URL locale, sans doublure de `curl` ni réseau.

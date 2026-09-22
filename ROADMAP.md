@@ -33,7 +33,7 @@ Découpage des modules du script de configuration, convenu le 15 septembre 2026.
 | 70 | `gnome` | bureau | réglages dconf, thème, clavier, raccourcis | oui |
 | 80 | `projets` | projets | clones Bitbucket Desjardins, `make setup` | |
 
-Le helper AppImage de `lib/` (déplacement dans `~/Applications`, fichier `.desktop` avec icône) est introduit par la **vague 0**, avec les autres helpers partagés — et non plus par le premier module qui en a besoin (révisé le 22 sept 2026 : deux modules d'une même vague l'écriraient en double).
+Le helper AppImage de `lib/` (déplacement dans `~/Applications`, fichier `.desktop` avec icône) et le helper `dconf` sont introduits par la vague qui les emploiera — respectivement la **vague 3** et la **vague 4** (22 sept 2026 : la vague 0 a été réduite aux besoins de la vague 1). La règle qui demeure : un helper partagé par plusieurs modules d'une même vague s'écrit **avant** elle, dans un change à part, jamais dans l'un des modules — son voisin l'écrirait en double.
 
 ## Ordre des changes
 
@@ -43,7 +43,7 @@ Les quatre premiers changes ont été faits un à un. La suite est organisée en
 2. `shell` — tranche la gestion des fichiers de config, dont tout le reste dépend — **fait**, archivé le 18 sept 2026
 3. `git` — fixe la convention des secrets `op://Private/<Item>/<champ>` — **fait** (18 sept 2026 ; `gh` depuis le dépôt officiel, clé SSH par l'agent avec l'app ou fichier depuis 1Password sans app)
 4. `navigateur` (+ extension 1Password, Brave Sync) — **fait** (21 sept 2026 ; validé en VM, archivé le 22 sept 2026), nécessaire avant `gh auth login` sur un poste neuf
-5. **Vague 0** — `socle-partage`, un change **sans module** : `config/shell/commonrc.d/` (chaque module y dépose son fragment au lieu d'éditer `commonrc`) et les helpers `lib/` que les vagues suivantes partagent — installation d'un `.deb` depuis une URL, AppImage (`~/Applications` + `.desktop` avec icône), police, `dconf`. **À faire seule** : c'est elle qui rend les vagues suivantes parallélisables. — **faite** (22 sept 2026), avec la portée réduite aux besoins de la vague 1 : fragments `~/.commonrc.d/`, `apt_install_deb_url` et `install_font` (`lib/fonts.sh`). Les helpers **AppImage** et **`dconf`** ont été reportés aux vagues 3 et 4, qui les emploieront.
+5. **Vague 0** — `socle-partage`, un change **sans module** : les fragments de config shell par module (chacun versionne `config/<module>/commonrc.sh` au lieu d'éditer `commonrc`) et les helpers `lib/` que les vagues suivantes partagent — installation d'un `.deb` depuis une URL, AppImage (`~/Applications` + `.desktop` avec icône), police, `dconf`. **À faire seule** : c'est elle qui rend les vagues suivantes parallélisables. — **faite** (22 sept 2026), avec la portée réduite aux besoins de la vague 1 : fragments `~/.commonrc.d/`, `apt_install_deb_url` et `install_font` (`lib/fonts.sh`). Les helpers **AppImage** et **`dconf`** ont été reportés aux vagues 3 et 4, qui les emploieront.
 6. **Vague 1** — `cli-tools`, `terminal`, `docker`
 7. **Vague 2** — `node`, puis `dev-tools` (seule vraie dépendance : Claude Code et twg CLI passent par npm) ; `vscode` et `claude-desktop` en parallèle
 8. **Vague 3** — `obsidian`, `rocketchat`, `thunderbird`, `spotify`, `vpn` — la plus parallélisable : mêmes helpers, périmètres indépendants
@@ -57,7 +57,7 @@ Convenu le 22 septembre 2026. Une vague = des modules sans dépendance entre eux
 
 **Trois ressources partagées** — à connaître avant de toucher quoi que ce soit depuis un worktree :
 
-1. `config/shell/commonrc` — plusieurs modules veulent y ajouter des lignes (fzf, zoxide, bat, nvm, docker). Une fois la vague 0 faite, **ne plus l'éditer** : déposer un fragment dans `config/shell/commonrc.d/`.
+1. `config/shell/commonrc` — plusieurs modules veulent y ajouter des lignes (fzf, zoxide, bat, nvm, docker). Depuis la vague 0, **ne plus l'éditer** : versionner `config/<module>/commonrc.sh` et le lier par `link_config` vers `~/.commonrc.d/<module>.sh` (un lien par module, chargé seulement si le module est installé).
 2. `lib/` — les helpers sont communs à tous les modules. Un helper manquant se rajoute dans la vague 0, ou dans un change à part ; jamais en double dans deux modules d'une même vague.
 3. **La VM Hyper-V** — un seul snapshot « vierge », un seul `ssh vm`. Le développement se parallélise, **la validation de bout en bout se fait en file**.
 

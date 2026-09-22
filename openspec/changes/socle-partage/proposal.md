@@ -12,7 +12,7 @@ Cette vague 0 pose donc les deux mécanismes partagés **avant** d'ouvrir les wo
   - à partir de là, `config/shell/commonrc` **ne doit plus être édité par un module**.
 - **`apt_install_deb_url <url> <paquet>`** (`lib/apt.sh`) : installe un paquet `.deb` téléchargé depuis une URL (éditeur ou *release* GitHub) en laissant apt résoudre les dépendances, sans rien faire si le paquet est déjà installé. Premier besoin connu : `terminal` (Ghostty, selon ce que la recon de la vague 1 établira), puis `obsidian` en vague 3.
 - **`install_font <url> <famille> [dossier]`** (nouveau `lib/fonts.sh`) : installe une police depuis une archive `.zip` dans `~/.local/share/fonts/`, rafraîchit le cache `fontconfig` et ne fait rien si la famille est déjà connue du système. Besoin de `terminal` (Nerd Font pour Powerlevel10k et Ghostty).
-- **Tests** : `tests/test-fonts.sh`, cas ajoutés à `tests/test-apt.sh` (`.deb` par URL) et `tests/test-files.sh` / `tests/test-shell.sh` (fragments), tous hors ligne et sans sudo comme les existants.
+- **Tests** : `tests/test-fonts.sh` (nouveau), cas ajoutés à `tests/test-apt.sh` (`.deb` par URL) et à `tests/test-shell.sh` (fragments, joués par de vrais `sh`, `bash` et `zsh`), tous hors ligne et sans sudo comme les existants. `tests/test-files.sh` n'a rien à gagner : la convention des fragments n'emploie que `link_config`/`config_linked`, déjà couverts.
 
 Hors périmètre, assumé explicitement :
 
