@@ -16,6 +16,6 @@
 
 ## 4. Vérification d'ensemble et documentation
 
-- [ ] 4.1 Lint et tests complets : ajouter `config/*/commonrc.sh` à la ligne `shellcheck` de `CLAUDE.md` (motif pour les fragments à venir, D7/Risks) ; vérifier `shellcheck setup.sh bootstrap.sh lib/*.sh modules/*.sh tests/*.sh tests/fixtures/*/*.sh config/shell/commonrc config/shell/bashrc-extra.sh` sans avertissement et `bash tests/run-all.sh` vert
+- [x] 4.1 Lint et tests complets : ajouter `config/*/commonrc.sh` à la ligne `shellcheck` de `CLAUDE.md` (motif pour les fragments à venir, D7/Risks) ; vérifier `shellcheck setup.sh bootstrap.sh lib/*.sh modules/*.sh tests/*.sh tests/fixtures/*/*.sh config/shell/commonrc config/shell/bashrc-extra.sh` sans avertissement et `bash tests/run-all.sh` vert
 - [ ] 4.2 Exécution réelle dans la WSL : `git pull` puis, dans un nouveau terminal, vérifier que `~/.commonrc` (lien vers le dépôt) charge bien un fragment d'essai déposé à la main dans `~/.commonrc.d`, puis le retirer ; `./setup.sh shell` → « déjà fait » (le module n'a pas changé) ; `./setup.sh --list` inchangé
-- [ ] 4.3 `CLAUDE.md` : mentionner `~/.commonrc.d/` comme point d'extension de la config shell commune (un fragment `config/<module>/commonrc.sh` par module, `commonrc` n'est plus édité par un module) et les deux nouveaux helpers dans la liste des helpers de `lib/` ; `ROADMAP.md` : vague 0 faite ; `openspec validate socle-partage --strict` vert
+- [x] 4.3 `CLAUDE.md` : mentionner `~/.commonrc.d/` comme point d'extension de la config shell commune (un fragment `config/<module>/commonrc.sh` par module, `commonrc` n'est plus édité par un module) et les deux nouveaux helpers dans la liste des helpers de `lib/` ; `ROADMAP.md` : vague 0 faite ; `openspec validate socle-partage --strict` vert
