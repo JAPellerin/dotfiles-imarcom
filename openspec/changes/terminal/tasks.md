@@ -1,8 +1,8 @@
 ## 1. Helper de police : fichiers en plus des archives
 
-- [ ] 1.1 `lib/fonts.sh` : nouvelle signature `install_font <famille> <dossier> <url...>` et traitement par extension (`.zip` extraite, `.ttf`/`.otf` installée telle quelle, nom de base décodé), le reste du déroulé inchangé (D2) ; vérifier `shellcheck lib/fonts.sh` propre
-- [ ] 1.2 `tests/test-fonts.sh` : les neuf appels passés à la nouvelle signature, plus les deux cas de D7 (installation depuis plusieurs URL de fichiers servies en `file://` ; une URL manquante → échec la nommant, aucun dossier laissé) ; vérifier `bash tests/test-fonts.sh` vert
-- [ ] 1.3 `CLAUDE.md` : la ligne des helpers du socle décrit `install_font` avec sa nouvelle signature ; vérifier qu'aucun autre appelant n'est resté sur l'ancienne (`grep -rn install_font`)
+- [x] 1.1 `lib/fonts.sh` : nouvelle signature `install_font <famille> <dossier> <url...>` et traitement par extension (`.zip` extraite, `.ttf`/`.otf` installée telle quelle, nom de base décodé), le reste du déroulé inchangé (D2) ; vérifier `shellcheck lib/fonts.sh` propre
+- [x] 1.2 `tests/test-fonts.sh` : les neuf appels passés à la nouvelle signature, plus les deux cas de D7 (installation depuis plusieurs URL de fichiers servies en `file://` ; une URL manquante → échec la nommant, aucun dossier laissé) ; vérifier `bash tests/test-fonts.sh` vert
+- [x] 1.3 `CLAUDE.md` : la ligne des helpers du socle décrit `install_font` avec sa nouvelle signature ; vérifier qu'aucun autre appelant n'est resté sur l'ancienne (`grep -rn install_font`)
 
 ## 2. Module `terminal`
 
