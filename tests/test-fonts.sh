@@ -60,6 +60,16 @@ printf 'Police\\-Test\n' >"$FAMILIES"
 assert_ok "caractère échappé par fontconfig" font_installed "Police-Test"
 printf 'Police Test\n' >"$FAMILIES"
 
+printf '%s\n' "== longue sortie de fc-list (SIGPIPE sous pipefail) =="
+# Régression du 22 sept 2026, vue en VM : avec `grep -q`, grep sort à la première
+# correspondance et tue fc-list par SIGPIPE ; sous `set -o pipefail`, que setup.sh
+# active, le pipeline renvoie 141 et la police passe pour absente. La doublure
+# doit donc écrire bien plus que le tampon d'un tube, la famille cherchée en tête.
+{ printf 'Police Longue\n'; seq 1 20000 | sed 's/^/Remplissage /'; } >"$FAMILIES"
+assert_ok "famille en tête d'une longue liste" font_installed "Police Longue"
+assert_fail "famille absente d'une longue liste" font_installed "Police Introuvable"
+printf 'Police Test\n' >"$FAMILIES"
+
 printf '%s\n' "== police déjà installée =="
 : >"$CALLS"
 assert_ok "réussit sans rien faire" install_font "Police Test" PoliceTest "$ZIP_URL"

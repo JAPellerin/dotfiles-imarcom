@@ -20,10 +20,14 @@ FONTS_DIR="${FONTS_DIR:-$HOME/.local/share/fonts}"
 # **exacte** (`-x`) et non par sous-chaîne : « JetBrainsMono Nerd Font » ne doit
 # pas être tenue pour installée par la seule présence de « JetBrainsMono Nerd
 # Font Mono ».
+# `grep -ixF … >/dev/null` et surtout **pas** `grep -q` : avec -q, grep sort dès
+# la première correspondance et tue fc-list par SIGPIPE ; sous `set -o pipefail`
+# — que setup.sh active — le pipeline renvoie alors 141 et la police est déclarée
+# absente alors qu'elle est là. Constaté en VM le 22 sept 2026, sur 234 familles.
 font_installed() {
   command -v fc-list >/dev/null 2>&1 || return 1
   # shellcheck disable=SC1003  # '\\' : contre-oblique littérale pour tr, pas une apostrophe échappée
-  fc-list : family 2>/dev/null | tr ',' '\n' | tr -d '\\' | grep -qixF -- "$1"
+  fc-list : family 2>/dev/null | tr ',' '\n' | tr -d '\\' | grep -ixF -- "$1" >/dev/null
 }
 
 # _font_basename <url> : nom de fichier lisible tiré de l'URL, pourcents décodés
