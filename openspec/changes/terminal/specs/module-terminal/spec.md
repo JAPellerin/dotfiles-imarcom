@@ -63,3 +63,14 @@ Le module SHALL faire de Ghostty le terminal par défaut du poste, par deux gest
 #### Scenario: Réglage impossible à constater
 - **WHEN** le module ne parvient pas à vérifier que Ghostty est bien le terminal par défaut
 - **THEN** il le signale, déclare l'étape manuelle correspondante et se termine sans erreur
+
+### Requirement: Session à rouvrir quand le shell de connexion vient de changer
+Un terminal démarre le shell annoncé par la session en cours, et non celui inscrit dans la base des comptes. Lorsque le shell de connexion de l'utilisateur a été changé après l'ouverture de la session courante — ce que fait le module `shell` dans la même exécution —, le module SHALL déclarer une étape manuelle demandant de rouvrir la session, afin que l'information figure dans le résumé final et pas seulement dans le journal. Cette situation étant transitoire, elle MUST NOT faire échouer le module ni entrer dans son critère « déjà fait ».
+
+#### Scenario: Session ouverte avant le changement de shell
+- **WHEN** le shell de connexion est zsh alors que la session courante annonce encore bash
+- **THEN** le module se termine sans erreur et le résumé final demande de rouvrir la session
+
+#### Scenario: Session à jour
+- **WHEN** la session courante annonce le même shell que le shell de connexion
+- **THEN** aucune étape manuelle n'est déclarée à ce titre
