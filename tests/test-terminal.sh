@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # tests/test-terminal.sh — module terminal avec un HOME isolé et des doublures
-# (dpkg-query, run_sudo, fc-list/fc-cache, update-alternatives, gsettings) :
+# (dpkg-query, run_sudo, fc-list/fc-cache, update-alternatives) :
 # aucune installation réelle et aucun réseau — la police est servie en file://,
 # avec des noms encodés côté URL comme le fait GitHub.
 # shellcheck source=lib.sh
@@ -25,7 +25,6 @@ INSTALLED="$TEST_TMP/installed"; : >"$INSTALLED"
 CALLS="$TEST_TMP/calls"; : >"$CALLS"
 FAMILIES="$TEST_TMP/families"; : >"$FAMILIES"
 NEXT="$TEST_TMP/families-next"; : >"$NEXT"
-SCHEMAS="$TEST_TMP/schemas"; : >"$SCHEMAS"
 ALT="$TEST_TMP/alt"; : >"$ALT"
 
 cat >"$TEST_TMP/bin/dpkg-query" <<'FAKE'
@@ -55,15 +54,6 @@ case ${1:-} in
     [ -e "$FAKE_DIR/alt-refuse" ] || printf '%s' "$3" >"$FAKE_DIR/alt" ;;
 esac
 printf 'update-alternatives %s\n' "$*" >>"$FAKE_DIR/calls"
-exit 0
-FAKE
-cat >"$TEST_TMP/bin/gsettings" <<'FAKE'
-#!/usr/bin/env bash
-case ${1:-} in
-  list-schemas) cat "$FAKE_DIR/schemas" 2>/dev/null ;;
-  set) printf "'%s'" "$4" >"$FAKE_DIR/gset" ;;
-  get) cat "$FAKE_DIR/gset" 2>/dev/null ;;
-esac
 exit 0
 FAKE
 chmod +x "$TEST_TMP/bin/"*
@@ -110,12 +100,12 @@ assert_eq "quatre fichiers de police installés" 4 "$(find "$FONTS_DIR/MesloLGSN
 assert_file "nom d'URL décodé" "$FONTS_DIR/MesloLGSNF/MesloLGS NF Bold Italic.ttf"
 assert_fail "module_check toujours à faire (configure pas encore passé)" module_check
 
-printf '%s\n' "== module_configure, sans schéma GNOME =="
+printf '%s\n' "== module_configure =="
 assert_ok "réussit" module_configure
 assert_ok "configuration liée" config_linked config/terminal/ghostty "$HOME/.config/ghostty/config"
 assert_contains "alternative enregistrée" "$(cat "$CALLS")" "--install /usr/bin/x-terminal-emulator x-terminal-emulator /usr/bin/ghostty"
 assert_contains "alternative sélectionnée" "$(cat "$CALLS")" "--set x-terminal-emulator /usr/bin/ghostty"
-assert_fail "schéma absent → aucun réglage GNOME écrit" test -e "$TEST_TMP/gset"
+assert_eq "Ghostty en tête de la liste des terminaux" "com.mitchellh.ghostty.desktop" "$(head -1 "$HOME/.config/xdg-terminals.list")"
 assert_ok "Ghostty est le terminal par défaut" _terminal_is_default
 assert_ok "module_check → déjà fait" module_check
 assert_eq "aucune étape manuelle" "" "$(cat "$MANUAL_STEPS_FILE")"
@@ -129,11 +119,13 @@ assert_ok "module_configure réussit" module_configure
 assert_eq "aucune nouvelle sélection d'alternative" 0 "$(count_calls -- '--set')"
 assert_ok "module_check → déjà fait" module_check
 
-printf '%s\n' "== schéma GNOME présent =="
-printf '%s\n' "org.gnome.desktop.default-applications.terminal" >"$SCHEMAS"
-: >"$ALT"
-assert_ok "module_configure réussit" module_configure
-assert_eq "GNOME reçoit Ghostty" "'/usr/bin/ghostty'" "$(cat "$TEST_TMP/gset")"
+printf '%s\n' "== liste de terminaux existante =="
+printf 'org.gnome.Ptyxis.desktop\ncom.mitchellh.ghostty.desktop\n' >"$HOME/.config/xdg-terminals.list"
+assert_fail "Ghostty ailleurs qu'en tête → à faire" module_check
+assert_ok "module_configure le remet en tête" module_configure
+assert_eq "Ghostty en tête" "com.mitchellh.ghostty.desktop" "$(head -1 "$HOME/.config/xdg-terminals.list")"
+assert_contains "l'autre terminal est conservé derrière" "$(cat "$HOME/.config/xdg-terminals.list")" "org.gnome.Ptyxis.desktop"
+assert_eq "sans doublon" 1 "$(grep -cxF 'com.mitchellh.ghostty.desktop' "$HOME/.config/xdg-terminals.list")"
 assert_ok "module_check → déjà fait" module_check
 
 printf '%s\n' "== terminal par défaut non constatable =="
@@ -159,6 +151,9 @@ assert_fail "configuration non liée → à faire" module_check
 assert_ok "module_configure la remet" module_configure
 : >"$ALT"
 assert_fail "alternative ailleurs → à faire" module_check
+assert_ok "module_configure la remet" module_configure
+rm -f "$HOME/.config/xdg-terminals.list"
+assert_fail "liste des terminaux absente → à faire" module_check
 assert_ok "module_configure la remet" module_configure
 assert_ok "module_check → déjà fait" module_check
 
