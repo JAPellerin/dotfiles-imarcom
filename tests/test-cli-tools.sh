@@ -3,7 +3,8 @@
 # (dpkg-query paramétrable par un fichier de paquets « installés », run_sudo qui
 # compte les apt-get et les simule en complétant ce fichier, faux batcat et
 # fdfind) : première application, installation partielle, réexécution, nom déjà
-# pris, fragment retiré. Aucune installation réelle, aucun réseau.
+# pris, binaire introuvable, fragment retiré. Aucune installation réelle, aucun
+# réseau.
 # shellcheck source=lib.sh
 source "$(dirname -- "${BASH_SOURCE[0]}")/lib.sh"
 # shellcheck source=../lib/ui.sh
@@ -73,6 +74,7 @@ assert_eq "bat vise le batcat du système" "$(readlink -f "$TEST_TMP/bin/batcat"
 assert_eq "fd vise le fdfind du système" "$(readlink -f "$TEST_TMP/bin/fdfind")" "$(readlink -f "$HOME/.local/bin/fd")"
 assert_eq "le nom usuel exécute bien l'outil" "batcat" "$("$HOME/.local/bin/bat")"
 assert_ok "fragment lié" config_linked config/cli-tools/commonrc.sh "$SHELL_COMMON_RC_DIR/cli-tools.sh"
+assert_eq "aucune étape manuelle consignée" "" "$(cat "$MANUAL_STEPS_FILE")"
 assert_ok "module_check → déjà fait" module_check
 assert_eq "config/shell/commonrc n'a pas été touché" "$COMMONRC_SUM" "$(cksum <"$DOTFILES_DIR/config/shell/commonrc")"
 
@@ -97,15 +99,35 @@ assert_not_contains "les paquets présents ne sont pas réinstallés" "$(grep 'a
 printf '%s\n' "== nom déjà pris par un vrai fichier =="
 rm -f "$HOME/.local/bin/fd"
 printf '#!/bin/sh\necho maison\n' >"$HOME/.local/bin/fd"; chmod +x "$HOME/.local/bin/fd"
+: >"$MANUAL_STEPS_FILE"
 out=$(module_configure 2>&1); rc=$?
 assert_eq "module_configure se termine sans erreur" 0 "$rc"
 assert_contains "le fichier est signalé" "$out" "laissé intact"
+assert_contains "une étape manuelle nomme le fichier à retirer" \
+  "$(cat "$MANUAL_STEPS_FILE")" "$HOME/.local/bin/fd"
 assert_ok "le fichier est resté un fichier ordinaire" test -f "$HOME/.local/bin/fd"
 assert_fail "…et n'est pas devenu un lien" test -L "$HOME/.local/bin/fd"
 assert_eq "son contenu est intact" "maison" "$("$HOME/.local/bin/fd")"
 assert_fail "module_check → à faire tant qu'il est là" module_check
 rm -f "$HOME/.local/bin/fd"
 assert_ok "retiré puis relancé : le lien est créé" module_configure
+assert_ok "module_check → déjà fait" module_check
+
+printf '%s\n' "== binaire introuvable après installation =="
+# Le paquet a changé de forme : la commande attendue n'existe pas. On éprouve la
+# branche sur une entrée fictive de la table plutôt qu'en retirant le faux
+# `batcat` du PATH — la machine de test a le vrai `/usr/bin/batcat`, qui prendrait
+# silencieusement le relais et rendrait le cas ininterprétable.
+RENAMED_SAVE=("${CLI_TOOLS_RENAMED[@]}")
+CLI_TOOLS_RENAMED=("commande-absente-dotfiles|outil-absent")
+out=$(module_configure 2>&1); rc=$?
+assert_eq "module_configure échoue" 1 "$rc"
+assert_contains "l'erreur nomme la commande" "$out" "commande-absente-dotfiles"
+assert_fail "aucun lien n'est créé" test -e "$HOME/.local/bin/outil-absent"
+assert_fail "aucune étape manuelle : ce n'est pas à l'utilisateur de corriger" \
+  grep -q "outil-absent" "$MANUAL_STEPS_FILE"
+CLI_TOOLS_RENAMED=("${RENAMED_SAVE[@]}")
+assert_ok "table rétablie : module_configure réussit" module_configure
 assert_ok "module_check → déjà fait" module_check
 
 printf '%s\n' "== fragment retiré =="
