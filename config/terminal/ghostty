@@ -1,0 +1,13 @@
+# config/terminal/ghostty — configuration de Ghostty, liée en ~/.config/ghostty/config
+# par le module `terminal`. Une clé par ligne, « clé = valeur ».
+# Documentation : https://ghostty.org/docs/config
+#
+# Volontairement minimal. **Aucun thème n'est fixé** : Ghostty en embarque une
+# liste que l'on ne peut consulter qu'une fois installé (`ghostty +list-themes`),
+# et en nommer un au jugé reviendrait à inventer une valeur. À compléter après
+# le passage en VM (design D3).
+
+# Police installée par le module. Sans une Nerd Font, Powerlevel10k affiche des
+# carrés vides à la place de ses icônes et de ses séparateurs.
+font-family = MesloLGS NF
+font-size = 11

@@ -6,10 +6,10 @@
 
 ## 2. Module `terminal`
 
-- [ ] 2.1 `config/terminal/ghostty` : les deux réglages de D3 (`font-family`, `font-size`), sans thème ; vérifier que le fichier est versionné et qu'aucune valeur n'y est inventée
-- [ ] 2.2 `modules/21-terminal.sh` (`MODULE_GROUP=shell`, `MODULE_DEPS="base shell"`, `MODULE_NEEDS_GUI=1`) — métadonnées, constantes (famille `MesloLGS NF`, les quatre URL, dossier de police) et `module_install` : `apt_install ghostty` puis `install_font` ; vérifier que `./setup.sh --list` affiche le module comme « non disponible ici » dans la WSL
-- [ ] 2.3 `module_configure` — `link_config` de la configuration, puis terminal par défaut selon D4 (alternative Debian enregistrée puis sélectionnée ; `gsettings` seulement si le schéma existe ; vérification après coup ; `manual_step` si rien ne se constate) ; `module_check` selon D6 sur ses quatre conditions
-- [ ] 2.4 `tests/test-terminal.sh` : les cas de D7 avec `HOME` isolé et doublures (`dpkg-query`, `run_sudo` comptant `apt-get` et `update-alternatives`, `fc-list`/`fc-cache`, `gsettings` avec ou sans schéma) ; vérifier `bash tests/run-all.sh` vert et `shellcheck` propre sur l'ensemble
+- [x] 2.1 `config/terminal/ghostty` : les deux réglages de D3 (`font-family`, `font-size`), sans thème ; vérifier que le fichier est versionné et qu'aucune valeur n'y est inventée
+- [x] 2.2 `modules/21-terminal.sh` (`MODULE_GROUP=shell`, `MODULE_DEPS="base shell"`, `MODULE_NEEDS_GUI=1`) — métadonnées, constantes (famille `MesloLGS NF`, les quatre URL, dossier de police) et `module_install` : `apt_install ghostty` puis `install_font` ; vérifier que `./setup.sh --list` affiche le module comme « non disponible ici » dans la WSL
+- [x] 2.3 `module_configure` — `link_config` de la configuration, puis terminal par défaut selon D4 (alternative Debian enregistrée puis sélectionnée ; `gsettings` seulement si le schéma existe ; vérification après coup ; `manual_step` si rien ne se constate) ; `module_check` selon D6 sur ses quatre conditions
+- [x] 2.4 `tests/test-terminal.sh` : les cas de D7 avec `HOME` isolé et doublures (`dpkg-query`, `run_sudo` comptant `apt-get` et `update-alternatives`, `fc-list`/`fc-cache`, `gsettings` avec ou sans schéma) ; vérifier `bash tests/run-all.sh` vert et `shellcheck` propre sur l'ensemble
 
 ## 3. Validation en VM et documentation
 
