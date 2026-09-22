@@ -46,15 +46,19 @@ Le module SHALL déployer `config/terminal/ghostty` vers `~/.config/ghostty/conf
 - **THEN** il est sauvegardé à côté avant que le lien ne soit créé
 
 ### Requirement: Ghostty comme terminal par défaut
-Le module SHALL faire de Ghostty le terminal par défaut du poste. Le paquet n'enregistrant pas d'alternative Debian, le module SHALL enregistrer `/usr/bin/ghostty` comme `x-terminal-emulator` puis le sélectionner, et SHALL appliquer en plus le réglage propre à GNOME lorsque son schéma est présent. Le module SHALL vérifier le résultat après application ; s'il ne peut pas l'établir, il SHALL le déclarer comme étape manuelle plutôt que de se déclarer fait.
+Le module SHALL faire de Ghostty le terminal par défaut du poste, par deux gestes. Le paquet n'enregistrant pas d'alternative Debian, le module SHALL enregistrer `/usr/bin/ghostty` comme `x-terminal-emulator` puis le sélectionner. Le bureau déléguant le choix du terminal à `xdg-terminal-exec`, le module SHALL en outre placer le fichier de bureau de Ghostty **en tête** de la liste des terminaux de l'utilisateur (`~/.config/xdg-terminals.list`), en conservant derrière les entrées déjà présentes et sans doublon. Le module MUST NOT redéfinir la clé du bureau qui désigne `xdg-terminal-exec` : l'écraser supprimerait cette délégation pour tout le système. Le module SHALL vérifier le résultat après application ; s'il ne peut pas l'établir, il SHALL le déclarer comme étape manuelle plutôt que de se déclarer fait.
 
 #### Scenario: Terminal par défaut appliqué
 - **WHEN** le module se termine sur un poste GNOME
-- **THEN** l'alternative `x-terminal-emulator` désigne `/usr/bin/ghostty`, et le raccourci du bureau qui ouvre un terminal ouvre Ghostty
+- **THEN** l'alternative `x-terminal-emulator` désigne `/usr/bin/ghostty`, le fichier de bureau de Ghostty est en tête de `~/.config/xdg-terminals.list`, et le raccourci du bureau qui ouvre un terminal ouvre Ghostty
 
 #### Scenario: Réexécution
 - **WHEN** le module est réexécuté alors que Ghostty est déjà le terminal par défaut
 - **THEN** rien n'est réécrit et le module se termine sans erreur
+
+#### Scenario: Liste de terminaux existante
+- **WHEN** `~/.config/xdg-terminals.list` contient déjà d'autres terminaux
+- **THEN** Ghostty passe en tête et les autres entrées sont conservées derrière lui, sans doublon
 
 #### Scenario: Réglage impossible à constater
 - **WHEN** le module ne parvient pas à vérifier que Ghostty est bien le terminal par défaut
