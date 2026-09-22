@@ -6,8 +6,8 @@
 
 ## 2. Helper `.deb` depuis une URL
 
-- [ ] 2.1 `lib/apt.sh` : `apt_install_deb_url <url> <paquet>` selon D4 (garde `pkg_installed`, `mktemp -d` + `add_cleanup`, `curl -fsSL`, contrôle `dpkg-deb --info`, `apt_update_once`, `apt-get install` du chemin absolu sous `ui_spin`), commentaire d'en-tête dans le style des helpers voisins ; vérifier `shellcheck lib/apt.sh` propre
-- [ ] 2.2 `tests/test-apt.sh` : les quatre cas de D6 avec un `.deb` construit par `dpkg-deb --build` et servi en `file://` (déjà installé → aucun appel ; installation → un `apt-get install` avec le chemin du fichier ; fichier non-`.deb` → échec sans `apt-get` ; URL absente → échec nommant l'URL, temporaire nettoyé) ; vérifier `bash tests/test-apt.sh` vert
+- [x] 2.1 `lib/apt.sh` : `apt_install_deb_url <url> <paquet>` selon D4 (garde `pkg_installed`, `mktemp -d` + `add_cleanup`, `curl -fsSL`, contrôle `dpkg-deb --info`, `apt_update_once`, `apt-get install` du chemin absolu sous `ui_spin`), commentaire d'en-tête dans le style des helpers voisins ; vérifier `shellcheck lib/apt.sh` propre
+- [x] 2.2 `tests/test-apt.sh` : les quatre cas de D6 avec un `.deb` construit par `dpkg-deb --build` et servi en `file://` (déjà installé → aucun appel ; installation → un `apt-get install` avec le chemin du fichier ; fichier non-`.deb` → échec sans `apt-get` ; URL absente → échec nommant l'URL, temporaire nettoyé) ; vérifier `bash tests/test-apt.sh` vert
 
 ## 3. Helper de police
 
