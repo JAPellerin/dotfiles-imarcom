@@ -18,7 +18,7 @@ Le module `shell` (groupe `shell`, dépend de `base`, sans session graphique req
 - **THEN** `module_check` retourne 0 et le module est « déjà fait »
 
 ### Requirement: Fichiers de configuration liés depuis le dépôt
-Le module SHALL déployer, via le helper de liens du socle, `config/shell/zshrc` → `~/.zshrc`, `config/shell/commonrc` → `~/.commonrc` et `config/shell/p10k.zsh` → `~/.p10k.zsh`. `~/.commonrc` MUST rester en syntaxe POSIX (chargé par bash et zsh) et SHALL charger, en dernier, chaque fichier `*.sh` du dossier des fragments `~/.commonrc.d` dans l'ordre lexicographique ; un dossier absent ou vide MUST NOT produire d'erreur ni de message. `~/.bashrc` SHALL rester le fichier fourni par Ubuntu, complété d'une ligne unique (idempotente) qui charge `config/shell/bashrc-extra.sh` (chargement de `.commonrc`, complétion nvm si présente, branche git dans l'invite). `.zshrc` SHALL activer les intégrations `fzf` et `zoxide` seulement si ces commandes sont présentes, sans erreur sinon.
+Le module SHALL déployer, via le helper de liens du socle, `config/shell/zshrc` → `~/.zshrc`, `config/shell/commonrc` → `~/.commonrc` et `config/shell/p10k.zsh` → `~/.p10k.zsh`. `~/.commonrc` MUST rester en syntaxe POSIX (chargé par bash et zsh) et SHALL charger, en dernier, chaque fichier `*.sh` du dossier des fragments `~/.commonrc.d` dans l'ordre lexicographique ; un dossier absent ou vide MUST NOT produire d'erreur ni de message. `~/.bashrc` SHALL rester le fichier fourni par Ubuntu, complété d'une ligne unique (idempotente) qui charge `config/shell/bashrc-extra.sh` (chargement de `.commonrc`, complétion nvm si présente, branche git dans l'invite). `.zshrc` **et `bashrc-extra.sh`** SHALL activer les intégrations `fzf` et `zoxide` seulement si ces commandes sont présentes, chacun dans la forme propre à son shell, sans erreur sinon.
 
 #### Scenario: Déploiement
 - **WHEN** le module se termine
@@ -26,7 +26,11 @@ Le module SHALL déployer, via le helper de liens du socle, `config/shell/zshrc`
 
 #### Scenario: Outils optionnels absents
 - **WHEN** `fzf` ou `zoxide` n'est pas installé
-- **THEN** `zsh -ic true` se termine sans message d'erreur
+- **THEN** `zsh -ic true` et `bash -ic true` se terminent sans message d'erreur
+
+#### Scenario: Outils optionnels présents
+- **WHEN** `fzf` et `zoxide` sont installés
+- **THEN** dans les deux shells, la fonction de saut de `zoxide` est définie et le raccourci de recherche d'historique de `fzf` est actif
 
 #### Scenario: Fragment chargé
 - **WHEN** `~/.commonrc.d/exemple.sh` définit une variable
