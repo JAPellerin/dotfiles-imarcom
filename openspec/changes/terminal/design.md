@@ -60,6 +60,12 @@ Le paquet n'enregistre rien (mesuré), donc le module fait les deux gestes :
 
 Vérification après coup des deux gestes, et `manual_step` si l'un ne se constate pas — le module ne se déclare pas fait sur un geste non vérifié.
 
+**Correction du 22 sept 2026 (premier passage réel en VM, tâche 3.1).** Le module a échoué sur `install_font` : les quatre fichiers téléchargés, `fc-cache` passé, et pourtant « fontconfig ne connaît pas la famille ». Cause : `font_installed` finissait par `| grep -qixF`. Avec `-q`, grep sort dès la première correspondance et tue `fc-list` en amont par **SIGPIPE** ; sous `set -o pipefail` — que `setup.sh` active — le pipeline renvoie alors **141**, et la police est déclarée absente alors qu'elle est là. Mesuré sur la VM : `code=0` sans `pipefail`, `code=141` avec, sur 234 familles.
+
+Le bug datait de la vague 0 et n'avait jamais pu se voir : `tests/test-fonts.sh` double `fc-list` par un script dont la sortie tient dans le tampon d'un tube, donc il se termine avant `grep` et aucun SIGPIPE n'a lieu. Correctif : `grep -ixF … >/dev/null`, qui lit tout et ne provoque rien, avec le commentaire qui explique pourquoi `-q` est proscrit ici. Régression ajoutée : la doublure écrit 20 000 familles, la cherchée en tête — le cas échoue avec `-q` et passe sans (vérifié dans les deux sens).
+
+Le même motif existe en `modules/20-shell.sh:80`, où la source est `~/.bashrc` : quelques kilo-octets, largement sous le tampon, donc sans effet aujourd'hui. Laissé tel quel — il appartient au module `shell`, pas à ce change.
+
 ### D5. Dépendance à `base` et `shell`
 `MODULE_DEPS="base shell"`, pour la raison que la contre-vérification de `cli-tools` a rendue visible : un module doit pouvoir être lancé seul et produire son effet. La police n'a d'utilité qu'avec le prompt Powerlevel10k que `shell` installe, et la configuration de Ghostty la désigne. Sans `shell`, `./setup.sh terminal` installerait une police que rien n'utilise.
 
