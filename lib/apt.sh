@@ -59,6 +59,34 @@ apt_install_pinned() {
     run_sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q --allow-downgrades "$@"
 }
 
+# apt_install_deb_url <url> <paquet> : installe un paquet `.deb` téléchargé depuis
+# une URL, pour les logiciels distribués hors dépôt apt (site de l'éditeur,
+# release GitHub). Ne fait rien si <paquet> est déjà installé, quelle que soit sa
+# version : une mise à jour reste une décision du module (D4). Le fichier est
+# téléchargé dans un dossier temporaire nettoyé à la sortie du runner et contrôlé
+# par `dpkg-deb --info` avant d'être confié à apt — une page d'erreur renvoyée à
+# la place du paquet est ainsi rejetée. `apt-get install <fichier>` plutôt que
+# `dpkg -i` : les dépendances sont résolues et installées dans la même passe.
+apt_install_deb_url() {
+  local url=${1:-} pkg=${2:-} tmp deb
+  [[ -n $url && -n $pkg ]] \
+    || { log_error "apt_install_deb_url : arguments manquants (url, paquet)"; return 1; }
+  if pkg_installed "$pkg"; then
+    log_ok "Paquet déjà installé : $pkg"
+    return 0
+  fi
+  tmp=$(mktemp -d -t "apt-deb-$pkg.XXXXXX") || return 1
+  add_cleanup "rm -rf '$tmp'"
+  deb="$tmp/$pkg.deb"
+  run curl -fsSL "$url" -o "$deb" || { log_error "Paquet .deb introuvable : $url"; return 1; }
+  # Contrôle local, hors `run` : la fiche du paquet n'a rien à faire au journal.
+  dpkg-deb --info "$deb" >/dev/null 2>&1 \
+    || { log_error "Le fichier téléchargé n'est pas un paquet Debian : $url"; return 1; }
+  apt_update_once || return $?
+  ui_spin "Installation apt (.deb téléchargé) : $pkg" \
+    run_sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q "$deb"
+}
+
 # apt_remove <paquet...> : retire uniquement les paquets présents, sans question.
 # Renvoie 0 si rien à faire.
 apt_remove() {

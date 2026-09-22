@@ -94,4 +94,45 @@ assert_contains "architecture = dpkg --print-architecture" "$(cat "$APT_SOURCES_
 assert_fail "clé introuvable → échec" apt_add_repo absent "file://$TEST_TMP/nexiste-pas" https://exemple.test/apt stable main
 assert_fail "arguments manquants → échec" apt_add_repo seulement-nom
 
+printf '%s\n' "== apt_install_deb_url =="
+# Paquet .deb minimal fabriqué sur place et servi en file:// : aucun réseau.
+export TMPDIR="$TEST_TMP/tmp"; mkdir -p "$TMPDIR"
+DEB_SRC="$TEST_TMP/paquet-fictif-dotfiles"
+mkdir -p "$DEB_SRC/DEBIAN"
+cat >"$DEB_SRC/DEBIAN/control" <<CTRL
+Package: paquet-fictif-dotfiles
+Version: 1.0
+Architecture: all
+Maintainer: dotfiles <test@exemple.invalid>
+Description: paquet de test hors ligne
+CTRL
+dpkg-deb --build --root-owner-group "$DEB_SRC" "$TEST_TMP/fictif.deb" >/dev/null 2>&1
+DEB_URL="file://$TEST_TMP/fictif.deb"
+
+: >"$CALLS"; _APT_UPDATED=1
+assert_ok "paquet déjà installé → réussit" apt_install_deb_url "$DEB_URL" bash
+assert_eq "…sans rien télécharger ni installer" 0 "$(count_calls 'apt-get install')"
+
+: >"$CALLS"
+assert_ok "paquet absent → installé" apt_install_deb_url "$DEB_URL" paquet-fictif-dotfiles
+assert_eq "un seul apt-get install" 1 "$(count_calls 'apt-get install')"
+assert_contains "apt reçoit le chemin du .deb téléchargé" "$(cat "$CALLS")" "/paquet-fictif-dotfiles.deb"
+assert_contains "installation non interactive" "$(cat "$CALLS")" "DEBIAN_FRONTEND=noninteractive"
+
+: >"$CALLS"
+printf '<html>404</html>\n' >"$TEST_TMP/faux.deb"
+assert_fail "fichier qui n'est pas un paquet Debian → échec" \
+  apt_install_deb_url "file://$TEST_TMP/faux.deb" paquet-fictif-dotfiles
+assert_eq "…sans appeler apt-get" 0 "$(count_calls 'apt-get install')"
+
+: >"$CALLS"; rm -rf "${TMPDIR:?}"; mkdir -p "$TMPDIR"
+# cleanup_scope : le sous-shell ne nettoie que ce qu'il a enregistré lui-même
+# (la liste du parent, dont TEST_TMP, lui reste étrangère).
+out=$( ( cleanup_scope; apt_install_deb_url "file://$TEST_TMP/nexiste-pas.deb" paquet-fictif-dotfiles ) 2>&1 )
+assert_contains "URL injoignable → l'erreur nomme l'URL" "$out" "nexiste-pas.deb"
+assert_eq "…sans appeler apt-get" 0 "$(count_calls 'apt-get install')"
+assert_eq "…et le dossier temporaire est nettoyé" "" "$(ls -A "$TMPDIR")"
+
+assert_fail "arguments manquants → échec" apt_install_deb_url "$DEB_URL"
+
 test_done
