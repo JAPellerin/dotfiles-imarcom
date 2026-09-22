@@ -37,6 +37,7 @@ TERMINAL_XDG_LIST="$HOME/.config/xdg-terminals.list"
 TERMINAL_CONFIG="config/terminal/ghostty"
 TERMINAL_CONFIG_TARGET="$HOME/.config/ghostty/config"
 TERMINAL_MANUAL="Faire de Ghostty le terminal par défaut dans les réglages du bureau : le script n'a pas pu le constater."
+TERMINAL_RELOGIN_MANUAL="Fermer puis rouvrir la session : le terminal démarre le shell annoncé par la session, qui n'a pas encore pris le changement de shell de connexion."
 
 # Déjà fait = ghostty installé, police connue de fontconfig, configuration liée,
 # alternative pointant sur Ghostty (D6). La police est constatée par fontconfig
@@ -74,7 +75,22 @@ module_install() {
 
 module_configure() {
   link_config "$TERMINAL_CONFIG" "$TERMINAL_CONFIG_TARGET" || return 1
-  _terminal_set_default
+  _terminal_set_default || return 1
+  _terminal_check_login_shell
+}
+
+# _terminal_check_login_shell : un terminal démarre le shell annoncé par la
+# session (SHELL), pas celui de /etc/passwd. Quand le module `shell` vient de
+# changer le shell de connexion, la session en cours transporte encore l'ancien
+# et Ghostty ouvrira bash — constaté en VM le 22 sept 2026. C'est transitoire, ça
+# ne fait donc échouer ni le module ni son module_check ; mais ça se dit dans le
+# résumé final plutôt que dans un journal qui a défilé.
+_terminal_check_login_shell() {
+  local login_shell
+  login_shell=$(getent passwd "$USER" 2>/dev/null | cut -d: -f7)
+  [[ -n ${SHELL:-} && -n $login_shell && $SHELL != "$login_shell" ]] || return 0
+  log_warn "Session ouverte avant le changement de shell : elle annonce $SHELL, le shell de connexion est $login_shell."
+  manual_step "$TERMINAL_RELOGIN_MANUAL"
 }
 
 # _terminal_set_default : deux gestes, parce que le paquet n'en fait aucun —

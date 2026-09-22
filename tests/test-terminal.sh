@@ -26,7 +26,13 @@ CALLS="$TEST_TMP/calls"; : >"$CALLS"
 FAMILIES="$TEST_TMP/families"; : >"$FAMILIES"
 NEXT="$TEST_TMP/families-next"; : >"$NEXT"
 ALT="$TEST_TMP/alt"; : >"$ALT"
+printf '/usr/bin/zsh' >"$TEST_TMP/login-shell"
+export SHELL=/usr/bin/zsh   # session à jour par défaut
 
+cat >"$TEST_TMP/bin/getent" <<'FAKE'
+#!/usr/bin/env bash
+printf 'u:x:1000:1000::/home/u:%s\n' "$(cat "$FAKE_DIR/login-shell" 2>/dev/null)"
+FAKE
 cat >"$TEST_TMP/bin/dpkg-query" <<'FAKE'
 #!/usr/bin/env bash
 grep -qx -- "${*: -1}" "$FAKE_DIR/installed" 2>/dev/null && printf 'install ok installed'
@@ -156,5 +162,17 @@ rm -f "$HOME/.config/xdg-terminals.list"
 assert_fail "liste des terminaux absente → à faire" module_check
 assert_ok "module_configure la remet" module_configure
 assert_ok "module_check → déjà fait" module_check
+
+printf '%s\n' "== session ouverte avant le changement de shell =="
+: >"$MANUAL_STEPS_FILE"
+assert_ok "session à jour → module_configure réussit" module_configure
+assert_eq "aucune étape manuelle à ce titre" "" "$(cat "$MANUAL_STEPS_FILE")"
+SHELL=/bin/bash
+out=$(module_configure 2>&1); rc=$?
+assert_eq "session en retard → se termine sans erreur" 0 "$rc"
+assert_contains "l'écart est signalé" "$out" "annonce /bin/bash"
+assert_contains "réouverture de session dans le résumé" "$(cat "$MANUAL_STEPS_FILE")" "rouvrir la session"
+assert_ok "module_check reste « déjà fait » (situation transitoire)" module_check
+SHELL=/usr/bin/zsh
 
 test_done
