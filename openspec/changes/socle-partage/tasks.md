@@ -1,8 +1,8 @@
 ## 1. Fragments de configuration shell
 
-- [ ] 1.1 `lib/core.sh` : ajouter `SHELL_COMMON_RC_DIR="${SHELL_COMMON_RC_DIR:-$HOME/.commonrc.d}"` à côté de `SHELL_COMMON_RC`, avec le commentaire renvoyant à la convention (D3) ; vérifier `shellcheck lib/core.sh` propre et `bash -c 'source lib/core.sh; echo $SHELL_COMMON_RC_DIR'`
-- [ ] 1.2 `config/shell/commonrc` : ajouter en fin de fichier la boucle POSIX de chargement des fragments (D1) ; vérifier `shellcheck config/shell/commonrc` propre, puis, avec un `~/.commonrc.d/zz-essai.sh` temporaire, que `bash -ic 'echo $ESSAI'` et `zsh -ic 'echo $ESSAI'` l'affichent, et qu'après suppression du dossier les deux shells démarrent sans message
-- [ ] 1.3 `tests/test-shell.sh` : ajouter les deux cas de D6 (fragment vu par bash et zsh et surchargeant une valeur de `commonrc` ; dossier absent → aucun message sur la sortie d'erreur) ; vérifier `bash tests/test-shell.sh` vert
+- [x] 1.1 `lib/core.sh` : ajouter `SHELL_COMMON_RC_DIR="${SHELL_COMMON_RC_DIR:-$HOME/.commonrc.d}"` à côté de `SHELL_COMMON_RC`, avec le commentaire renvoyant à la convention (D3) ; vérifier `shellcheck lib/core.sh` propre et `bash -c 'source lib/core.sh; echo $SHELL_COMMON_RC_DIR'`
+- [x] 1.2 `config/shell/commonrc` : ajouter en fin de fichier la boucle POSIX de chargement des fragments (D1) ; vérifier `shellcheck config/shell/commonrc` propre, puis, avec un `~/.commonrc.d/zz-essai.sh` temporaire, que `bash -ic 'echo $ESSAI'` et `zsh -ic 'echo $ESSAI'` l'affichent, et qu'après suppression du dossier les deux shells démarrent sans message
+- [x] 1.3 `tests/test-shell.sh` : ajouter les deux cas de D6 (fragment vu par bash et zsh et surchargeant une valeur de `commonrc` ; dossier absent → aucun message sur la sortie d'erreur) ; vérifier `bash tests/test-shell.sh` vert
 
 ## 2. Helper `.deb` depuis une URL
 

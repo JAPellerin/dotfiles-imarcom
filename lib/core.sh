@@ -154,6 +154,12 @@ wait_for() {
 # --- Fichiers de configuration --------------------------------------------------------------
 # Config shell commune bash/zsh (POSIX uniquement), chargée par .bashrc et .zshrc.
 SHELL_COMMON_RC="${SHELL_COMMON_RC:-$HOME/.commonrc}"
+# Fragments déposés par les modules, chargés en dernier par .commonrc : un module
+# qui a besoin de variables ou d'alias communs aux deux shells versionne
+# config/<module>/commonrc.sh et le lie ici par link_config (un lien par module,
+# donc chargé seulement si le module est installé). config/shell/commonrc n'est
+# jamais édité par un module. Voir openspec/specs/config-files/spec.md.
+SHELL_COMMON_RC_DIR="${SHELL_COMMON_RC_DIR:-$HOME/.commonrc.d}"
 
 # ensure_line <fichier> <ligne> : ajoute la ligne (exacte) au fichier si elle n'y
 # est pas déjà — idempotent, crée le fichier au besoin. Renvoie 0 si ajoutée,

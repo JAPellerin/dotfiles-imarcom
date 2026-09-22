@@ -13,14 +13,17 @@ Voir `proposal.md`. État du socle au 22 sept 2026 : `link_config` / `config_lin
 ### D1. Chargement des fragments : boucle POSIX en fin de `commonrc`
 Ajout à la fin de `config/shell/commonrc` :
 ```sh
-# Fragments déposés par les modules (un lien par module) — voir specs/config-files
+[ -n "${ZSH_VERSION:-}" ] && setopt no_nomatch
 for _rc in "$HOME/.commonrc.d"/*.sh; do
   [ -r "$_rc" ] && . "$_rc"
 done
+[ -n "${ZSH_VERSION:-}" ] && unsetopt no_nomatch
 unset _rc
 ```
-Pas de garde `[ -d ]` : sans correspondance, le motif reste littéral et `[ -r ]` échoue — comportement POSIX, sans message, y compris dossier absent (c'est le scénario « Aucun fragment » de la spec). `for` plutôt que `find`/`ls` : pas de sous-processus au démarrage de chaque shell interactif, et l'ordre du glob est déjà lexicographique. **En dernier** dans le fichier, pour qu'un fragment puisse surcharger une valeur commune.
-Alternative rejetée : `. "$HOME/.commonrc.d"/*.sh` en une ligne — `.` n'accepte qu'un argument en POSIX.
+Pas de garde `[ -d ]` : en sh et en bash, un motif sans correspondance reste littéral et `[ -r ]` l'écarte — sans message, dossier absent comme dossier vide (le scénario « Aucun fragment » de la spec). `for` plutôt que `find`/`ls` : pas de sous-processus au démarrage de chaque shell interactif, et l'ordre du glob est déjà lexicographique. **En dernier** dans le fichier, pour qu'un fragment puisse surcharger une valeur commune.
+
+**Correction du 22 sept 2026 (vu à l'implémentation)** : zsh ne se comporte pas comme sh ici — son option `NOMATCH`, active par défaut, fait d'un motif sans correspondance une **erreur**, affichée à chaque ouverture de shell (`/home/…/.commonrc:21: no matches found`). Comme `.zshrc` charge `.commonrc`, le scénario « Aucun fragment » échouait pour le shell cible du projet. D'où la garde `setopt no_nomatch` / `unsetopt no_nomatch` autour de la boucle : `setopt` et `unsetopt` sont de simples mots pour sh et bash, qui ne les exécutent jamais — la syntaxe du fichier reste POSIX. Le rétablissement remet l'option à sa valeur par défaut, que `config/shell/zshrc` ne modifie pas (vérifié). `unset _rc` passe en dernier pour que le fichier se termine sur un code 0 dans tous les shells.
+Alternatives rejetées : `[ -d ]` seul (ne couvre pas le dossier vide, qui est le cas nommé par la spec) ; `2>/dev/null` sur la boucle (masquerait aussi les erreurs d'un fragment fautif) ; le qualificateur zsh `*.sh(N)` (erreur de syntaxe à l'analyse pour sh et bash, même dans une branche non exécutée) ; `. "$HOME/.commonrc.d"/*.sh` en une ligne (`.` n'accepte qu'un argument en POSIX).
 
 ### D2. Un lien par fragment, pas le dossier lié (décision du 22 sept 2026)
 `~/.commonrc.d/<module>.sh` → `<dépôt>/config/<module>/commonrc.sh`, par `link_config` (qui crée déjà le dossier parent). Conséquence recherchée : **le fragment n'existe que si son module a été exécuté**, donc `cli-tools` peut poser `alias bat=batcat` sans garde `command -v`, et `config_linked` devient un critère de `module_check` comme les autres liens.
