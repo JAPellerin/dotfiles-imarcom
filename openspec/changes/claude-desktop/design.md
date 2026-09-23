@@ -36,14 +36,14 @@ Alternative rejetée : laisser le paquet déclarer son dépôt et se passer d'`a
 `ensure_user_in_group kvm` puis `group_relogin_step kvm`. Aucune vérification de `/dev/kvm` : la présence de la virtualisation est une affaire de matériel, que l'application signale elle-même ; le module ne doit ni échouer ni la promettre.
 
 ### D5. Connexion et `module_check`
-Connexion : `module_install` note si le paquet était absent avant son passage ; `module_configure` déclare alors `manual_step "Ouvrir Claude (menu des applications) et se connecter avec le compte Anthropic."`. On ne cherche pas où l'application range sa session : chemin interne, non documenté.
+Connexion : **dans `module_install`**, si `claude-desktop` était absent avant `apt_install` et que l'installation réussit, `manual_step "Ouvrir Claude (menu des applications) et se connecter avec le compte Anthropic."`. Pas de variable transmise à `module_configure` : le runner lance `module_install` et `module_configure` dans deux sous-shells distincts (`module_call`, `lib/module.sh`), une variable posée dans l'un est perdue dans l'autre. `manual_step` écrit dans un fichier, qui survit au sous-shell. On ne cherche pas où l'application range sa session : chemin interne, non documenté.
 `module_check` : `pkg_installed claude-desktop` **et** `cmp -s config/claude-desktop/claude-desktop.default /etc/default/claude-desktop` (lisible sans `sudo`) **et** `user_in_group kvm`.
 
 ### D6. Dépendance à `base` seulement ; prérequis `socle-groupes`
 `MODULE_DEPS="base"`, `MODULE_NEEDS_GUI=1`. `socle-groupes` n'est pas un module mais du code de `lib/` : c'est un **ordre d'implémentation** (ce change après lui), pas une dépendance du runner.
 
 ### D7. Tests
-`tests/test-claude-desktop.sh` (nouveau) : doublures `dpkg-query`, `getent`, `id`, `run_sudo` (journalise ; simule `apt-get install`, `usermod`, `install`/copie vers un `/etc` du `$TEST_TMP`), `apt_add_repo` (compte) ; chemin de `/etc/default/claude-desktop` surchargeable. Cas : première application (réglage posé **avant** `apt-get install`, dépôt, paquet, `usermod -aG kvm`, étape de session nommant `kvm`, étape de connexion) ; réexécution → aucun appel ; réglage supprimé → `module_check` à faire, rétabli ; réglage au contenu différent → rétabli ; déjà membre de `kvm` → pas de `usermod` ; paquet déjà là → pas d'étape de connexion ; `module_check` sur chaque condition.
+`tests/test-claude-desktop.sh` (nouveau) : doublures `dpkg-query`, `getent`, `id`, `run_sudo` (journalise ; simule `apt-get install`, `usermod`, `install`/copie vers un `/etc` du `$TEST_TMP`), `apt_add_repo` (compte) ; chemin de `/etc/default/claude-desktop` surchargeable. Cas : première application (réglage posé **avant** `apt-get install`, dépôt, paquet, `usermod -aG kvm`, étape de session nommant `kvm`, étape de connexion) ; réexécution → aucun appel ; réglage supprimé → `module_check` à faire, rétabli ; réglage au contenu différent → rétabli ; déjà membre de `kvm` → pas de `usermod` ; paquet déjà là → pas d'étape de connexion ; installation du paquet en échec → pas d'étape de connexion ; `module_install` et `module_configure` appelés chacun dans un sous-shell, comme par le runner → l'étape de connexion figure bien au fichier des étapes manuelles ; `module_check` sur chaque condition.
 
 ## Risks / Trade-offs
 

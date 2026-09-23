@@ -6,6 +6,6 @@
 
 ## 2. Validation réelle et documentation
 
-- [ ] 2.1 WSL : `./setup.sh node` (dans un terminal, pour `sudo -v`) → LTS installée avec son pnpm 11, la 26 reste par défaut ; dans un nouveau shell : `node --version` → v26, `nvm exec --lts pnpm --version` → 11, `openspec --version` ; `git -C ~/dotfiles status` propre (aucun fichier du shell modifié) ; relance → « déjà fait » ; consigner ici
+- [ ] 2.1 WSL : `./setup.sh node` (dans un terminal, pour `sudo -v`) → LTS installée avec son pnpm 11, la 26 reste par défaut ; `ls ~/.nvm/versions/node` → la LTS et **la seule v26.8.2** (aucune nouvelle 26, D3) ; dans un nouveau shell : `node --version` → v26, `nvm exec --lts pnpm --version` → 11, `openspec --version` ; `git -C ~/dotfiles status` propre (aucun fichier du shell modifié) ; relance → « déjà fait » ; consigner ici
 - [ ] 2.2 VM (snapshot « vierge ») : bootstrap → `base`, `1password`, `shell`, `node` → mêmes vérifications depuis zéro, dans un nouveau terminal ; `~/.nvm` à l'étiquette `v0.40.8` ; `pnpm --version` dans un dossier contenant un `package.json` avec `"packageManager": "pnpm@11.20.0"` → `11.20.0` ; relance → « déjà fait » ; consigner ici
 - [ ] 2.3 `ROADMAP.md` : `node` fait (date, versions), contenu corrigé (« LTS + 26, pnpm 11 ») ; `openspec validate node --strict` vert
