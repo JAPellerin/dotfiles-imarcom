@@ -58,6 +58,9 @@ apt_add_repo() { printf 'apt_add_repo %s\n' "$*" >>"$CALLS"; }
 count_calls() { grep -c -- "$1" "$CALLS" || true; }
 line_of() { grep -n -m1 -- "$1" "$CALLS" | cut -d: -f1; }
 _APT_UPDATED=1
+# Comme module_call : chaque fonction du cycle de vie dans son propre sous-shell,
+# pour qu'aucun état ne passe de module_install à module_configure par une variable.
+in_subshell() { ( "$@" ); }
 WANTED=$(grep -v '^#' "$DOTFILES_DIR/config/vscode/extensions.txt" | grep -v '^$')
 
 printf '%s\n' "== liste versionnée =="
@@ -67,7 +70,7 @@ assert_contains "anthropic.claude-code listée" "$WANTED" "anthropic.claude-code
 
 printf '%s\n' "== première application =="
 assert_fail "module_check → à faire" module_check
-assert_ok "module_install réussit" module_install
+assert_ok "module_install réussit" in_subshell module_install
 assert_eq "sélection debconf reçue par la commande" "code code/add-microsoft-repo boolean false" "$(cat "$DEBCONF" 2>/dev/null)"
 assert_ok "debconf réglé avant l'installation" test "$(line_of debconf-set-selections)" -lt "$(line_of 'apt-get install')"
 assert_ok "dépôt déclaré avant l'installation" test "$(line_of apt_add_repo)" -lt "$(line_of 'apt-get install')"
@@ -75,15 +78,15 @@ assert_contains "dépôt Microsoft" "$(cat "$CALLS")" \
   "apt_add_repo vscode https://packages.microsoft.com/keys/microsoft.asc https://packages.microsoft.com/repos/code stable main"
 assert_contains "code et gnome-keyring passés à apt" "$(grep 'apt-get install' "$CALLS")" "code gnome-keyring"
 assert_fail "module_check toujours à faire (extensions)" module_check
-assert_ok "module_configure réussit" module_configure
+assert_ok "module_configure réussit" in_subshell module_configure
 assert_eq "18 extensions installées" 18 "$(count_calls 'code --install-extension')"
 assert_ok "module_check → déjà fait" module_check
 assert_contains "VS Code neuf → étape de connexion Jira et Bitbucket" "$(cat "$MANUAL_STEPS_FILE")" "Connecter Jira et Bitbucket"
 
 printf '%s\n' "== réexécution =="
-: >"$CALLS"; : >"$MANUAL_STEPS_FILE"; _VSCODE_FRESH=0
-assert_ok "module_install réussit (code déjà là)" module_install
-assert_ok "module_configure réussit" module_configure
+: >"$CALLS"; : >"$MANUAL_STEPS_FILE"
+assert_ok "module_install réussit (code déjà là)" in_subshell module_install
+assert_ok "module_configure réussit" in_subshell module_configure
 assert_eq "aucune installation d'extension" 0 "$(count_calls 'code --install-extension')"
 assert_eq "VS Code déjà là → aucune étape de connexion" "" "$(cat "$MANUAL_STEPS_FILE")"
 
