@@ -19,6 +19,9 @@ MODULE_DEPS="base shell"
 DEV_TOOLS_BIN_DIR="$HOME/.local/bin"
 DEV_TOOLS_CLAUDE_URL="https://claude.ai/install.sh"
 DEV_TOOLS_TWG_URL="https://teamwork-graph.atlassian.com/cli/install"
+# Conditions d'utilisation acceptées par le script (décision de l'utilisateur,
+# 23 sept 2026), sans connexion ni skills ajoutées aux agents (D4).
+DEV_TOOLS_TWG_ARGS=(--yes --skip-login --skip-skills)
 # Fichiers dont la seule présence dit qu'une connexion a été faite (D5) ; leur
 # contenu n'est jamais lu.
 DEV_TOOLS_CLAUDE_AUTH="$HOME/.claude/.credentials.json"
@@ -71,8 +74,10 @@ module_install() {
   if [[ -x $DEV_TOOLS_BIN_DIR/twg ]]; then
     log_ok "twg déjà installé : $DEV_TOOLS_BIN_DIR/twg"
   else
-    # --skip-login : pas de navigateur ouvert par l'installateur (D4).
-    _dev_tools_run_installer "twg (installateur Atlassian)" "$DEV_TOOLS_TWG_URL" --skip-login || return 1
+    # L'installateur lit /dev/tty lui-même : sans --yes, il attend l'acceptation
+    # des conditions d'Atlassian sur le terminal, sans fin (vu en VM le 23 sept
+    # 2026). --yes n'est transmis qu'avec --skip-login et --skip-skills (D4).
+    _dev_tools_run_installer "twg (installateur Atlassian)" "$DEV_TOOLS_TWG_URL" "${DEV_TOOLS_TWG_ARGS[@]}" || return 1
   fi
   # L'installateur a pu réussir sans poser la commande attendue : constaté ici.
   local tool
