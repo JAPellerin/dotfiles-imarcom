@@ -1,8 +1,8 @@
 ## 1. Module `dev-tools`
 
-- [ ] 1.1 `modules/42-dev-tools.sh` (`MODULE_GROUP=dev`, `MODULE_DEPS="base shell"`, pas de `NEEDS_GUI`) — en-tête avec les liens des deux docs, constantes (URL des installateurs, chemins), `_dev_tools_run_installer` (D1), `PATH` (D2) et `module_install` (D3, D4) ; vérifier `shellcheck` propre et `./setup.sh --list` → `dev-tools` dans `[dev]`, « déjà fait » dans la WSL
-- [ ] 1.2 `module_configure` : étapes de connexion selon D5 ; `module_check` selon D6 ; vérifier `shellcheck` propre
-- [ ] 1.3 `tests/test-dev-tools.sh` : les cas de D8 ; vérifier `bash tests/run-all.sh` vert et la ligne `shellcheck` de `CLAUDE.md` propre
+- [x] 1.1 `modules/42-dev-tools.sh` (`MODULE_GROUP=dev`, `MODULE_DEPS="base shell"`, pas de `NEEDS_GUI`) — en-tête avec les liens des deux docs, constantes (URL des installateurs, chemins), `_dev_tools_run_installer` (D1), `PATH` (D2) et `module_install` (D3, D4) ; vérifier `shellcheck` propre et `./setup.sh --list` → `dev-tools` dans `[dev]`, « déjà fait » dans la WSL
+- [x] 1.2 `module_configure` : étapes de connexion selon D5 ; `module_check` selon D6 ; vérifier `shellcheck` propre
+- [x] 1.3 `tests/test-dev-tools.sh` : les cas de D8 ; vérifier `bash tests/run-all.sh` vert et la ligne `shellcheck` de `CLAUDE.md` propre
 
 ## 2. Validation réelle et documentation
 
