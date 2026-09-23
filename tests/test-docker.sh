@@ -12,6 +12,8 @@ source "$DOTFILES_DIR/lib/ui.sh"
 source "$DOTFILES_DIR/lib/apt.sh"
 # shellcheck source=../lib/module.sh
 source "$DOTFILES_DIR/lib/module.sh"
+# shellcheck source=../lib/groups.sh
+source "$DOTFILES_DIR/lib/groups.sh"
 
 mkdir -p "$TEST_TMP/bin"
 export FAKE_DIR="$TEST_TMP"
@@ -148,13 +150,13 @@ printf '%s\n' "== groupe absent =="
 assert_ok "module_configure réussit" module_configure
 assert_contains "groupe créé" "$(cat "$CALLS")" "groupadd --system docker"
 assert_ok "groupe créé avant l'ajout" test "$(line_of groupadd)" -lt "$(line_of usermod)"
-assert_ok "utilisateur membre" _docker_user_in_group
+assert_ok "utilisateur membre" user_in_group docker
 
 printf '%s\n' "== appartenance par nom exact =="
 printf 'docker:x:986:uu,autre\n' >"$GROUP"
-assert_fail "« uu » n'est pas « u »" _docker_user_in_group
+assert_fail "« uu » n'est pas « u »" user_in_group docker
 printf 'docker:x:986:autre,u\n' >"$GROUP"
-assert_ok "membre en fin de liste" _docker_user_in_group
+assert_ok "membre en fin de liste" user_in_group docker
 
 printf '%s\n' "== service arrêté =="
 rm -f "$ACTIVE"; : >"$CALLS"

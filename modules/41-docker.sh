@@ -23,33 +23,18 @@ DOCKER_PACKAGES=(docker-ce docker-ce-cli containerd.io docker-buildx-plugin dock
 # nomme (section « Uninstall old versions », 23 sept 2026) — design D2.
 DOCKER_CONFLICTS=(docker.io docker-compose docker-compose-v2 docker-doc docker-buildx podman-docker containerd runc)
 DOCKER_GROUP="docker"
-DOCKER_USER="${USER:-$(id -un)}"
-DOCKER_RELOGIN_MANUAL="Fermer puis rouvrir la session : l'appartenance au groupe docker n'est prise en compte qu'à l'ouverture d'une session (d'ici là, docker demande sudo)."
 
 # Déjà fait = les cinq paquets installés, l'utilisateur membre du groupe `docker`
 # dans la base des groupes, le service activé et en marche (D6). Tout se lit
 # localement, sans réseau ni sudo. La session à rouvrir n'y entre pas (D5).
+# Groupe : helpers de lib/groups.sh (base des groupes, pas la session).
 module_check() {
   local pkg
   for pkg in "${DOCKER_PACKAGES[@]}"; do
     pkg_installed "$pkg" || return 1
   done
-  _docker_user_in_group || return 1
+  user_in_group "$DOCKER_GROUP" || return 1
   _docker_service_ok
-}
-
-# _docker_user_in_group : vrai si la base des groupes liste l'utilisateur parmi
-# les membres de `docker`. Pas `id -nG`, qui donne les groupes de la session et
-# resterait faux jusqu'à la reconnexion (D3). `grep … >/dev/null` et non `-q` :
-# sous pipefail, -q peut tuer l'amont par SIGPIPE et renvoyer 141.
-_docker_user_in_group() {
-  getent group "$DOCKER_GROUP" 2>/dev/null | cut -d: -f4 | tr ',' '\n' \
-    | grep -xF -- "$DOCKER_USER" >/dev/null
-}
-
-# _docker_session_has_group : vrai si la session courante porte déjà le groupe.
-_docker_session_has_group() {
-  id -nG 2>/dev/null | tr ' ' '\n' | grep -xF -- "$DOCKER_GROUP" >/dev/null
 }
 
 # _docker_service_ok : service activé au démarrage et en marche (D4). Lu sans sudo.
@@ -64,29 +49,14 @@ module_install() {
   apt_install "${DOCKER_PACKAGES[@]}"
 }
 
+# Groupe créé s'il manque (le paquet le crée normalement, la doc
+# post-installation le fait créer quand même), utilisateur inscrit s'il n'est
+# pas déjà membre (D3) ; puis le service ; puis, tant que la session ne porte
+# pas le groupe, l'étape « rouvrir la session » au résumé final (D5).
 module_configure() {
-  _docker_ensure_group || return 1
+  ensure_user_in_group "$DOCKER_GROUP" || return 1
   _docker_ensure_service || return 1
-  _docker_check_session
-}
-
-# _docker_ensure_group : groupe créé s'il manque (le paquet le crée normalement,
-# la doc post-installation le fait créer quand même), utilisateur ajouté s'il
-# n'est pas déjà membre (D3).
-_docker_ensure_group() {
-  if ! getent group "$DOCKER_GROUP" >/dev/null 2>&1; then
-    run_sudo groupadd --system "$DOCKER_GROUP" || return 1
-  fi
-  if _docker_user_in_group; then
-    log_ok "$DOCKER_USER est déjà membre du groupe $DOCKER_GROUP."
-    return 0
-  fi
-  run_sudo usermod -aG "$DOCKER_GROUP" "$DOCKER_USER" || return 1
-  if ! _docker_user_in_group; then
-    log_error "$DOCKER_USER n'apparaît pas dans le groupe $DOCKER_GROUP après usermod."
-    return 1
-  fi
-  log_ok "$DOCKER_USER ajouté au groupe $DOCKER_GROUP."
+  group_relogin_step "$DOCKER_GROUP"
 }
 
 # _docker_ensure_service : rien si le service est déjà activé et en marche ;
@@ -103,14 +73,4 @@ _docker_ensure_service() {
     return 1
   fi
   log_ok "Service docker activé et démarré."
-}
-
-# _docker_check_session : l'appartenance au groupe n'est prise en compte qu'à
-# l'ouverture d'une session. Transitoire : ni échec ni critère « déjà fait »,
-# mais une ligne dans le résumé final plutôt que dans un journal qui a défilé (D5).
-_docker_check_session() {
-  _docker_user_in_group || return 0
-  _docker_session_has_group && return 0
-  log_warn "La session courante ne porte pas encore le groupe $DOCKER_GROUP : docker demande sudo jusqu'à sa réouverture."
-  manual_step "$DOCKER_RELOGIN_MANUAL"
 }
