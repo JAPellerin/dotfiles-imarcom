@@ -38,6 +38,17 @@ Le module SHALL installer dans VS Code chaque extension listée dans `config/vsc
 - **WHEN** l'installation d'une extension de la liste échoue
 - **THEN** le module échoue en nommant l'extension
 
+### Requirement: Connexion à Jira et Bitbucket déclarée comme étape manuelle
+Lorsque le module vient d'installer VS Code, il SHALL déclarer l'étape manuelle de se connecter à Jira et à Bitbucket dans l'extension Atlassian. Le module MUST NOT tenter d'établir lui-même ces connexions, qui passent par une autorisation dans le navigateur et un stockage de secrets propre à VS Code. Cette étape MUST NOT faire échouer le module ni entrer dans son critère « déjà fait ».
+
+#### Scenario: Première installation
+- **WHEN** le module installe VS Code
+- **THEN** le résumé final demande de se connecter à Jira et à Bitbucket dans l'extension Atlassian
+
+#### Scenario: VS Code déjà installé
+- **WHEN** le module s'exécute alors que VS Code était déjà installé (par exemple pour ajouter une extension de la liste)
+- **THEN** aucune étape de connexion n'est déclarée
+
 ### Requirement: État du module
 `module_check` SHALL retourner 0 si et seulement si `code` et `gnome-keyring` sont installés et que chaque extension de la liste est installée. Le constat MUST NOT nécessiter `sudo`.
 

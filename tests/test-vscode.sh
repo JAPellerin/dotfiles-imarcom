@@ -78,11 +78,14 @@ assert_fail "module_check toujours à faire (extensions)" module_check
 assert_ok "module_configure réussit" module_configure
 assert_eq "18 extensions installées" 18 "$(count_calls 'code --install-extension')"
 assert_ok "module_check → déjà fait" module_check
+assert_contains "VS Code neuf → étape de connexion Jira et Bitbucket" "$(cat "$MANUAL_STEPS_FILE")" "Connecter Jira et Bitbucket"
 
 printf '%s\n' "== réexécution =="
-: >"$CALLS"
+: >"$CALLS"; : >"$MANUAL_STEPS_FILE"; _VSCODE_FRESH=0
+assert_ok "module_install réussit (code déjà là)" module_install
 assert_ok "module_configure réussit" module_configure
 assert_eq "aucune installation d'extension" 0 "$(count_calls 'code --install-extension')"
+assert_eq "VS Code déjà là → aucune étape de connexion" "" "$(cat "$MANUAL_STEPS_FILE")"
 
 printf '%s\n' "== extensions partielles, casse différente, hors liste =="
 grep -v -e '^eamodio.gitlens$' -e '^vitest.explorer$' -e '^anthropic.claude-code$' "$EXTS" >"$TEST_TMP/reste"
