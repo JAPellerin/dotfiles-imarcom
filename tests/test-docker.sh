@@ -22,6 +22,7 @@ GROUP="$TEST_TMP/group"; : >"$GROUP"                 # ligne « docker:x:986:mem
 SESSION="$TEST_TMP/session-groups"; printf 'u sudo' >"$SESSION"
 ENABLED="$TEST_TMP/svc-enabled"; ACTIVE="$TEST_TMP/svc-active"   # présents = vrai
 BROKEN="$TEST_TMP/svc-broken"                        # présent = le service refuse de démarrer
+ENABLE_FAILS="$TEST_TMP/svc-enable-fails"            # présent = `systemctl enable --now` échoue
 
 cat >"$TEST_TMP/bin/dpkg-query" <<'FAKE'
 #!/usr/bin/env bash
@@ -78,7 +79,14 @@ run_sudo() {
       local line; line=$(cat "$GROUP")
       if [[ $line == *: ]]; then printf '%s%s\n' "$line" "${args[3]}" >"$GROUP"
       else printf '%s,%s\n' "$line" "${args[3]}" >"$GROUP"; fi ;;
-    "systemctl enable") [[ -e $BROKEN ]] || touch "$ENABLED" "$ACTIVE" ;;
+    "systemctl enable")
+      # Échec de la commande elle-même : même rapport que le vrai run_sudo.
+      if [[ -e $ENABLE_FAILS ]]; then
+        printf '[00:00:00] $ sudo -n %s\n' "$*" >>"$LOG_FILE"
+        _run_report_failure 1 "sudo -n $*"
+        return 1
+      fi
+      [[ -e $BROKEN ]] || touch "$ENABLED" "$ACTIVE" ;;
   esac
   return 0
 }
@@ -168,6 +176,16 @@ assert_ok "module_configure échoue" test "$rc" -ne 0
 assert_contains "le service est nommé" "$out" "docker.service"
 assert_fail "module_check → à faire" module_check
 rm -f "$BROKEN"
+assert_ok "après correction, module_configure rétablit" module_configure
+
+printf '%s\n' "== systemctl enable --now qui échoue =="
+rm -f "$ENABLED" "$ACTIVE"; touch "$ENABLE_FAILS"
+out=$(module_configure 2>&1); rc=$?
+assert_ok "module_configure échoue" test "$rc" -ne 0
+assert_contains "le service est nommé" "$out" "docker.service"
+assert_not_contains "aucune constatation de succès" "$out" "activé et démarré"
+assert_fail "module_check → à faire" module_check
+rm -f "$ENABLE_FAILS"
 assert_ok "après correction, module_configure rétablit" module_configure
 
 printf '%s\n' "== module_check : chacune de ses conditions =="
