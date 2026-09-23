@@ -66,7 +66,7 @@ printf '%s\n' "== première installation =="
 assert_ok "module_install réussit" module_install
 assert_eq "deux téléchargements" 2 "$(count_calls '^curl ')"
 assert_contains "installateur de Claude Code sans argument" "$(cat "$CALLS")" $'installateur claude \n'
-assert_contains "twg installé avec --skip-login" "$(cat "$CALLS")" "installateur twg --skip-login"
+assert_eq "twg installé sans interaction, connexion ni skills" 1 "$(grep -cx 'installateur twg --yes --skip-login --skip-skills' "$CALLS")"
 assert_eq "fichiers du shell intacts" "$SHELL_SUMS" "$(cat "$HOME/.zshrc" "$HOME/.bashrc" | cksum)"
 assert_ok "claude répond" "$HOME/.local/bin/claude"
 assert_ok "module_check → déjà fait" module_check

@@ -16,11 +16,11 @@ Le module `dev-tools` (groupe `dev`, dépend de `base` et de `shell`, sans sessi
 - **THEN** l'installateur n'est pas lancé
 
 ### Requirement: twg par l'installateur d'Atlassian, sans connexion
-Le module SHALL installer la CLI `twg` pour l'utilisateur courant par l'installateur public d'Atlassian, sans `sudo` et sans lancer la connexion, si `twg` n'est pas déjà installé dans `~/.local/bin`. Une installation existante MUST NOT être réinstallée par le module.
+Le module SHALL installer la CLI `twg` pour l'utilisateur courant par l'installateur public d'Atlassian, sans `sudo`, sans lancer la connexion et sans ajouter de skills aux agents, si `twg` n'est pas déjà installé dans `~/.local/bin`. L'installation MUST NOT attendre de réponse de l'utilisateur : l'acceptation des conditions d'utilisation d'Atlassian est donnée par le module, à la demande de l'utilisateur. Une installation existante MUST NOT être réinstallée par le module.
 
 #### Scenario: Machine fraîche
 - **WHEN** le module s'exécute sur une machine sans `twg`
-- **THEN** `~/.local/bin/twg --help` répond, et aucune fenêtre de connexion n'a été ouverte
+- **THEN** `~/.local/bin/twg --help` répond, aucune fenêtre de connexion n'a été ouverte et aucune question n'a été posée
 
 #### Scenario: Déjà installé
 - **WHEN** `~/.local/bin/twg` existe
