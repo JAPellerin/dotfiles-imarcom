@@ -1,0 +1,8 @@
+# /etc/default/claude-desktop — posé par le module `claude-desktop` avant le
+# paquet : sans ce réglage, le paquet enregistre lui-même le dépôt d'Anthropic
+# dans /etc/apt/sources.list.d/claude-desktop.list, en double de celui que le
+# socle déclare (claude-desktop.sources, clé dans /etc/apt/keyrings/).
+# Réglage documenté : https://code.claude.com/docs/en/desktop-linux
+# (« Install from a downloaded file »). Relu à chaque mise à jour du paquet :
+# il doit rester en place.
+CLAUDE_DESKTOP_ADD_REPO="false"
