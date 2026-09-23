@@ -29,7 +29,8 @@ Alternative rejetée : `curl …/install.sh | PROFILE=/dev/null bash` — marche
 nvm est une fonction shell qui modifie le `PATH` de l'appelant. Le module l'appelle dans un bash enfant : `run bash -c '. "$NVM_DIR/nvm.sh" && nvm "$@"' nvm <args…>` (fonction `_node_nvm`). Le journal reçoit la sortie, le runner garde son environnement, et l'interaction de `nvm.sh` avec `set -u` du runner ne se pose pas. Les installations longues passent sous `ui_spin`.
 
 ### D3. Versions : `lts/*` et `26`, par défaut `26`
-`module_install` : `nvm install --lts`, `nvm install 26`, puis `nvm alias default 26`. `nvm install` rafraîchit les alias `lts/*` locaux : c'est ce qui fait « bouger » la LTS au passage suivant du module. `nvm install 26` sur un poste qui a déjà une 26 installe la dernière 26 si elle manque — voulu, c'est une installation, pas un constat.
+`module_install` : `nvm install --lts`, puis `nvm install 26` **seulement si `nvm version 26` répond `N/A`**, puis `nvm alias default 26`. `nvm install --lts` rafraîchit les alias `lts/*` locaux : c'est ce qui fait « bouger » la LTS au passage suivant du module ; il reste inconditionnel, puisque suivre la LTS du moment est le choix de l'utilisateur.
+La condition sur la 26 est nécessaire : `nvm install 26` résout d'abord la dernière 26 publiée, **puis** regarde si elle est installée — sur la WSL (26.8.2), il téléchargerait la 26.10.0 et y réinstallerait pnpm et openspec, alors que le module n'y est « à faire » que pour la LTS. Une 26 déjà présente, même antérieure, est gardée (cohérent avec D5 : un poste plus ancien mais complet est « déjà fait »). Décision de l'utilisateur, 23 sept 2026.
 Les versions effectives sont relues après installation par `nvm version lts/*` et `nvm version 26` ; si elles sont égales (LTS devenue la 26), la suite ne traite qu'une version.
 
 ### D4. Globaux par version, installés par `nvm exec`
@@ -44,12 +45,13 @@ Ni l'étiquette de nvm ni la version exacte de Node ne sont exigées : un poste 
 `MODULE_DEPS="base shell"` : sans `shell`, `~/.commonrc` ne charge pas nvm et aucun nouveau shell ne trouverait `node` — le module ne produirait pas son effet s'il était lancé seul (même raison que `cli-tools` D7). `git` et `curl` viennent de `base`.
 
 ### D7. Tests
-`tests/test-node.sh` (nouveau) : `NVM_DIR` dans `$TEST_TMP`, un faux `nvm.sh` qui définit une fonction `nvm` pilotée par des fichiers (versions installées, alias `lts/*`, `default`) et qui simule `install`, `alias` et `exec … npm install -g` en créant les dossiers et `package.json` attendus ; `ensure_git_clone` remplacé par une doublure qui crée le faux clone et compte ses appels. Cas : première application (deux versions, défaut 26, pnpm sous les deux, openspec sous la 26) ; LTS = 26 → une seule version, un seul pnpm ; réexécution → aucun appel ; pnpm 12 → remplacé ; openspec manquant → installé sous la 26 seulement ; `module_check` sur chacune de ses conditions ; aucun fichier du shell écrit dans le `HOME` isolé.
+`tests/test-node.sh` (nouveau) : `NVM_DIR` dans `$TEST_TMP`, un faux `nvm.sh` qui définit une fonction `nvm` pilotée par des fichiers (versions installées, alias `lts/*`, `default`) et qui simule `install`, `alias` et `exec … npm install -g` en créant les dossiers et `package.json` attendus ; `ensure_git_clone` remplacé par une doublure qui crée le faux clone et compte ses appels. Cas : première application (deux versions, défaut 26, pnpm sous les deux, openspec sous la 26) ; LTS = 26 → une seule version, un seul pnpm ; une 26 déjà installée sans LTS (cas de la WSL) → `nvm install --lts` seul, **aucun `nvm install 26`**, défaut toujours sur la 26 existante ; réexécution → aucun appel ; pnpm 12 → remplacé ; openspec manquant → installé sous la 26 seulement ; `module_check` sur chacune de ses conditions ; aucun fichier du shell écrit dans le `HOME` isolé.
 
 ## Risks / Trade-offs
 
 - [La LTS « du moment » change sous nos pieds] → c'est le choix de l'utilisateur ; `module_check` hors ligne ne le voit qu'au rafraîchissement suivant des alias (D5).
-- [`nvm install 26` télécharge une nouvelle 26 lors d'une relance] → seulement quand le module est « à faire » ; les globaux sont alors installés sous la nouvelle version (D4), l'ancienne reste.
+- [`nvm install 26` télécharge une nouvelle 26 alors qu'une 26 est déjà là] → évité : il n'est lancé que si aucune 26 n'est installée (D3). Les mises à jour de la 26 restent un geste de l'utilisateur.
+- [`nvm install --lts` télécharge un nouveau correctif de la LTS lors d'une relance] → seulement quand le module est « à faire » ; c'est le sens de « LTS du moment ». Une fois la 26 devenue LTS, il peut ainsi ajouter une 26 plus récente à côté de l'ancienne : les globaux suivent alors la 26 que résout `nvm version 26` (D4).
 - [nvm figé à v0.40.8] → constante à relever à la main ; le clone existant n'est jamais mis à jour.
 - [Supply chain npm] → pnpm épinglé en majeure 11 ; openspec à sa dernière version, choix assumé pour l'outil de ce dépôt.
 

@@ -20,7 +20,7 @@ Le module `node` (groupe `dev`, dépend de `base` et de `shell`, sans session gr
 - **THEN** le module échoue en nommant le dossier et ne le modifie pas
 
 ### Requirement: Node LTS et Node 26, la 26 par défaut
-Le module SHALL installer par nvm la version LTS courante de Node et la version majeure 26, puis faire de la 26 la version par défaut des nouveaux shells. Lorsque la LTS courante est elle-même une version 26, une seule version SHALL être installée. Une version déjà installée MUST NOT être réinstallée.
+Le module SHALL installer par nvm la version LTS courante de Node et la version majeure 26, puis faire de la 26 la version par défaut des nouveaux shells. Lorsque la LTS courante est elle-même une version 26, une seule version SHALL être installée. Une version déjà installée MUST NOT être réinstallée. Lorsqu'une version 26 est déjà installée, le module MUST NOT en installer une autre, même si une version 26 plus récente est publiée.
 
 #### Scenario: Deux versions distinctes
 - **WHEN** le module s'exécute alors que la LTS courante n'est pas une version 26
@@ -33,6 +33,10 @@ Le module SHALL installer par nvm la version LTS courante de Node et la version 
 #### Scenario: Déjà en place
 - **WHEN** la LTS et la 26 sont installées et la 26 est la version par défaut
 - **THEN** aucune version n'est téléchargée ni réinstallée
+
+#### Scenario: Une 26 plus ancienne déjà installée, sans LTS
+- **WHEN** une version 26 antérieure à la dernière publiée est installée et que la LTS courante ne l'est pas
+- **THEN** seule la LTS est installée, et la 26 existante reste la version par défaut
 
 ### Requirement: pnpm 11 sous chaque version, openspec sous la 26
 Le module SHALL installer pnpm en version majeure 11 comme outil global sous la LTS et sous la 26, et `openspec` comme outil global sous la 26 seulement. Un outil déjà présent à la bonne version majeure MUST NOT être réinstallé ; un pnpm d'une autre version majeure SHALL être remplacé par la 11.
