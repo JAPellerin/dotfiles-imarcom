@@ -1,8 +1,8 @@
 ## 1. Module `docker`
 
-- [ ] 1.1 `modules/41-docker.sh` (`MODULE_GROUP=dev`, `MODULE_DEPS="base"`, pas de `NEEDS_GUI`) — en-tête avec les liens de la doc Docker suivie, constantes (URL de clé et de dépôt, cinq paquets, liste des paquets en conflit de D2) et `module_install` : `apt_remove` des conflits, `apt_add_repo` (D1), `apt_install` des cinq paquets ; vérifier `shellcheck modules/41-docker.sh` propre et `./setup.sh --list` qui affiche le module dans le groupe `[dev]`
-- [ ] 1.2 `module_configure` : groupe selon D3 (création si absent, `usermod -aG` seulement si non membre dans `getent`), service selon D4 (constaté, `enable --now` seulement si besoin, échec nommé s'il ne démarre pas), étape de session selon D5 ; `module_check` selon D6 sur ses trois conditions ; vérifier `shellcheck` propre
-- [ ] 1.3 `tests/test-docker.sh` : les cas de D7 avec doublures (`dpkg-query`, `run_sudo`, `getent`, `id`, `systemctl`, `apt_add_repo`) ; vérifier `bash tests/run-all.sh` vert et la ligne `shellcheck` de CLAUDE.md propre sur l'ensemble
+- [x] 1.1 `modules/41-docker.sh` (`MODULE_GROUP=dev`, `MODULE_DEPS="base"`, pas de `NEEDS_GUI`) — en-tête avec les liens de la doc Docker suivie, constantes (URL de clé et de dépôt, cinq paquets, liste des paquets en conflit de D2) et `module_install` : `apt_remove` des conflits, `apt_add_repo` (D1), `apt_install` des cinq paquets ; vérifier `shellcheck modules/41-docker.sh` propre et `./setup.sh --list` qui affiche le module dans le groupe `[dev]`
+- [x] 1.2 `module_configure` : groupe selon D3 (création si absent, `usermod -aG` seulement si non membre dans `getent`), service selon D4 (constaté, `enable --now` seulement si besoin, échec nommé s'il ne démarre pas), étape de session selon D5 ; `module_check` selon D6 sur ses trois conditions ; vérifier `shellcheck` propre
+- [x] 1.3 `tests/test-docker.sh` : les cas de D7 avec doublures (`dpkg-query`, `run_sudo`, `getent`, `id`, `systemctl`, `apt_add_repo`) ; vérifier `bash tests/run-all.sh` vert et la ligne `shellcheck` de CLAUDE.md propre sur l'ensemble
 
 ## 2. Validation réelle et documentation
 
