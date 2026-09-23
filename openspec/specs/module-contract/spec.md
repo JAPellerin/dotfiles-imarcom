@@ -57,7 +57,7 @@ Un module SHALL pouvoir déclarer, via un helper du socle, une ou plusieurs éta
 - **THEN** cette ligne figure dans la section « Étapes manuelles restantes » du résumé final
 
 ### Requirement: Accès aux helpers du socle
-Un module SHALL pouvoir utiliser les helpers du socle pour : journaliser, exécuter une commande avec `sudo`, ajouter un dépôt apt avec sa clé GPG (fichier `.sources` deb822, clé dans `/etc/apt/keyrings/`), installer des paquets apt, installer un paquet `.deb` téléchargé depuis une URL, installer une police depuis une archive, lire un secret 1Password, poser une question ou un choix à l'utilisateur, et savoir si une session graphique est disponible. Un module MUST NOT appeler `gum` ni `apt` directement quand un helper existe pour l'opération, ni télécharger et installer un `.deb` ou une police par ses propres moyens.
+Un module SHALL pouvoir utiliser les helpers du socle pour : journaliser, exécuter une commande avec `sudo`, ajouter un dépôt apt avec sa clé GPG (fichier `.sources` deb822, clé dans `/etc/apt/keyrings/`), installer des paquets apt, installer un paquet `.deb` téléchargé depuis une URL, installer une police depuis une archive ou des fichiers de police, lire un secret 1Password, poser une question ou un choix à l'utilisateur, et savoir si une session graphique est disponible. Un module MUST NOT appeler `gum` ni `apt` directement quand un helper existe pour l'opération, ni télécharger et installer un `.deb` ou une police par ses propres moyens.
 
 #### Scenario: Ajout de dépôt apt
 - **WHEN** un module ajoute le dépôt Docker via le helper avec l'URL de la clé et l'URL du dépôt
