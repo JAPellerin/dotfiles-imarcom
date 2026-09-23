@@ -12,7 +12,7 @@ Relevé le 22 sept 2026 sur Ubuntu 26.04.1 : **Ghostty 1.3.0 est dans les dépô
   - `apt_install ghostty` depuis les dépôts Ubuntu ;
   - **police MesloLGS NF** par `install_font`, depuis les quatre fichiers publiés par Powerlevel10k (`romkatv/powerlevel10k-media`) — ceux que son assistant installe lui-même, famille `MesloLGS NF`, ~10 Mio au total ;
   - **configuration versionnée** `config/terminal/ghostty` liée vers `~/.config/ghostty/config` par `link_config` : police et taille, et le minimum vérifiable ;
-  - **terminal par défaut** : enregistrement puis sélection de l'alternative Debian `x-terminal-emulator`, et réglage GNOME quand son schéma est présent ; vérifié après coup.
+  - **terminal par défaut** : enregistrement puis sélection de l'alternative Debian `x-terminal-emulator`, puis Ghostty placé en tête de `~/.config/xdg-terminals.list`, que GNOME consulte par `xdg-terminal-exec` (la clé GNOME n'est pas touchée, voir design D4) ; vérifié après coup.
 - **`install_font` accepte une URL de fichier de police**, pas seulement une archive : appelé avec une URL qui se termine par `.ttf` ou `.otf`, le helper installe ce fichier tel quel. Plusieurs URL peuvent être données pour une même famille. Le comportement « archive `.zip` » est inchangé.
 
 Hors périmètre, assumé explicitement :
@@ -35,7 +35,7 @@ Hors périmètre, assumé explicitement :
 ## Impact
 
 - Nouveaux `modules/21-terminal.sh`, `config/terminal/ghostty`, `tests/test-terminal.sh` ; `lib/fonts.sh` étendu (+ cas dans `tests/test-fonts.sh`).
-- Fichiers créés hors dépôt : `~/.local/share/fonts/MesloLGSNF/` (quatre `.ttf`), `~/.config/ghostty/config` (lien vers le dépôt).
+- Fichiers créés hors dépôt : `~/.local/share/fonts/MesloLGSNF/` (quatre `.ttf`), `~/.config/ghostty/config` (lien vers le dépôt), `~/.config/xdg-terminals.list` (Ghostty en tête, entrées existantes conservées).
 - Écriture système : `update-alternatives` pour `x-terminal-emulator` (avec `sudo`), que le paquet Ghostty n'enregistre pas lui-même.
 - Réseau : quatre téléchargements depuis `github.com/romkatv/powerlevel10k-media` (~10 Mio). Les tests restent hors ligne (URL `file://`).
 - **Module graphique** (`MODULE_NEEDS_GUI=1`) : sauté dans la WSL, comme `navigateur`. Les tests hors ligne y tournent, mais la validation réelle se fait **en VM** — y compris le mécanisme du terminal par défaut, qu'aucune mesure hors GNOME ne peut trancher.
