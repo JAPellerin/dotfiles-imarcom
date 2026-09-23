@@ -1,0 +1,11 @@
+## 1. Module `docker`
+
+- [ ] 1.1 `modules/41-docker.sh` (`MODULE_GROUP=dev`, `MODULE_DEPS="base"`, pas de `NEEDS_GUI`) — en-tête avec les liens de la doc Docker suivie, constantes (URL de clé et de dépôt, cinq paquets, liste des paquets en conflit de D2) et `module_install` : `apt_remove` des conflits, `apt_add_repo` (D1), `apt_install` des cinq paquets ; vérifier `shellcheck modules/41-docker.sh` propre et `./setup.sh --list` qui affiche le module dans le groupe `[dev]`
+- [ ] 1.2 `module_configure` : groupe selon D3 (création si absent, `usermod -aG` seulement si non membre dans `getent`), service selon D4 (constaté, `enable --now` seulement si besoin, échec nommé s'il ne démarre pas), étape de session selon D5 ; `module_check` selon D6 sur ses trois conditions ; vérifier `shellcheck` propre
+- [ ] 1.3 `tests/test-docker.sh` : les cas de D7 avec doublures (`dpkg-query`, `run_sudo`, `getent`, `id`, `systemctl`, `apt_add_repo`) ; vérifier `bash tests/run-all.sh` vert et la ligne `shellcheck` de CLAUDE.md propre sur l'ensemble
+
+## 2. Validation réelle et documentation
+
+- [ ] 2.1 WSL (Docker déjà installé par `~/setup-sudo.sh`) : `./setup.sh --list` → `docker` « déjà fait » ; puis `./setup.sh docker` → sauté, et `stat` de `/etc/apt/sources.list.d/docker.sources` et `/etc/apt/keyrings/docker.asc` inchangé (aucune réécriture, D1) ; consigner le résultat ici
+- [ ] 2.2 VM (snapshot « vierge ») : bootstrap → `base`, `1password`, `docker` → les cinq paquets installés depuis `download.docker.com` (`apt-cache policy docker-ce`), `systemctl is-active docker` → `active`, `getent group docker` liste l'utilisateur, le résumé final demande de rouvrir la session ; après réouverture : `docker run --rm hello-world` **sans sudo** et `docker compose version` ; relance → « déjà fait » ; consigner versions et constats ici (et dans `design.md` si un fait contredit une décision)
+- [ ] 2.3 `ROADMAP.md` : `docker` fait (date, versions), vague 1 close ; `openspec validate docker --strict` vert
