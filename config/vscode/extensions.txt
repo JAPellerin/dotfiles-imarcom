@@ -1,0 +1,23 @@
+# config/vscode/extensions.txt — extensions VS Code installées par le module
+# `vscode` (code --install-extension), seulement celles qui manquent. Une par
+# ligne, identifiant « éditeur.nom » ; lignes vides et commentaires ignorés.
+# Une extension installée à la main et absente d'ici n'est jamais retirée.
+# Liste relevée le 23 sept 2026 dans le VS Code en service (Windows + WSL).
+anthropic.claude-code
+atlassian.atlascode
+bradlc.vscode-tailwindcss
+dbaeumer.vscode-eslint
+eamodio.gitlens
+graphql.vscode-graphql
+graphql.vscode-graphql-syntax
+mechatroner.rainbow-csv
+ms-azuretools.vscode-containers
+ms-ossdata.vscode-pgsql
+ms-playwright.playwright
+ms-vscode.makefile-tools
+redhat.vscode-yaml
+shd101wyy.markdown-preview-enhanced
+streetsidesoftware.code-spell-checker
+streetsidesoftware.code-spell-checker-french
+vitest.explorer
+yzhang.markdown-all-in-one
