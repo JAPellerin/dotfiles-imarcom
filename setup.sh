@@ -28,6 +28,8 @@ source "$DOTFILES_DIR/lib/files.sh"
 source "$DOTFILES_DIR/lib/fonts.sh"
 # shellcheck source=lib/module.sh
 source "$DOTFILES_DIR/lib/module.sh"
+# shellcheck source=lib/groups.sh
+source "$DOTFILES_DIR/lib/groups.sh"
 
 usage() {
   cat >&2 <<'USAGE'
