@@ -6,6 +6,6 @@
 
 ## 2. Validation réelle et documentation
 
-- [ ] 2.1 WSL : `./setup.sh dev-tools` (terminal) → « déjà fait », aucun installateur lancé (journal) ; consigner ici
+- [x] 2.1 WSL : `./setup.sh dev-tools` (terminal) → « déjà fait », aucun installateur lancé (journal) ; consigner ici — **fait le 23 sept 2026** : `./setup.sh dev-tools` lancé par l'utilisateur (journal `setup-20260923-121526.log`) → `base`, `shell` et `dev-tools` « déjà fait », aucune commande exécutée ; Claude Code 2.1.280 et twg 1.3.1 existants laissés tels quels ; `git status` propre
 - [ ] 2.2 VM (snapshot « vierge ») : bootstrap → `base`, `1password`, `shell`, `dev-tools` → `claude --version` et `twg --help` dans un nouveau terminal ; **`git -C ~/dotfiles status` propre et `~/.bashrc`, `~/.profile` sans ligne ajoutée** (D2) ; résumé final avec les deux étapes de connexion ; `twg login` et `claude` faits à la main → relance : « déjà fait », plus d'étape ; consigner ici (et corriger D2 si un installateur a écrit quelque part)
 - [ ] 2.3 `ROADMAP.md` : `dev-tools` fait (date, versions), dépendance à `node` retirée (vague 2 sans dépendance interne) ; `openspec validate dev-tools --strict` vert
