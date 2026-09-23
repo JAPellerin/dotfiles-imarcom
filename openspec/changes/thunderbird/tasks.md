@@ -1,7 +1,7 @@
 ## 1. Module `thunderbird`
 
 - [ ] 1.1 `config/thunderbird/thunderbird.desktop` : le fichier `.desktop` publié par Mozilla (sumo-kb), `Exec` et `Icon` portant `@THUNDERBIRD_DIR@` (D3) ; vérifier `desktop-file-validate` sur une version rendue, s'il est disponible
-- [ ] 1.2 `modules/62-thunderbird.sh` (`MODULE_GROUP=apps`, `MODULE_DEPS="base"`, `MODULE_NEEDS_GUI=1`) — en-tête avec le lien de la doc de Mozilla, constantes, `module_check` (D4), `module_install` (D1, étape des comptes), `module_configure` (D2, D3) ; vérifier `shellcheck` propre et `./setup.sh --list` → « non disponible ici » dans la WSL
+- [ ] 1.2 `modules/62-thunderbird.sh` (`MODULE_GROUP=apps`, `MODULE_DEPS="base shell"`, `MODULE_NEEDS_GUI=1`) — en-tête avec le lien de la doc de Mozilla, constantes, `module_check` (D4), `module_install` (D1, étape des comptes), `module_configure` (D2, D3) ; vérifier `shellcheck` propre et `./setup.sh --list` → « non disponible ici » dans la WSL
 - [ ] 1.3 `tests/test-thunderbird.sh` : les cas de D5 ; vérifier `bash tests/run-all.sh` vert et la ligne `shellcheck` de `CLAUDE.md` propre
 
 ## 2. Validation en VM et documentation
