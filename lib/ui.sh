@@ -49,6 +49,28 @@ ui_password() {
   gum input --password --header "$1" --placeholder ""
 }
 
+# _ui_columns : largeur du terminal en colonnes. `stty size` sur stderr (où le
+# spinner écrit ; `tput` et $COLUMNS ne sont pas fiables dans un script non
+# interactif), 80 à défaut.
+_ui_columns() {
+  local cols
+  read -r _ cols < <(stty size <&2 2>/dev/null) || true
+  [[ ${cols:-} =~ ^[0-9]+$ && $cols -gt 0 ]] && { printf '%s' "$cols"; return; }
+  printf '80'
+}
+
+# _ui_fit <texte> <largeur> : le texte tel quel s'il tient, sinon tronqué à
+# <largeur> caractères, le dernier remplacé par « … ».
+_ui_fit() {
+  local text=$1 width=$2
+  (( width < 1 )) && width=1
+  if (( ${#text} <= width )); then
+    printf '%s' "$text"
+  else
+    printf '%s…' "${text:0:width-1}"
+  fi
+}
+
 # _ui_spinner <titre> <commande...> : exécute la commande derrière un spinner
 # animé (ou une simple ligne d'info sans terminal) et renvoie son code sans
 # commenter le résultat : ui_spin et ui_wait s'en chargent. Le spinner est une
@@ -70,10 +92,17 @@ _ui_spinner() {
     add_cleanup "printf '\\033[?25h' >&2"
     _UI_CURSOR_CLEANUP_PID=$BASHPID
   fi
+  # La ligne animée doit tenir sur une seule ligne d'écran : `\r` ne ramène qu'au
+  # début de la dernière ligne affichée, et un titre plus large que le terminal
+  # serait réimprimé à chaque image (vu en VM le 23 sept 2026 : les cinq paquets
+  # Docker, 99 caractères, dans un terminal de 80 colonnes). Le titre complet
+  # reste affiché par ui_spin une fois la commande terminée.
+  local line
+  line=$(_ui_fit "$title" "$(( $(_ui_columns) - 3 ))")
   printf '\033[?25l' >&2
   (
     while true; do
-      printf '\r%s%s%s %s' "$_C_MAGENTA" "${frames[i]}" "$_C_RESET" "$title" >&2
+      printf '\r%s%s%s %s' "$_C_MAGENTA" "${frames[i]}" "$_C_RESET" "$line" >&2
       i=$(( (i + 1) % ${#frames[@]} ))
       sleep 0.1
     done
