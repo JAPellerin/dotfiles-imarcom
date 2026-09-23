@@ -40,8 +40,9 @@ TERMINAL_MANUAL="Faire de Ghostty le terminal par défaut dans les réglages du 
 TERMINAL_RELOGIN_MANUAL="Fermer puis rouvrir la session : le terminal démarre le shell annoncé par la session, qui n'a pas encore pris le changement de shell de connexion."
 
 # Déjà fait = ghostty installé, police connue de fontconfig, configuration liée,
-# alternative pointant sur Ghostty (D6). La police est constatée par fontconfig
-# et non par la présence de fichiers : c'est lui qui décide si elle est utilisable.
+# alternative et xdg-terminals.list désignant Ghostty — cinq conditions (D6). La
+# police est constatée par fontconfig et non par la présence de fichiers : c'est
+# lui qui décide si elle est utilisable.
 module_check() {
   pkg_installed ghostty || return 1
   font_installed "$TERMINAL_FONT_FAMILY" || return 1
