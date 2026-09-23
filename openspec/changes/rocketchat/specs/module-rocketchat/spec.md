@@ -1,0 +1,42 @@
+## Purpose
+
+Installer le client de bureau Rocket.Chat depuis son paquet `.deb` officiel le plus récent, déjà configuré pour le serveur de l'entreprise, afin que l'utilisateur n'ait plus qu'à se connecter.
+
+## ADDED Requirements
+
+### Requirement: Client Rocket.Chat depuis son .deb officiel le plus récent
+Le module `rocketchat` (groupe `apps`, dépend de `base`, nécessite une session graphique) SHALL installer le paquet `rocketchat` à partir du `.deb` amd64 publié par l'éditeur dans ses releases GitHub, en retenant la plus récente des releases publiées qui en contient un, par les helpers du socle. Un paquet déjà installé MUST NOT être retéléchargé ni réinstallé. L'échec de la recherche ou du téléchargement MUST faire échouer le module en le nommant.
+
+#### Scenario: Machine fraîche
+- **WHEN** le module s'exécute sur une machine sans client Rocket.Chat
+- **THEN** le paquet `rocketchat` est installé et son lanceur est présent dans le menu des applications
+
+#### Scenario: Déjà installé
+- **WHEN** le paquet `rocketchat` est installé et le serveur pré-configuré
+- **THEN** `module_check` retourne 0 et rien n'est téléchargé
+
+#### Scenario: Sans session graphique
+- **WHEN** le runner s'exécute là où aucune session graphique n'est disponible
+- **THEN** le module est annoncé « non disponible ici » et n'est pas exécuté
+
+### Requirement: Serveur de l'entreprise pré-configuré
+Le module SHALL déployer la liste de serveurs par défaut versionnée dans le dépôt, qui désigne `https://rocketchat.imarcom.net`, à l'emplacement utilisateur que documente Rocket.Chat pour Linux, par le helper de liens du socle. Au premier lancement du client, le serveur de l'entreprise SHALL être proposé sans que l'utilisateur ait à saisir son adresse. Le module MUST NOT empêcher l'utilisateur d'ajouter d'autres serveurs. `module_check` SHALL constater l'état du lien.
+
+#### Scenario: Premier lancement
+- **WHEN** l'utilisateur ouvre le client après le module, sur un poste où aucun serveur n'a encore été ajouté
+- **THEN** le client s'ouvre sur la page de connexion de `rocketchat.imarcom.net`
+
+#### Scenario: Fichier existant
+- **WHEN** un fichier de serveurs écrit à la main existe déjà à cet emplacement
+- **THEN** il est sauvegardé à côté avant que le lien ne soit créé
+
+#### Scenario: Lien retiré
+- **WHEN** le lien de la liste de serveurs a été supprimé
+- **THEN** `module_check` retourne 1 et le module le recrée
+
+### Requirement: Connexion déclarée comme étape manuelle
+Lorsque le module vient d'installer le client, il SHALL déclarer l'étape manuelle de se connecter à Rocket.Chat. Cette étape MUST NOT faire échouer le module ni entrer dans son critère « déjà fait ».
+
+#### Scenario: Première installation
+- **WHEN** le module installe le client
+- **THEN** le résumé final demande de se connecter à Rocket.Chat
