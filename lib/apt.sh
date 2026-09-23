@@ -9,6 +9,13 @@
 # Toute écriture système passe par run_sudo ; les chemins sont surchargeables
 # (tests) : APT_KEYRINGS_DIR, APT_SOURCES_DIR.
 
+# Attente du verrou de dpkg au lieu d'un échec immédiat : sur un poste qui vient
+# de démarrer, unattended-upgrades peut le tenir une minute ou plus (vu en VM le
+# 23 sept 2026 : « Could not get lock /var/lib/dpkg/lock-frontend … held by
+# unattended-upgr »). Ubuntu règle déjà 120 s pour la commande `apt`, mais pas
+# pour `apt-get`. Forme collée « -oClé=valeur » : un seul mot commençant par
+# « - », placé après les paquets — apt lit ses options n'importe où.
+APT_LOCK_OPT="-oDPkg::Lock::Timeout=${APT_LOCK_TIMEOUT:-300}"
 APT_KEYRINGS_DIR="${APT_KEYRINGS_DIR:-/etc/apt/keyrings}"
 APT_SOURCES_DIR="${APT_SOURCES_DIR:-/etc/apt/sources.list.d}"
 _APT_UPDATED=0
@@ -26,7 +33,7 @@ apt_mark_stale() { _APT_UPDATED=0; }
 # (sauf apt_mark_stale entre-temps).
 apt_update_once() {
   (( _APT_UPDATED == 1 )) && return 0
-  ui_spin "Mise à jour des index apt" run_sudo apt-get update -q || return $?
+  ui_spin "Mise à jour des index apt" run_sudo apt-get update -q "$APT_LOCK_OPT" || return $?
   _APT_UPDATED=1
 }
 
@@ -43,7 +50,7 @@ apt_install() {
   fi
   apt_update_once || return $?
   ui_spin "Installation apt : ${missing[*]}" \
-    run_sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q "${missing[@]}"
+    run_sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q "${missing[@]}" "$APT_LOCK_OPT"
 }
 
 # apt_install_pinned <paquet...> : `apt-get install` inconditionnel — installe le
@@ -56,7 +63,7 @@ apt_install() {
 apt_install_pinned() {
   apt_update_once || return $?
   ui_spin "Installation apt (version épinglée) : $*" \
-    run_sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q --allow-downgrades "$@"
+    run_sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q --allow-downgrades "$@" "$APT_LOCK_OPT"
 }
 
 # apt_install_deb_url <url> <paquet> : installe un paquet `.deb` téléchargé depuis
@@ -90,7 +97,7 @@ apt_install_deb_url() {
     || { log_error "Le fichier téléchargé n'est pas un paquet Debian : $url"; return 1; }
   apt_update_once || return $?
   ui_spin "Installation apt (.deb téléchargé) : $pkg" \
-    run_sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q "$deb"
+    run_sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q "$deb" "$APT_LOCK_OPT"
 }
 
 # apt_remove <paquet...> : retire uniquement les paquets présents, sans question.
@@ -105,7 +112,7 @@ apt_remove() {
     return 0
   fi
   ui_spin "Retrait apt : ${present[*]}" \
-    run_sudo env DEBIAN_FRONTEND=noninteractive apt-get remove -y -q "${present[@]}"
+    run_sudo env DEBIAN_FRONTEND=noninteractive apt-get remove -y -q "${present[@]}" "$APT_LOCK_OPT"
 }
 
 # apt_add_repo <nom> <url-clé> <url-dépôt> <suite> <composants> [architectures]
