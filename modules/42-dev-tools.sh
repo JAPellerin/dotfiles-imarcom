@@ -10,7 +10,7 @@
 # L'installateur de twg ajoute un `export PATH=…` à ~/.zshrc — un lien vers le
 # dépôt — quand ~/.local/bin manque au PATH : le module l'y met avant (D2).
 # Les connexions restent des gestes de l'utilisateur, signalés au résumé (D5).
-# Voir openspec/changes/dev-tools/specs/module-dev-tools/spec.md et design.md.
+# Voir openspec/specs/module-dev-tools/spec.md et openspec/changes/archive/2026-09-23-dev-tools/design.md.
 MODULE_NAME="dev-tools"
 MODULE_DESC="Claude Code (installateur natif) ; twg (CLI Atlassian Teamwork Graph)"
 MODULE_GROUP="dev"

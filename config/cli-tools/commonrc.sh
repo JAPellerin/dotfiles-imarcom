@@ -3,7 +3,7 @@
 # en ~/.commonrc.d/cli-tools.sh et chargé par ~/.commonrc en bash comme en zsh :
 # syntaxe POSIX uniquement. Aucune garde `command -v` ici — le lien n'existe que
 # si le module est installé, c'est tout l'intérêt d'un lien par fragment.
-# Voir openspec/changes/cli-tools/design.md (D3).
+# Voir openspec/changes/archive/2026-09-22-cli-tools/design.md (D3).
 #
 # Ce qui s'initialise par shell (`fzf --bash` / `fzf --zsh`, `zoxide init …`) ne
 # peut pas vivre ici : c'est dans config/shell/zshrc et bashrc-extra.sh.

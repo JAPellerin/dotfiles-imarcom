@@ -14,7 +14,7 @@
 #                https://mozilla.github.io/policy-templates/ (ExtensionSettings, Preferences)
 #   Brave Sync : brave-core/components/brave_sync/time_limited_words.cc (25ᵉ mot),
 #                liste BIP-0039 https://github.com/bitcoin/bips/blob/master/bip-0039/english.txt
-# Voir openspec/changes/navigateur/{specs/module-navigateur/spec.md,design.md}.
+# Voir openspec/specs/module-navigateur/spec.md et openspec/changes/archive/2026-09-22-navigateur/design.md.
 MODULE_NAME="navigateur"
 MODULE_DESC="navigateurs : Brave / Firefox / Chrome (dépôts officiels) ; extension 1Password ; Brave Sync ; navigateur par défaut"
 MODULE_GROUP="apps"

@@ -8,7 +8,7 @@
 # `code/add-microsoft-repo` est réglée à « non » avant l'installation, pour que
 # seul le socle le déclare (design D2 — même piège que Chrome et repo_add_once).
 # Pas de settings.json versionné : VS Code le réécrit depuis son interface.
-# Voir openspec/changes/vscode/specs/module-vscode/spec.md et design.md.
+# Voir openspec/specs/module-vscode/spec.md et openspec/changes/archive/2026-09-23-vscode/design.md.
 MODULE_NAME="vscode"
 MODULE_DESC="VS Code (dépôt Microsoft) ; gnome-keyring ; extensions versionnées"
 MODULE_GROUP="apps"

@@ -15,7 +15,7 @@
 # Dépend de `shell` et pas seulement de `base` (D7) : sans lui, ~/.commonrc
 # n'existe pas, le fragment déposé ici n'est jamais chargé, et les initialisations
 # de fzf et zoxide — qui vivent dans zshrc et bashrc-extra.sh — non plus.
-# Voir openspec/changes/cli-tools/specs/module-cli-tools/spec.md et design.md.
+# Voir openspec/specs/module-cli-tools/spec.md et openspec/changes/archive/2026-09-22-cli-tools/design.md.
 MODULE_NAME="cli-tools"
 MODULE_DESC="trousse CLI : ripgrep / fd / fzf / bat / zoxide / lazygit / client PostgreSQL"
 MODULE_GROUP="shell"

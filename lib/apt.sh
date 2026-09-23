@@ -56,7 +56,7 @@ apt_install() {
 # apt_install_pinned <paquet...> : `apt-get install` inconditionnel — installe le
 # paquet ou le bascule vers la version que la politique apt sélectionne
 # (épinglage : le firefox de Mozilla par-dessus le paquet de transition d'Ubuntu,
-# voir openspec/changes/navigateur/design.md D3), même si un paquet du même nom
+# voir openspec/changes/archive/2026-09-22-navigateur/design.md D3), même si un paquet du même nom
 # est déjà installé. `--allow-downgrades` : sans lui, `-y` refuse un déclassement
 # (constaté en VM le 21 sept 2026 : « 1:1snap1 » → « 154.0 » est un déclassement
 # d'époque). Dans le cas courant, apt_install suffit.
