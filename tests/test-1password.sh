@@ -11,6 +11,8 @@ source "$DOTFILES_DIR/lib/apt.sh"
 source "$DOTFILES_DIR/lib/op.sh"
 # shellcheck source=../lib/module.sh
 source "$DOTFILES_DIR/lib/module.sh"
+# shellcheck source=../lib/files.sh
+source "$DOTFILES_DIR/lib/files.sh"
 
 if ! command -v python3 >/dev/null 2>&1; then
   printf 'python3 absent : test sauté (socket factice impossible).\n'
@@ -52,7 +54,7 @@ export PATH="$TEST_TMP/bin:$PATH"
 
 # Environnement du module : socket, délais courts, config shell et CLI isolées.
 export OP_AGENT_SOCK="$TEST_TMP/agent.sock" OP_WAIT_SECONDS=6 OP_WAIT_INTERVAL=0.1 OP_OPEN_DELAY=0 OP_SETTLE=1
-export OP_CLI_CONFIG="$TEST_TMP/op-config" SHELL_COMMON_RC="$TEST_TMP/commonrc" OP_APP_SETTINGS_FILE="$TEST_TMP/app-settings.json"
+export OP_CLI_CONFIG="$TEST_TMP/op-config" SHELL_COMMON_RC="$TEST_TMP/commonrc" SHELL_COMMON_RC_DIR="$TEST_TMP/commonrc.d" OP_APP_SETTINGS_FILE="$TEST_TMP/app-settings.json"
 # shellcheck source=../modules/10-1password.sh
 source "$DOTFILES_DIR/modules/10-1password.sh"
 # Le repli terminal n'est pas testé ici (interactif) : doublure qui se signale.
@@ -82,13 +84,28 @@ assert_eq "un seul op signin" 1 "$(grep -c '^signin' "$TEST_TMP/op.log")"
 assert_eq "aucune commande op pendant l'attente (whoami initial, puis signin)" $'whoami\nsignin' "$(head -2 "$TEST_TMP/op.log")"
 assert_contains "session constatée" "$out" "Session 1Password active via l'application (test@example.com)"
 assert_fail "aucune question posée (gum non appelé)" test -e "$TEST_TMP/gum.log"
+printf '# commonrc témoin\n' >"$SHELL_COMMON_RC"; COMMONRC_SUM=$(cksum <"$SHELL_COMMON_RC")
 out=$(_op_ssh_agent 2>&1)
+assert_ok "fragment lié dans ~/.commonrc.d" config_linked config/1password/commonrc.sh "$SHELL_COMMON_RC_DIR/1password.sh"
 # shellcheck disable=SC2016  # ligne littérale attendue dans le fichier
-assert_contains "SSH_AUTH_SOCK écrit dans la config shell commune" "$(cat "$SHELL_COMMON_RC")" 'SSH_AUTH_SOCK="$HOME/.1password/agent.sock"'
+assert_contains "SSH_AUTH_SOCK dans le fragment chargé par la config shell commune" "$(cat "$SHELL_COMMON_RC_DIR/1password.sh")" 'export SSH_AUTH_SOCK="$HOME/.1password/agent.sock"'
+assert_eq "config shell commune jamais modifiée (lien vers le dépôt une fois shell passé)" "$COMMONRC_SUM" "$(cksum <"$SHELL_COMMON_RC")"
 assert_contains "agent actif signalé, nouveau terminal" "$out" "nouveau terminal"
 assert_eq "aucune étape manuelle consignée" "" "$(cat "$MANUAL_STEPS_FILE")"
 _op_ssh_agent >/dev/null 2>&1
-assert_eq "SSH_AUTH_SOCK écrit une seule fois" 1 "$(grep -c SSH_AUTH_SOCK "$SHELL_COMMON_RC")"
+assert_eq "relance : un seul fragment, toujours lié" "1password.sh" "$(ls "$SHELL_COMMON_RC_DIR")"
+assert_ok "relance : lien intact" config_linked config/1password/commonrc.sh "$SHELL_COMMON_RC_DIR/1password.sh"
+out=$(sh -c '. "$1"; printf %s "$SSH_AUTH_SOCK"' _ "$SHELL_COMMON_RC_DIR/1password.sh")
+assert_eq "le fragment se charge en sh et désigne le socket de l'agent" "$HOME/.1password/agent.sock" "$out"
+# module_check : avec l'app, le fragment fait partie du « déjà fait » (session et
+# paquets supposés en place ici).
+# shellcheck disable=SC2329  # doublures appelées par module_check dans le sous-shell
+_check_session_ok() ( op_session_active() { :; }; has_gui() { :; }; module_check )
+assert_ok "module_check : fragment lié → déjà fait" _check_session_ok
+mv "$SHELL_COMMON_RC_DIR/1password.sh" "$TEST_TMP/fragment.garde"
+assert_fail "module_check : fragment absent → à faire" _check_session_ok
+mv "$TEST_TMP/fragment.garde" "$SHELL_COMMON_RC_DIR/1password.sh"
+
 
 printf '%s\n' "== stabilisation : conditions vraies puis retombées → compteur remis à zéro =="
 reset; app_setting $SYS $CLI

@@ -23,14 +23,19 @@ OP_DEBSIG_ID="AC2D62742012EA22"
 OP_DEBSIG_POLICY_URL="https://downloads.1password.com/linux/debian/debsig/1password.pol"
 OP_DEBSIG_POLICY="/etc/debsig/policies/$OP_DEBSIG_ID/1password.pol"
 OP_DEBSIG_KEYRING="/usr/share/debsig/keyrings/$OP_DEBSIG_ID/debsig.gpg"
-# shellcheck disable=SC2016  # ligne littérale : $HOME est évalué par le shell qui la charge
-OP_AGENT_SOCK_LINE='export SSH_AUTH_SOCK="$HOME/.1password/agent.sock"'
+# SSH_AUTH_SOCK : fragment de config shell, lié dans ~/.commonrc.d (convention de
+# la vague 0) et non ligne ajoutée à ~/.commonrc — voir config/1password/commonrc.sh.
+OP_AGENT_FRAGMENT="config/1password/commonrc.sh"
+OP_AGENT_FRAGMENT_TARGET="$SHELL_COMMON_RC_DIR/1password.sh"
 
 # Déjà fait = CLI installé, app installée quand une session graphique existe,
-# et session `op` active.
+# fragment SSH_AUTH_SOCK lié quand l'app est là, et session `op` active.
 module_check() {
   pkg_installed 1password-cli || return 1
   if has_gui; then pkg_installed 1password || return 1; fi
+  if pkg_installed 1password; then
+    config_linked "$OP_AGENT_FRAGMENT" "$OP_AGENT_FRAGMENT_TARGET" || return 1
+  fi
   op_session_active
 }
 
@@ -233,14 +238,12 @@ _op_warn_cli_account() {
 }
 
 # Agent SSH de l'application (D8) : SSH_AUTH_SOCK dans la config shell commune,
-# une seule fois. L'activation a été obtenue dans _op_connect ; on constate.
+# par un fragment lié dans ~/.commonrc.d — indépendant de l'ordre des modules, et
+# jamais d'écriture dans ~/.commonrc, qui est un lien vers le dépôt une fois
+# `shell` passé. L'activation a été obtenue dans _op_connect ; on constate.
 _op_ssh_agent() {
   pkg_installed 1password || return 0
-  if ensure_line "$SHELL_COMMON_RC" "$OP_AGENT_SOCK_LINE"; then
-    log_ok "SSH_AUTH_SOCK → agent 1Password ajouté dans $SHELL_COMMON_RC"
-  else
-    log_ok "SSH_AUTH_SOCK déjà configuré dans $SHELL_COMMON_RC"
-  fi
+  link_config "$OP_AGENT_FRAGMENT" "$OP_AGENT_FRAGMENT_TARGET" || return 1
   if op_agent_ready; then
     log_info "Agent SSH 1Password actif ; SSH_AUTH_SOCK prend effet dans un nouveau terminal."
   else
