@@ -26,7 +26,6 @@ VSCODE_BIN="${VSCODE_BIN:-/usr/bin/code}"
 # Connexion de l'extension Atlassian : OAuth dans le navigateur, jetons dans le
 # stockage de secrets de VS Code — rien de scriptable, étape manuelle (D6b).
 VSCODE_ATLASSIAN_MANUAL="Connecter Jira et Bitbucket dans VS Code : extension Atlassian (barre latérale) → se connecter, dans le navigateur."
-_VSCODE_FRESH=0
 
 # Déjà fait = les deux paquets installés et chaque extension de la liste
 # présente (D4). `code --list-extensions` est la seule source de vérité des
@@ -55,11 +54,19 @@ _vscode_installed() {
   "$VSCODE_BIN" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]'
 }
 
+# L'étape de connexion Atlassian est déclarée ici, seulement quand `code` vient
+# d'être installé — la connexion se fait une fois et son état n'est pas lisible
+# (D6b). Pas plus tard, dans module_configure : le runner lance les deux
+# fonctions dans des sous-shells distincts, une variable posée ici y serait perdue.
 module_install() {
-  pkg_installed code || _VSCODE_FRESH=1
+  local fresh=0
+  pkg_installed code || fresh=1
   _vscode_debconf || return 1
   apt_add_repo vscode "$VSCODE_KEY_URL" "$VSCODE_REPO_URL" stable main || return 1
-  apt_install "${VSCODE_PACKAGES[@]}"
+  apt_install "${VSCODE_PACKAGES[@]}" || return 1
+  if (( fresh == 1 )); then
+    manual_step "$VSCODE_ATLASSIAN_MANUAL"
+  fi
 }
 
 # _vscode_debconf : sélection écrite dans un fichier puis passée en argument, et
@@ -88,9 +95,4 @@ module_configure() {
       || { log_error "Extension VS Code non installée : $id"; return 1; }
   done < <(_vscode_wanted)
   log_ok "Extensions VS Code : $(_vscode_wanted | wc -l) présentes."
-  # Seulement quand VS Code vient d'être installé : la connexion se fait une
-  # fois, et son état n'est pas lisible (D6b).
-  if (( _VSCODE_FRESH == 1 )); then
-    manual_step "$VSCODE_ATLASSIAN_MANUAL"
-  fi
 }
