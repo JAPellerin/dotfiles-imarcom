@@ -135,4 +135,26 @@ assert_eq "…et le dossier temporaire est nettoyé" "" "$(ls -A "$TMPDIR")"
 
 assert_fail "arguments manquants → échec" apt_install_deb_url "$DEB_URL"
 
+printf '%s\n' "== attente du verrou de dpkg =="
+# Chaque apt-get passé par les helpers attend le verrou (unattended-upgrades) au
+# lieu d'échouer aussitôt.
+: >"$CALLS"; _APT_UPDATED=0
+apt_update_once >/dev/null 2>&1
+apt_install paquet-fictif-dotfiles >/dev/null 2>&1
+apt_install_pinned bash >/dev/null 2>&1
+apt_remove bash >/dev/null 2>&1
+apt_install_deb_url "$DEB_URL" paquet-fictif-dotfiles >/dev/null 2>&1
+assert_eq "cinq apt-get lancés (update, install, épinglé, remove, .deb)" 5 "$(grep -c 'apt-get' "$CALLS")"
+assert_eq "tous les apt-get portent l'option d'attente" \
+  "$(grep -c 'apt-get' "$CALLS")" "$(grep -c 'apt-get .* -oDPkg::Lock::Timeout=300$' "$CALLS")"
+: >"$CALLS"; _APT_UPDATED=0
+APT_LOCK_OPT="-oDPkg::Lock::Timeout=42"
+apt_update_once
+assert_contains "délai réglable" "$(cat "$CALLS")" "apt-get update -q -oDPkg::Lock::Timeout=42"
+out=$(bash -c 'APT_LOCK_TIMEOUT=7; source lib/core.sh 2>/dev/null; source lib/apt.sh; printf %s "$APT_LOCK_OPT"')
+assert_eq "APT_LOCK_TIMEOUT surcharge le défaut" "-oDPkg::Lock::Timeout=7" "$out"
+out=$(bash -c 'unset APT_LOCK_TIMEOUT; source lib/apt.sh; printf %s "$APT_LOCK_OPT"')
+assert_eq "défaut : 300 s" "-oDPkg::Lock::Timeout=300" "$out"
+assert_ok "apt accepte l'option après les paquets" apt-get -s -q install bash "-oDPkg::Lock::Timeout=300"
+
 test_done

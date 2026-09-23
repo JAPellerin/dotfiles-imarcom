@@ -25,7 +25,7 @@ module_install() {
   if ui_confirm "Mettre le système à jour d'abord (apt update && apt upgrade) ?" oui; then
     apt_update_once
     ui_spin "Mise à niveau des paquets (apt upgrade)" \
-      run_sudo env DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -q
+      run_sudo env DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -q "$APT_LOCK_OPT"
   else
     log_warn "Mise à niveau du système sautée."
   fi
