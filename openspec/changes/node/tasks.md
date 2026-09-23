@@ -1,8 +1,8 @@
 ## 1. Module `node`
 
-- [ ] 1.1 `modules/40-node.sh` (`MODULE_GROUP=dev`, `MODULE_DEPS="base shell"`, pas de `NEEDS_GUI`) — en-tête avec les liens de la doc de nvm, constantes (URL, étiquette `v0.40.8`, `pnpm@11`, paquet openspec), `_node_nvm` (D2) et `module_install` selon D1, D3, D4 ; vérifier `shellcheck` propre et `./setup.sh --list` qui affiche `node` dans `[dev]`
-- [ ] 1.2 `module_check` selon D5 ; vérifier dans la WSL qu'il retourne 1 (aucune LTS installée), en moins d'une seconde et sans réseau (seulement des lectures de fichiers et `nvm version`)
-- [ ] 1.3 `tests/test-node.sh` : les cas de D7 ; vérifier `bash tests/run-all.sh` vert et la ligne `shellcheck` de `CLAUDE.md` propre
+- [x] 1.1 `modules/40-node.sh` (`MODULE_GROUP=dev`, `MODULE_DEPS="base shell"`, pas de `NEEDS_GUI`) — en-tête avec les liens de la doc de nvm, constantes (URL, étiquette `v0.40.8`, `pnpm@11`, paquet openspec), `_node_nvm` (D2) et `module_install` selon D1, D3, D4 ; vérifier `shellcheck` propre et `./setup.sh --list` qui affiche `node` dans `[dev]`
+- [x] 1.2 `module_check` selon D5 ; vérifier dans la WSL qu'il retourne 1 (aucune LTS installée), en moins d'une seconde et sans réseau (seulement des lectures de fichiers et `nvm version`)
+- [x] 1.3 `tests/test-node.sh` : les cas de D7 ; vérifier `bash tests/run-all.sh` vert et la ligne `shellcheck` de `CLAUDE.md` propre
 
 ## 2. Validation réelle et documentation
 
