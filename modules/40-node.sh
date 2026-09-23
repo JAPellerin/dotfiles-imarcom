@@ -10,7 +10,7 @@
 #   https://github.com/nvm-sh/nvm#git-install
 # pnpm 11 et non 12 : pnpm n'a pas de LTS, la 11 est maintenue et c'est celle
 # des projets ; pnpm bascule de lui-même sur le champ `packageManager` d'un projet.
-# Voir openspec/changes/node/specs/module-node/spec.md et design.md.
+# Voir openspec/specs/module-node/spec.md et openspec/changes/archive/2026-09-23-node/design.md.
 MODULE_NAME="node"
 MODULE_DESC="Node.js par nvm : LTS et 26 (par défaut) ; pnpm 11 ; openspec"
 MODULE_GROUP="dev"

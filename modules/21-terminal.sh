@@ -13,7 +13,7 @@
 # « default-applications.terminal exec » vaut « xdg-terminal-exec », un script
 # qui lit xdg-terminals.list (relevé en VM le 22 sept 2026). Le module écrit
 # donc cette liste plutôt que d'écraser la délégation (design D4).
-# Voir openspec/changes/terminal/specs/module-terminal/spec.md et design.md.
+# Voir openspec/specs/module-terminal/spec.md et openspec/changes/archive/2026-09-23-terminal/design.md.
 MODULE_NAME="terminal"
 MODULE_DESC="Ghostty depuis les dépôts Ubuntu ; police MesloLGS NF ; config versionnée ; terminal par défaut"
 MODULE_GROUP="shell"

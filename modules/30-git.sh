@@ -10,7 +10,7 @@
 #   delta  : https://github.com/dandavison/delta#get-started
 #   op     : https://developer.1password.com/docs/cli/reference/commands/read (ssh-format=openssh)
 #   hôtes  : https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints
-# Voir openspec/specs/module-git/spec.md et openspec/changes/git/design.md.
+# Voir openspec/specs/module-git/spec.md et openspec/changes/archive/2026-09-21-git/design.md.
 MODULE_NAME="git"
 MODULE_DESC="git : identité et delta (gitconfig versionné) ; gh ; clé SSH depuis 1Password ; hôtes GitHub connus"
 MODULE_GROUP="dev"

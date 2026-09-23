@@ -7,7 +7,7 @@
 # par `id -nG` : ce dernier donne les groupes de la session, qui ne changent
 # qu'à la reconnexion — un module_check fondé dessus ne serait jamais vrai dans
 # la session de l'installation. Repris du module docker, validé en VM le 23 sept
-# 2026. Voir openspec/changes/socle-groupes/design.md.
+# 2026. Voir openspec/changes/archive/2026-09-23-socle-groupes/design.md.
 # Dépend de lib/core.sh (run_sudo, log_*) et lib/module.sh (manual_step).
 
 # _group_user : l'utilisateur courant.

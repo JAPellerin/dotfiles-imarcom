@@ -6,7 +6,7 @@
 # Les fichiers de config vivent dans config/<module>/ (sans point initial) ; un
 # module les amène dans ~ par link_config et constate leur état par config_linked.
 # Voir openspec/specs/config-files/spec.md et openspec/changes/archive/2026-09-18-shell/design.md (D1, D2) ;
-# install_system_file : openspec/changes/navigateur/design.md (D6).
+# install_system_file : openspec/changes/archive/2026-09-22-navigateur/design.md (D6).
 # Dépend de lib/core.sh (DOTFILES_DIR, log_*, run, run_sudo).
 
 # _config_source <rel> : chemin absolu du fichier <rel> du dépôt, ou échec nommé.

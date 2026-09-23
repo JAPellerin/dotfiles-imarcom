@@ -9,7 +9,7 @@
 # paquet, et le dépôt déclaré par le socle (design D1, D2 — même mécanisme que
 # /etc/default/google-chrome pour Chrome). Cowork fait tourner une VM QEMU/KVM :
 # paquets QEMU en recommandations du paquet, utilisateur dans le groupe kvm (D3, D4).
-# Voir openspec/changes/claude-desktop/specs/module-claude-desktop/spec.md et design.md.
+# Voir openspec/specs/module-claude-desktop/spec.md et openspec/changes/archive/2026-09-23-claude-desktop/design.md.
 MODULE_NAME="claude-desktop"
 MODULE_DESC="Claude Desktop (dépôt apt Anthropic) ; Cowork (groupe kvm)"
 MODULE_GROUP="apps"

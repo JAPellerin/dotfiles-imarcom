@@ -10,7 +10,7 @@
 # le 23 sept 2026) : le module les constate et ne les rétablit que s'il le faut.
 # Aucun /etc/docker/daemon.json : réglages par défaut de Docker, par décision de
 # l'utilisateur, jusqu'à ce qu'un besoin réel se présente.
-# Voir openspec/changes/docker/specs/module-docker/spec.md et design.md.
+# Voir openspec/specs/module-docker/spec.md et openspec/changes/archive/2026-09-23-docker/design.md.
 MODULE_NAME="docker"
 MODULE_DESC="Docker Engine (dépôt apt officiel) ; compose et buildx ; groupe docker ; service actif"
 MODULE_GROUP="dev"

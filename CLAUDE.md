@@ -22,6 +22,8 @@ Workflow via les commandes `/opsx:*` (définies dans `.claude/commands/opsx/`) :
 
 Commandes utiles : `openspec list`, `openspec status --change <nom>`, `openspec validate <nom> --strict`, `openspec show <nom>`.
 
+**Renvois depuis le code** (23 sept 2026, change `menage`) : un commentaire renvoie à la spec principale, `openspec/specs/<capacité>/spec.md`, stable ; au design par son chemin d'archive, `openspec/changes/archive/<date>-<nom>/design.md`. Pendant un change actif, un renvoi à `openspec/changes/<nom>/…` est permis, mais **l'archivage le corrige dans la même opération** : `tests/test-refs.sh` vérifie que chaque chemin `openspec/…` cité dans `lib/`, `modules/`, `config/`, `setup.sh` et `bootstrap.sh` existe, et échoue sur un renvoi laissé mort.
+
 ## Commandes de développement
 
 - `shellcheck setup.sh bootstrap.sh lib/*.sh modules/*.sh tests/*.sh tests/fixtures/*/*.sh config/shell/commonrc config/shell/bashrc-extra.sh $(git ls-files 'config/*/commonrc.sh')` — lint (aucun avertissement toléré). Le `git ls-files` couvre les fragments `commonrc.d` des modules ; il ne donne rien tant qu'aucun module n'en dépose, là où un motif `config/*/commonrc.sh` ferait échouer `shellcheck` sur un fichier inexistant.
