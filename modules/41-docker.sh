@@ -24,7 +24,7 @@ DOCKER_PACKAGES=(docker-ce docker-ce-cli containerd.io docker-buildx-plugin dock
 DOCKER_CONFLICTS=(docker.io docker-compose docker-compose-v2 docker-doc docker-buildx podman-docker containerd runc)
 DOCKER_GROUP="docker"
 DOCKER_USER="${USER:-$(id -un)}"
-DOCKER_RELOGIN_MANUAL="Fermer puis rouvrir la session : l'appartenance au groupe docker n'est prise en compte qu'à l'ouverture d'une session (docker sans sudo d'ici là)."
+DOCKER_RELOGIN_MANUAL="Fermer puis rouvrir la session : l'appartenance au groupe docker n'est prise en compte qu'à l'ouverture d'une session (d'ici là, docker demande sudo)."
 
 # Déjà fait = les cinq paquets installés, l'utilisateur membre du groupe `docker`
 # dans la base des groupes, le service activé et en marche (D6). Tout se lit
