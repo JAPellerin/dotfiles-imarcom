@@ -4,7 +4,7 @@ Thunderbird est le client de courriel et d'agenda de l'utilisateur (courriel et 
 
 ## What Changes
 
-- **Module `thunderbird`** (`modules/62-thunderbird.sh`, groupe `apps`, dépend de `base`, **session graphique requise**) :
+- **Module `thunderbird`** (`modules/62-thunderbird.sh`, groupe `apps`, dépend de `base` et de `shell` — pour que `~/.local/bin` soit dans le `PATH` —, **session graphique requise**) :
   - **archive officielle de Mozilla**, en français, par l'adresse de téléchargement de Mozilla (`download.mozilla.org/?product=thunderbird-latest&os=linux64&lang=fr`) ;
   - **installée dans le dossier personnel** (`~/.local/share/thunderbird`), sans `sudo`, pour que la **mise à jour intégrée de Thunderbird fonctionne** — installé sous `/opt`, le dossier appartiendrait à root et la doc de Mozilla prévoit alors une réinstallation manuelle à chaque version ;
   - commande `thunderbird` dans `~/.local/bin` et **lanceur** `~/.local/share/applications/thunderbird.desktop`, tiré du fichier `.desktop` que publie Mozilla, chemins adaptés au dossier d'installation ;

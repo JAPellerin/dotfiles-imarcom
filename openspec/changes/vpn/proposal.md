@@ -6,7 +6,8 @@ L'utilisateur se connecte au réseau de l'entreprise par **OpenVPN**. La ROADMAP
 
 - **Module `vpn`** (`modules/65-vpn.sh`, groupe `apps`, dépend de `base`, **session graphique requise**) :
   - `openvpn` et le greffon OpenVPN de NetworkManager pour GNOME (`network-manager-openvpn-gnome`, qui tire `network-manager-openvpn`) depuis les dépôts d'Ubuntu, par `apt_install` — les connexions VPN se gèrent alors dans **Paramètres > Réseau > VPN** ;
-  - **étape manuelle** tant qu'aucune connexion VPN OpenVPN n'existe dans NetworkManager : importer le profil fourni par l'équipe TI.
+  - **étape manuelle** tant qu'aucune connexion VPN OpenVPN n'existe dans NetworkManager : importer le profil fourni par l'équipe TI ;
+  - **le module reste « à faire » tant qu'aucun profil OpenVPN n'est importé** — décision de l'utilisateur (23 sept 2026, contre-vérification). Sur Ubuntu 26.04, `ubuntu-desktop-minimal` recommande `network-manager-openvpn-gnome`, qui tire `network-manager-openvpn` puis `openvpn` : sur un poste de bureau neuf, les paquets sont très probablement déjà là. Un critère « paquets installés » seul rendrait le module « déjà fait » d'emblée, jamais exécuté, et l'étape d'import ne s'afficherait jamais. Le vrai état attendu est « VPN prêt à l'emploi », donc un profil importé.
 
 Hors périmètre, **reporté** :
 

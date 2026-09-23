@@ -5,7 +5,7 @@ Installer Thunderbird, le client de courriel et d'agenda de l'utilisateur, depui
 ## ADDED Requirements
 
 ### Requirement: Thunderbird depuis l'archive officielle de Mozilla, dans le dossier personnel
-Le module `thunderbird` (groupe `apps`, dépend de `base`, nécessite une session graphique) SHALL installer la dernière version de Thunderbird en français à partir de l'archive officielle publiée par Mozilla, dans un dossier appartenant à l'utilisateur, sans `sudo`, de sorte que la mise à jour intégrée de Thunderbird puisse écrire dans son dossier d'installation. Le module MUST NOT installer le snap de Thunderbird ni le paquet de transition d'Ubuntu, ni un paquet d'une source non officielle. Une installation existante MUST NOT être retéléchargée ni écrasée. Un téléchargement ou une extraction en échec MUST faire échouer le module en le nommant, sans laisser de dossier d'installation incomplet.
+Le module `thunderbird` (groupe `apps`, dépend de `base` et de `shell`, nécessite une session graphique) SHALL installer la dernière version de Thunderbird en français à partir de l'archive officielle publiée par Mozilla, dans un dossier appartenant à l'utilisateur, sans `sudo`, de sorte que la mise à jour intégrée de Thunderbird puisse écrire dans son dossier d'installation. Le module MUST NOT installer le snap de Thunderbird ni le paquet de transition d'Ubuntu, ni un paquet d'une source non officielle. Une installation existante MUST NOT être retéléchargée ni écrasée. Un téléchargement ou une extraction en échec MUST faire échouer le module en le nommant, sans laisser de dossier d'installation incomplet.
 
 #### Scenario: Machine fraîche
 - **WHEN** le module s'exécute sur une machine sans Thunderbird
