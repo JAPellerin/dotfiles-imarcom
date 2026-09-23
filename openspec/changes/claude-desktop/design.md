@@ -6,7 +6,7 @@ Relevés du 23 sept 2026 (doc « Claude Desktop on Linux (beta) » et dépôt) :
 
 | Fait | Mesure |
 |---|---|
-| Dépôt | `https://downloads.claude.ai/claude-desktop/apt/stable`, suite `stable`, composant `main`, `amd64 arm64` ; `Release` daté du 23 sept 2026 ; `claude-desktop` 1.17282.0 |
+| Dépôt | `https://downloads.claude.ai/claude-desktop/apt/stable`, suite `stable`, composant `main`, `amd64 arm64` ; `Release` daté du 23 sept 2026 ; `claude-desktop` 1.17282.0 (2.7032.0 à la contre-vérification, même jour) |
 | Clé | `https://downloads.claude.ai/claude-desktop/key.asc` (armurée), empreinte `31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE` — la même que Claude Code |
 | Doc, dépôt | `.list` d'une ligne dans `/etc/apt/sources.list.d/claude-desktop.list`, clé dans `/usr/share/keyrings/` |
 | Doc, paquet | « Installing the `.deb` also registers Anthropic's apt repository at `/etc/apt/sources.list.d/claude-desktop.list` » ; pour l'éviter : `/etc/default/claude-desktop` avec `CLAUDE_DESKTOP_ADD_REPO="false"` ; la désinstallation retire ce que le paquet a enregistré |
@@ -24,6 +24,8 @@ Relevés du 23 sept 2026 (doc « Claude Desktop on Linux (beta) » et dépôt) :
 
 ### D1. `/etc/default/claude-desktop` posé avant le paquet
 `config/claude-desktop/claude-desktop.default` (versionné) contient `CLAUDE_DESKTOP_ADD_REPO="false"`, copié par `install_system_file` vers `/etc/default/claude-desktop` **avant** `apt_install`. Le paquet relit ce fichier à chaque mise à jour : il doit rester en place, d'où sa présence dans `module_check` (D5).
+**Vérifié dans le `postinst` du paquet 2.7032.0 (contre-vérification, 23 sept 2026).** Le fichier est lu à chaque `configure` (installation et mise à jour), **analysé et non exécuté** : commentaires, `export` et guillemets tolérés, seules les valeurs `true`/`false` comptent — notre fichier est reconnu tel quel. Avec `false`, le script ne touche pas du tout à `/etc/apt` : ni `claude-desktop.list`, ni `/etc/apt/apt.conf.d/50claude-desktop`. Le paquet ne livre pas `/etc/default/claude-desktop` comme conffile : le poser avant ne provoque aucune question de `dpkg`. Sa clé `/usr/share/keyrings/claude-desktop-archive-keyring.asc` est écrite dans tous les cas — sans effet, notre `.sources` pointe sur `/etc/apt/keyrings/claude-desktop.asc`.
+**Conséquence acceptée (décision de l'utilisateur, 23 sept 2026) : pas de mises à jour automatiques.** `50claude-desktop` inscrit le dépôt d'Anthropic auprès d'`unattended-upgrades` ; sans lui, Claude Desktop se met à jour par `apt upgrade` ou par le programme de mise à jour d'Ubuntu (qui propose les mises à jour de tous les dépôts apt), comme Docker, VS Code et Brave. Alternative écartée : versionner notre propre `50claude-desktop` — un fichier de plus, calqué sur un format interne d'Anthropic.
 Alternative rejetée : laisser le paquet déclarer son dépôt et se passer d'`apt_add_repo` — clé hors de `/etc/apt/keyrings/`, format `.list`, contraire à la règle du projet.
 
 ### D2. Dépôt par `apt_add_repo claude-desktop …`
@@ -50,6 +52,7 @@ Connexion : **dans `module_install`**, si `claude-desktop` était absent avant `
 - [Linux en bêta : le mécanisme de D1 change] → constaté en VM avant l'archive ; `apt_add_repo` ferait voir un doublon (D2).
 - [Le groupe `kvm` donne accès à la virtualisation] → exigé par la doc de l'application ; choix de l'utilisateur.
 - [Recommandations lourdes (QEMU)] → voulues pour Cowork ; la doc les installe ainsi.
+- [Claude Desktop hors des mises à jour automatiques] → conséquence du réglage de D1 (le paquet n'écrit pas `50claude-desktop`) ; mises à jour par `apt upgrade` ou le programme de mise à jour d'Ubuntu, décision de l'utilisateur.
 
 ## Migration Plan
 
