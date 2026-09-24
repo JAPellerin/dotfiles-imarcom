@@ -1,0 +1,39 @@
+# Lanceur de Thunderbird — gabarit rendu par le module `thunderbird` vers
+# ~/.local/share/applications/thunderbird.desktop, le jeton THUNDERBIRD_DIR entre
+# arobases remplacé par le chemin absolu du dossier d'installation (un .desktop
+# n'interprète ni ~ ni $HOME, et la session graphique ne lit pas ~/.commonrc).
+# Le jeton n'est jamais écrit tel quel dans ce commentaire : il y serait remplacé.
+# Dans Exec, le chemin est entre guillemets (un dossier personnel avec une espace
+# couperait sinon la commande) ; Icon est une valeur simple, sans guillemets.
+# Fichier publié par Mozilla, seuls Exec et Icon adaptés :
+#   https://github.com/mozilla/sumo-kb/blob/main/installing-thunderbird-linux/thunderbird.desktop
+# Voir openspec/changes/thunderbird/design.md (D3).
+[Desktop Entry]
+Encoding=UTF-8
+Name=Thunderbird Mail
+Name[fr]=Messagerie Thunderbird
+Comment=Send and receive mail with Thunderbird
+Comment[fr]=Lire et écrire des courriels
+GenericName=Mail Client
+GenericName[fr]=Client de messagerie
+Keywords=Email;E-mail;Newsgroup;Feed;RSS
+Keywords[fr]=Mails;Mels;E-Mails;Emails;Courriels;Courriers;Newsgroup;Feed;RSS;Poster;Thunderbird;Lire;Écrire
+Exec="@THUNDERBIRD_DIR@/thunderbird" %u
+Terminal=false
+X-MultipleArgs=false
+Type=Application
+Icon=@THUNDERBIRD_DIR@/chrome/icons/default/default128.png
+Categories=Application;Network;Email;
+MimeType=x-scheme-handler/mailto;application/x-xpinstall;
+StartupNotify=true
+Actions=Compose;Contacts
+
+[Desktop Action Compose]
+Name=Compose New Message
+Name[fr]=Rédiger un nouveau courriel
+Exec="@THUNDERBIRD_DIR@/thunderbird" -compose
+
+[Desktop Action Contacts]
+Name=Contacts
+Name[fr]=Carnet d'adresses
+Exec="@THUNDERBIRD_DIR@/thunderbird" -addressbook
