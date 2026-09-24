@@ -5,7 +5,7 @@
 # Référence : API REST de GitHub, « List releases »
 # (https://docs.github.com/en/rest/releases/releases#list-releases) — sans jeton,
 # 60 requêtes par heure et par adresse ; un appel par module et par installation,
-# jamais dans module_check. Voir openspec/changes/socle-github/design.md.
+# jamais dans module_check. Voir openspec/changes/archive/2026-09-24-socle-github/design.md.
 # Dépend de lib/core.sh (log_*) et de jq (module base).
 # URL de l'API surchargeable (tests, réponses servies en file://) : GITHUB_API_URL.
 
