@@ -7,6 +7,7 @@ Spotify publie un **dépôt apt officiel** (`repository.spotify.com`, `spotify-c
 ## What Changes
 
 - **Module `spotify`** (`modules/63-spotify.sh`, groupe `apps`, dépend de `base`, **session graphique requise**) :
+  - `/etc/apt/sources.list.d/spotify.list` posé **avant le paquet**, sans aucune entrée (commentaire seul) : sinon le `postinst` de `spotify-client` y écrit le dépôt, en double du `.sources` du socle, et le conflit `Signed-By` casse `apt update` (constaté le 24 sept 2026 dans le paquet 1:1.2.95) ;
   - dépôt apt de Spotify par `apt_add_repo` (clé publiée par Spotify, suite `stable`, composant `non-free`) ;
   - paquet `spotify-client` par `apt_install` ;
   - étape manuelle à la première installation : se connecter à Spotify.
@@ -23,8 +24,8 @@ _Aucune._
 
 ## Impact
 
-- Nouveaux `modules/63-spotify.sh` et `tests/test-spotify.sh`.
-- Écritures système (avec `sudo`) : `/etc/apt/keyrings/spotify.asc`, `/etc/apt/sources.list.d/spotify.sources`, paquet `spotify-client`.
+- Nouveaux `modules/63-spotify.sh`, `config/spotify/spotify.list` et `tests/test-spotify.sh`.
+- Écritures système (avec `sudo`) : `/etc/apt/sources.list.d/spotify.list` (sans entrée), `/etc/apt/keyrings/spotify.asc`, `/etc/apt/sources.list.d/spotify.sources`, paquet `spotify-client` — dont le `postinst` copie aussi ses clés dans `/etc/apt/trusted.gpg.d/` (sans moyen de l'en empêcher, design D3).
 - Réseau : `download.spotify.com` (clé), `repository.spotify.com`. Les tests restent hors ligne.
 - **Module graphique** : sauté dans la WSL ; validation en VM.
 - Docs : `ROADMAP.md` (`spotify` fait, « facultatif » retiré).

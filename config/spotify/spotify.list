@@ -1,0 +1,9 @@
+# /etc/apt/sources.list.d/spotify.list — posé par le module `spotify` avant le
+# paquet, volontairement sans aucune entrée : le dépôt de Spotify est déclaré
+# par le socle (spotify.sources, clé dans /etc/apt/keyrings/).
+# Sans ce fichier, le postinst de spotify-client y écrirait le dépôt, en double
+# du .sources et sans Signed-By : apt refuserait alors toutes les sources
+# (« Conflicting values set for option Signed-By »). Le postinst ne lit que les
+# .list et s'abstient si ce fichier existe — désactivation prévue par son
+# script (« sudo touch /etc/apt/sources.list.d/spotify.list »).
+# Relu à chaque mise à jour du paquet : il doit rester en place.
