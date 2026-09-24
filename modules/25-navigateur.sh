@@ -275,7 +275,7 @@ _nav_firefox_policy() {
 # (_nav_brave_code), copié dans le presse-papiers ; Brave s'ouvre ; le script
 # reprend quand le profil montre la chaîne. Jamais bloquant : sans session, sans
 # note ou sur « Passer », étape manuelle ; presse-papiers vidé dans tous les cas.
-# Voir openspec/changes/socle-connexion/design.md (D6).
+# Voir openspec/changes/archive/2026-09-24-socle-connexion/design.md (D6).
 _nav_brave_sync() {
   pkg_installed brave-browser || return 0
   # Liste BIP39 absente ou incomplète : dépôt cassé, pas une étape de

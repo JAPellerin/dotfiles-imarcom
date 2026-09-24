@@ -9,7 +9,8 @@
 # tous les cas — connexion constatée, « Passer », Ctrl-C (nettoyage enregistré par
 # add_cleanup avant la copie, exécuté à la sortie du sous-shell de module_call).
 # Jamais bloquant : tout empêchement devient une étape manuelle.
-# Voir openspec/changes/socle-connexion/design.md (D2 à D4).
+# Voir openspec/specs/module-contract/spec.md et
+# openspec/changes/archive/2026-09-24-socle-connexion/design.md (D2 à D4).
 # Dépend de lib/core.sh (log_*, add_cleanup, has_gui), lib/ui.sh (ui_wait,
 # ui_choose), lib/apt.sh (apt_install), lib/op.sh (op_session_active, op_read)
 # et lib/module.sh (manual_step).
