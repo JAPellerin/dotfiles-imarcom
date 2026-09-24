@@ -19,21 +19,29 @@
 CONNEXION_WAIT_SECONDS="${CONNEXION_WAIT_SECONDS:-120}"
 CONNEXION_WAIT_INTERVAL="${CONNEXION_WAIT_INTERVAL:-2}"
 
-# open_detached <commande…> : lance une application détachée du script (setsid),
-# sorties vers /dev/null — elle hériterait sinon du terminal et du journal, et y
-# écrirait ses propres traces tant qu'elle tourne (vu en VM avec 1Password). La
-# commande est tracée au journal. Jamais d'échec : avertissement si elle manque
-# ou ne démarre pas.
+# open_detached [--warn <message>] <commande…> : lance une application détachée
+# du script (setsid), sorties vers /dev/null — elle hériterait sinon du terminal
+# et du journal, et y écrirait ses propres traces tant qu'elle tourne (vu en VM
+# avec 1Password). La commande est tracée au journal. Jamais d'échec :
+# avertissement si elle manque ou ne démarre pas — <message> s'il est fourni
+# (le module y nomme ce que l'utilisateur doit ouvrir, là où la commande est un
+# intermédiaire comme xdg-open), sinon « Impossible de lancer <commande> ».
 open_detached() {
+  local warn=''
+  if [[ ${1:-} == --warn ]]; then
+    (( $# >= 2 )) || { log_error "open_detached : message manquant après --warn"; return 1; }
+    warn=$2
+    shift 2
+  fi
   local cmd=${1:-}
   [[ -n $cmd ]] || { log_error "open_detached : commande manquante"; return 1; }
+  warn=${warn:-"Impossible de lancer $cmd : l'ouvrir à la main."}
   if ! command -v -- "$cmd" >/dev/null 2>&1; then
-    log_warn "Impossible de lancer $cmd : l'ouvrir à la main."
+    log_warn "$warn"
     return 0
   fi
   printf '[%s] $ %s (détaché)\n' "$(date +%H:%M:%S)" "$*" >>"$LOG_FILE"
-  setsid -f "$@" >/dev/null 2>&1 </dev/null \
-    || log_warn "Impossible de lancer $cmd : l'ouvrir à la main."
+  setsid -f "$@" >/dev/null 2>&1 </dev/null || log_warn "$warn"
   return 0
 }
 

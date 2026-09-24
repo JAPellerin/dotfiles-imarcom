@@ -194,7 +194,8 @@ _op_open_settings() {
   for page in "$@"; do
     # Pause entre deux envois seulement (le temps que l'app démarre).
     (( i++ == 0 )) || sleep "$OP_OPEN_DELAY"
-    open_detached xdg-open "onepassword://settings/$page"
+    open_detached --warn "Impossible d'ouvrir onepassword://settings/$page : aller dans les réglages de l'app à la main." \
+      xdg-open "onepassword://settings/$page"
   done
 }
 
