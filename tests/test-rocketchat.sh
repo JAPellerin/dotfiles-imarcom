@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # tests/test-rocketchat.sh — module rocketchat avec un HOME et une racine isolés
 # et des doublures (dpkg-query lu dans un fichier ; github_release_asset_url,
-# apt_install_deb_url et run_sudo qui journalisent, et échouent sur demande ;
-# run_sudo copie vers le /opt du dossier temporaire, sans sudo). Hors ligne :
-# aucun appel à GitHub.
+# apt_install_deb_url, run_sudo et apparmor_parser qui journalisent, et échouent
+# sur demande ; run_sudo copie vers le /opt et le /etc du dossier temporaire,
+# sans sudo). Hors ligne : aucun appel à GitHub.
 # Les fonctions du module sont appelées par module_call, chacune dans son
 # sous-shell, comme le fait le runner.
 # shellcheck source=lib.sh
@@ -25,12 +25,19 @@ CALLS="$TEST_TMP/calls"; : >"$CALLS"
 SERVERS="$ROCKETCHAT_ROOT/opt/Rocket.Chat/resources/servers.json"
 USER_SERVERS="$HOME/.config/Rocket.Chat/servers.json"
 SRC="config/rocketchat/servers.json"
+PROFILE="$ROCKETCHAT_ROOT/etc/apparmor.d/rocketchat-desktop"
+PROFILE_SRC="config/rocketchat/apparmor-profile"
 MOD="$DOTFILES_DIR/modules/61-rocketchat.sh"
 DEB_URL="https://github.com/RocketChat/Rocket.Chat.Electron/releases/download/4.17.2/rocketchat-4.17.2-linux-amd64.deb"
 
 cat >"$TEST_TMP/bin/dpkg-query" <<'FAKE'
 #!/usr/bin/env bash
 grep -qx -- "${*: -1}" "$FAKE_DIR/installed" 2>/dev/null && printf 'install ok installed'
+FAKE
+cat >"$TEST_TMP/bin/apparmor_parser" <<'FAKE'
+#!/usr/bin/env bash
+printf 'apparmor_parser %s\n' "$*" >>"$FAKE_DIR/calls"
+[[ ! -e $FAKE_DIR/parser-refuse ]]
 FAKE
 chmod +x "$TEST_TMP/bin/"*
 export PATH="$TEST_TMP/bin:$PATH"
@@ -55,6 +62,7 @@ export -f github_release_asset_url apt_install_deb_url run_sudo
 export INSTALLED CALLS TEST_TMP DEB_URL
 count_calls() { grep -c -- "$1" "$CALLS" || true; }
 same_as_repo() { cmp -s -- "$DOTFILES_DIR/$SRC" "$SERVERS"; }
+profile_as_repo() { cmp -s -- "$DOTFILES_DIR/$PROFILE_SRC" "$PROFILE"; }
 uninstall() { grep -vx rocketchat "$INSTALLED" >"$TEST_TMP/reste"; mv "$TEST_TMP/reste" "$INSTALLED"; }
 # Comme le runner (setup.sh) : chaque fonction dans son propre sous-shell.
 mcall() { module_call "$MOD" "$1"; }
@@ -64,6 +72,11 @@ assert_ok "JSON valide" jq -e . "$DOTFILES_DIR/$SRC"
 assert_eq "désigne le serveur de l'entreprise" "https://rocketchat.imarcom.net" \
   "$(jq -r '[.[]] | .[0]' "$DOTFILES_DIR/$SRC")"
 assert_eq "un seul serveur" 1 "$(jq 'length' "$DOTFILES_DIR/$SRC")"
+
+printf '%s\n' "== profil AppArmor versionné =="
+assert_contains "attaché au binaire, pas au script d'enveloppe" "$(cat "$DOTFILES_DIR/$PROFILE_SRC")" \
+  "profile rocketchat-desktop /opt/Rocket.Chat/rocketchat-desktop.bin flags=(unconfined) {"
+assert_contains "autorise les espaces de noms utilisateur" "$(cat "$DOTFILES_DIR/$PROFILE_SRC")" "  userns,"
 
 printf '%s\n' "== première application (sous-shells du runner) =="
 assert_fail "module_check → à faire" mcall module_check
@@ -77,6 +90,8 @@ assert_fail "paquet installé, liste de serveurs absente → à faire" mcall mod
 out=$(mcall module_configure 2>&1); rc=$?
 assert_eq "module_configure réussit" 0 "$rc"
 assert_ok "liste de serveurs copiée, identique au dépôt" same_as_repo
+assert_ok "profil AppArmor copié, identique au dépôt" profile_as_repo
+assert_contains "profil chargé" "$(cat "$CALLS")" "apparmor_parser -r $PROFILE"
 assert_fail "copie, pas un lien" test -L "$SERVERS"
 assert_eq "rien sous ~/.config/Rocket.Chat" "" "$(ls -A "$HOME/.config/Rocket.Chat" 2>/dev/null)"
 assert_ok "module_check → déjà fait" mcall module_check
@@ -108,6 +123,29 @@ printf '{"Autre": "https://chat.example.com"}\n' >"$SERVERS"
 assert_fail "contenu différent → à faire" mcall module_check
 assert_ok "module_configure réussit" mcall module_configure
 assert_ok "remplacée par la version du dépôt" same_as_repo
+assert_ok "module_check → déjà fait" mcall module_check
+
+printf '%s\n' "== profil AppArmor retiré ou différent =="
+for etat in retiré différent; do
+  if [[ $etat == retiré ]]; then rm -f "$PROFILE"; else printf 'profile autre {}\n' >"$PROFILE"; fi
+  : >"$CALLS"
+  assert_fail "profil $etat → à faire" mcall module_check
+  assert_ok "module_configure réussit" mcall module_configure
+  assert_ok "profil remis comme au dépôt" profile_as_repo
+  assert_eq "profil rechargé" 1 "$(count_calls "^apparmor_parser -r $PROFILE")"
+  assert_ok "module_check → déjà fait" mcall module_check
+done
+
+printf '%s\n' "== chargement du profil en échec =="
+rm -f "$PROFILE"; touch "$TEST_TMP/parser-refuse"
+out=$(mcall module_configure 2>&1); rc=$?
+assert_eq "module_configure échoue" 1 "$rc"
+assert_contains "échec nommé" "$out" "Chargement du profil AppArmor impossible"
+assert_fail "profil non chargé retiré" test -e "$PROFILE"
+assert_fail "module_check → à faire" mcall module_check
+rm -f "$TEST_TMP/parser-refuse"; : >"$CALLS"
+assert_ok "après correction, module_configure réussit" mcall module_configure
+assert_eq "profil copié et chargé" 1 "$(count_calls "^apparmor_parser -r $PROFILE")"
 assert_ok "module_check → déjà fait" mcall module_check
 
 printf '%s\n' "== écriture système en échec =="
@@ -150,6 +188,10 @@ rm -f "$SERVERS"
 printf '{"Autre": "https://chat.example.com"}\n' >"$SERVERS"
 assert_fail "liste de serveurs différente → à faire" mcall module_check
 assert_ok "module_configure la remplace" mcall module_configure
+assert_ok "module_check → déjà fait" mcall module_check
+rm -f "$PROFILE"
+assert_fail "profil AppArmor absent → à faire" mcall module_check
+assert_ok "module_configure le réécrit" mcall module_configure
 assert_ok "module_check → déjà fait" mcall module_check
 assert_eq "aucun appel à GitHub hors module_install" 0 "$(count_calls github_release_asset_url)"
 assert_eq "aucun téléchargement hors module_install" 0 "$(count_calls apt_install_deb_url)"

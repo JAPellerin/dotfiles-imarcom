@@ -12,6 +12,10 @@
 # non dans ~/.config/Rocket.Chat/, où le client le supprime après lecture
 # (loadUserServers dans src/servers/main.ts, relevé du 24 sept 2026) : un lien y
 # disparaîtrait au premier lancement (D2).
+# Profil AppArmor versionné (D6) : sans lui, Ubuntu 26.04 refuse au client les
+# espaces de noms utilisateur et il plante au lancement ; le paquet n'installe pas
+# le sien.
+#   https://ubuntu.com/blog/ubuntu-23-10-restricted-unprivileged-user-namespaces
 # Voir openspec/changes/rocketchat/design.md.
 MODULE_NAME="rocketchat"
 MODULE_DESC="Rocket.Chat (.deb officiel) ; serveur rocketchat.imarcom.net pré-configuré"
@@ -26,13 +30,18 @@ ROCKETCHAT_SERVERS_SRC="config/rocketchat/servers.json"
 # Racine surchargeable (tests), comme CLAUDE_DESKTOP_ETC pour claude-desktop.
 ROCKETCHAT_ROOT="${ROCKETCHAT_ROOT:-}"
 ROCKETCHAT_SERVERS="$ROCKETCHAT_ROOT/opt/Rocket.Chat/resources/servers.json"
+ROCKETCHAT_APPARMOR_SRC="config/rocketchat/apparmor-profile"
+ROCKETCHAT_APPARMOR="$ROCKETCHAT_ROOT/etc/apparmor.d/rocketchat-desktop"
 ROCKETCHAT_LOGIN_MANUAL="Ouvrir Rocket.Chat (menu des applications) et se connecter à rocketchat.imarcom.net."
 
-# Déjà fait = paquet installé et liste de serveurs identique à celle du dépôt
-# (D4). Sans sudo ni réseau : l'API GitHub n'est jamais appelée ici.
+# Déjà fait = paquet installé, liste de serveurs et profil AppArmor identiques à
+# ceux du dépôt (D4). Sans sudo ni réseau : l'API GitHub n'est jamais appelée ici.
+# Le chargement du profil n'est pas lisible sans root : le fichier en tient lieu,
+# AppArmor charge /etc/apparmor.d/ à chaque démarrage.
 module_check() {
   pkg_installed "$ROCKETCHAT_PKG" || return 1
-  cmp -s -- "$DOTFILES_DIR/$ROCKETCHAT_SERVERS_SRC" "$ROCKETCHAT_SERVERS"
+  cmp -s -- "$DOTFILES_DIR/$ROCKETCHAT_SERVERS_SRC" "$ROCKETCHAT_SERVERS" || return 1
+  cmp -s -- "$DOTFILES_DIR/$ROCKETCHAT_APPARMOR_SRC" "$ROCKETCHAT_APPARMOR"
 }
 
 # Paquet présent → aucun appel à GitHub ni téléchargement ; une mise à jour est
@@ -52,6 +61,20 @@ module_install() {
 
 # Liste de serveurs par défaut (D2), après le paquet : un fichier absent ou
 # différent est réécrit ; aucun paquet ne le déclare, dpkg le laisse en place.
+# Profil AppArmor (D6) : chargé seulement s'il vient d'être écrit ; retiré si le
+# chargement échoue, pour que module_check ne tienne pas pour fait un profil
+# jamais chargé.
 module_configure() {
-  install_system_file "$ROCKETCHAT_SERVERS_SRC" "$ROCKETCHAT_SERVERS"
+  install_system_file "$ROCKETCHAT_SERVERS_SRC" "$ROCKETCHAT_SERVERS" || return 1
+  cmp -s -- "$DOTFILES_DIR/$ROCKETCHAT_APPARMOR_SRC" "$ROCKETCHAT_APPARMOR" && {
+    log_ok "Profil AppArmor déjà à jour : $ROCKETCHAT_APPARMOR"
+    return 0
+  }
+  install_system_file "$ROCKETCHAT_APPARMOR_SRC" "$ROCKETCHAT_APPARMOR" || return 1
+  if ! run_sudo apparmor_parser -r "$ROCKETCHAT_APPARMOR"; then
+    log_error "Chargement du profil AppArmor impossible : $ROCKETCHAT_APPARMOR (retiré)"
+    run_sudo rm -f -- "$ROCKETCHAT_APPARMOR"
+    return 1
+  fi
+  log_ok "Profil AppArmor chargé : $ROCKETCHAT_APPARMOR"
 }
