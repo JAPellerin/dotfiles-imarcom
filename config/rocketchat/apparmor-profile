@@ -1,9 +1,9 @@
 # Profil AppArmor du client Rocket.Chat, copié vers
 # /etc/apparmor.d/opt.Rocket.Chat.rocketchat-desktop.bin par le module rocketchat.
 # Ubuntu 26.04 restreint les espaces de noms utilisateur non privilégiés : sans
-# ce profil, le bac à sable Chromium du client est refusé
-# et il plante au lancement. Le paquet n'installe pas le sien, qui vise en plus le
-# script d'enveloppe et non le binaire ; son postrm supprime en revanche
+# ce profil, le bac à sable Chromium du client est refusé et il plante au
+# lancement. Le paquet n'installe pas le sien, qui vise en plus le script
+# d'enveloppe et non le binaire ; son postrm supprime en revanche
 # /etc/apparmor.d/rocketchat-desktop à chaque mise à jour : ce profil porte donc
 # un autre nom (celui du chemin du binaire, convention AppArmor classique).
 # Modèle : /etc/apparmor.d/obsidian d'Ubuntu.
