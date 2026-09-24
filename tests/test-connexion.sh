@@ -111,6 +111,7 @@ sleep 0.2
 assert_eq "application ouverte avec ses arguments" "--login" "$(cat "$TEST_TMP/app.log")"
 assert_contains "consigne numérotée" "$out" "2. Coller le mot de passe"
 assert_eq "aucune question sans délai écoulé" 0 "$(events choose)"
+assert_contains "titre de l'attente avec sa durée maximale" "$out" "App : en attente (2 s au plus)"
 
 printf '%s\n' "== secret jamais visible, identifiant affiché =="
 assert_not_contains "secret absent de la sortie" "$out" "$SECRET"
@@ -225,6 +226,11 @@ wait
 assert_eq "retour 0" 0 "$rc"
 assert_contains "avertissement" "$out" "identifiant « op://Test/Absent/username » illisible"
 assert_eq "le parcours continue : aucune étape manuelle" "" "$(cat "$MANUAL_STEPS_FILE")"
+
+printf '%s\n' "== durée affichée =="
+assert_eq "120 s → 2 min" "2 min" "$(_connexion_duree 120)"
+assert_eq "90 s → 90 s" "90 s" "$(_connexion_duree 90)"
+assert_eq "délai par défaut : 2 minutes" 120 "$(env -u CONNEXION_WAIT_SECONDS bash -c "LOG_FILE=/dev/null; source '$DOTFILES_DIR/lib/connexion.sh'; printf '%s' \"\$CONNEXION_WAIT_SECONDS\"")"
 
 printf '%s\n' "== arguments invalides =="
 assert_rc "moins de trois arguments" 1 guided_login "App" probe

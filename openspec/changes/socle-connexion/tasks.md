@@ -16,3 +16,9 @@
 ## 4. Validation en VM
 
 - [ ] 4.1 VM (snapshot « vierge », mémoire fixe) : bootstrap → `base`, `1password` → l'app 1Password s'ouvre sur ses réglages comme avant (non-régression D4) ; `navigateur` avec Brave → Brave s'ouvre, le code est dans le presse-papiers, la chaîne rejointe est constatée, presse-papiers vidé (`wl-paste` vide) ; relance → « déjà rejointe », aucune lecture 1Password ; second essai sur un profil neuf : « Passer » → `wl-paste` vide, étape au résumé ; troisième essai : Ctrl-C pendant l'attente → `wl-paste` vide ; aucun secret dans `~/.local/state/dotfiles/setup-*.log` ; consigner ici
+  - Premier passage (24 sept 2026, VM à 3 Go fixes, `eaf303a`) : réglages de 1Password ouverts comme avant ; Brave Sync : code collé, « Brave Sync : fait (presse-papiers vidé) », relance → « déjà fait » ; Ctrl-C pendant l'attente → presse-papiers vidé (`wl-paste` : « Nothing is copied »), **mais l'animation du spinner survivait** (orpheline, SIGINT ignoré en arrière-plan) ; aucune attente n'a atteint le délai de 5 min, qui n'était pas affiché → corrections D8 (tâches 5.x), « Passer » et Ctrl-C à refaire.
+
+## 5. Corrections après la validation en VM (24 sept 2026)
+
+- [x] 5.1 `lib/ui.sh` : l'animation de `_ui_spinner` s'arrête quand le processus qui l'a lancée n'existe plus (D8) ; `tests/test-ui.sh` : sous `script`, un sous-shell interrompu pendant `ui_wait` ne laisse aucun processus dans la session ; vérifier que le cas échoue sans la correction
+- [x] 5.2 `lib/connexion.sh` : `CONNEXION_WAIT_SECONDS` à 120, durée maximale dans le titre de l'attente (D8) ; `tests/test-connexion.sh` : le titre porte la durée ; `bash tests/run-all.sh` vert et la ligne `shellcheck` de `CLAUDE.md` propre

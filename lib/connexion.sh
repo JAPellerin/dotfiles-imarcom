@@ -14,8 +14,9 @@
 # ui_choose), lib/apt.sh (apt_install), lib/op.sh (op_session_active, op_read)
 # et lib/module.sh (manual_step).
 
-# Délais de l'attente, surchargeables (tests).
-CONNEXION_WAIT_SECONDS="${CONNEXION_WAIT_SECONDS:-300}"
+# Délais de l'attente, surchargeables (tests) : 2 minutes au plus, puis le choix
+# « Continuer d'attendre » / « Passer » (D8).
+CONNEXION_WAIT_SECONDS="${CONNEXION_WAIT_SECONDS:-120}"
 CONNEXION_WAIT_INTERVAL="${CONNEXION_WAIT_INTERVAL:-2}"
 
 # open_detached <commande…> : lance une application détachée du script (setsid),
@@ -34,6 +35,11 @@ open_detached() {
   setsid -f "$@" >/dev/null 2>&1 </dev/null \
     || log_warn "Impossible de lancer $cmd : l'ouvrir à la main."
   return 0
+}
+
+# _connexion_duree <secondes> : « 2 min », ou « 90 s » si ce ne sont pas des minutes rondes.
+_connexion_duree() {
+  if (( $1 >= 60 && $1 % 60 == 0 )); then printf '%d min' "$(( $1 / 60 ))"; else printf '%d s' "$1"; fi
 }
 
 # _connexion_clear : vide le presse-papiers (sans erreur s'il est indisponible).
@@ -142,9 +148,11 @@ guided_login() {
   done
   log_info "Le script reprend dès que c'est constaté ; Ctrl-C pour abandonner."
 
-  # 6. Attente de la sonde ; au délai écoulé, continuer ou passer.
+  # 6. Attente de la sonde, durée maximale affichée ; au délai écoulé, continuer ou passer.
+  local title
+  title="$label : en attente ($(_connexion_duree "$CONNEXION_WAIT_SECONDS") au plus)"
   while true; do
-    if ui_wait "$label : en attente" "$CONNEXION_WAIT_SECONDS" "$CONNEXION_WAIT_INTERVAL" "$probe"; then
+    if ui_wait "$title" "$CONNEXION_WAIT_SECONDS" "$CONNEXION_WAIT_INTERVAL" "$probe"; then
       (( copied )) && _connexion_clear
       log_ok "$label : fait$( (( copied )) && printf ' (presse-papiers vidé)')."
       return 0
