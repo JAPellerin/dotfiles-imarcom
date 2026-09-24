@@ -11,4 +11,4 @@
 
 - [x] 2.1 VM (snapshot « vierge ») : bootstrap → `base`, `1password`, `obsidian` → Obsidian s'ouvre depuis le menu ; `dpkg -s obsidian` → version du dernier `.deb` publié ; journal : l'URL vient de la dernière release **qui contient** le `.deb` ; résumé : étape « ouvrir le coffre » ; relance → « déjà fait », aucun appel à GitHub dans le journal ; consigner ici
   - Constaté le 24 sept 2026 (VM, bootstrap depuis main `810e6ab`) : Obsidian s'ouvre depuis le menu ; `dpkg -s obsidian` → 1.13.7 ; la dernière release, **v1.13.8, n'a pas de `.deb`** (API GitHub) : le helper a bien retenu la plus récente qui en contient un (`obsidian_1.13.7_amd64.deb` dans le journal) ; résumé : étape « ouvrir le coffre » ; relance → « déjà fait », aucun appel à GitHub ni téléchargement.
-- [ ] 2.2 `ROADMAP.md` : `obsidian` fait (date, version) ; `openspec validate obsidian --strict` vert
+- [x] 2.2 `ROADMAP.md` : `obsidian` fait (date, version) ; `openspec validate obsidian --strict` vert
