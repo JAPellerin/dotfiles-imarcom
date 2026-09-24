@@ -10,7 +10,7 @@ Relevés du 23 sept 2026 :
 | Dépôt apt de Mozilla | aucun paquet `thunderbird` |
 | `download.mozilla.org/?product=thunderbird-latest&os=linux64&lang=fr` | 302 → `…/thunderbird/releases/156.0.1/linux-x86_64/fr/thunderbird-156.0.1.tar.xz` |
 | Doc de Mozilla « Install Thunderbird on Linux » | deux méthodes, système (`/opt/thunderbird`, lien `/usr/local/bin/thunderbird`, `.desktop` dans `/usr/local/share/applications`, **mise à jour = réinstaller**) ou dossier personnel ; `.desktop` publié sur `github.com/mozilla/sumo-kb/…/installing-thunderbird-linux/thunderbird.desktop` (`Exec=thunderbird %u`, `Icon=/opt/thunderbird/chrome/icons/default/default128.png`, `MimeType=x-scheme-handler/mailto;…`, actions `Compose` et `Contacts`) |
-| Limite du relevé | le détail de la méthode « dossier personnel » n'a pas pu être lu (page rendue par JavaScript) : les emplacements de D2 sont une décision de ce design, à comparer à la page (tâche 2.1) |
+| Limite du relevé | le détail de la méthode « dossier personnel » n'a pas pu être lu (page rendue par JavaScript) : les emplacements de D2 sont une décision de ce design, à comparer à la page (tâche 2.1) — fait : ligne suivante |
 | Méthode « dossier personnel » (lue le 24 sept 2026 dans la copie de la Wayback Machine du 7 mai 2026, article mis à jour le 1er sept 2025) | archive extraite dans `$HOME/thunderbird` « ou ailleurs dans votre compte » ; lanceur `~/.local/share/applications/thunderbird.desktop`, `Exec` et `Icon` réécrits vers le dossier d'installation (`sed`) ; **aucun lien de commande** ; la commande `wget` de la page dépose le lanceur dans `$HOME/.local/bin/thunderbird`, en contradiction avec le `sed` qui suit (coquille de la page) → **D2 et D3 conformes** : `~/.local/share/thunderbird` est un emplacement du compte, le lanceur est au même endroit avec les mêmes réécritures ; le lien `~/.local/bin/thunderbird` est un ajout |
 
 Relevés du 24 sept 2026 (test en VM, puis demande de l'utilisateur : langue d'Ubuntu, dictionnaires anglais (Canada) et français) :
@@ -67,8 +67,7 @@ Alternative écartée : paquets `hunspell-fr`/`hunspell-en-ca` d'Ubuntu, que la 
 - [Une future version déplace `res/multilocale.txt`] → langue illisible : l'archive extraite est refusée avec un échec nommé (D6), pas de réinstallation en boucle ; à corriger alors dans le module.
 - [Liste des langues figée] → une langue ajoutée par Mozilla retombe sur `ll` ou `en-US` jusqu'à la mise à jour de la constante.
 - [Slug d'un dictionnaire changé sur addons.thunderbird.net] → Thunderbird n'installe pas le dictionnaire ; l'adresse se corrige dans `config/thunderbird/policies.json`.
-
-- [Dépendances système de l'archive (GTK3, ALSA…) absentes] → présentes sur Ubuntu Desktop ; constaté en VM (tâche 2.1) : Thunderbird doit s'ouvrir.
+- [Dépendances système de l'archive (GTK3, ALSA…) absentes] → présentes sur Ubuntu Desktop ; constaté en VM (tâche 2.1) : Thunderbird s'ouvre.
 - [Pas de vérification de signature de l'archive] → téléchargement HTTPS depuis Mozilla, comme la doc ; la signature GPG (`.asc`) pourrait être ajoutée plus tard.
 
 ## Migration Plan
