@@ -1,0 +1,14 @@
+{
+  "policies": {
+    "ExtensionSettings": {
+      "en-CA@dictionaries.addons.mozilla.org": {
+        "installation_mode": "normal_installed",
+        "install_url": "https://addons.thunderbird.net/thunderbird/downloads/latest/canadian-english-dictionary/latest.xpi"
+      },
+      "fr-dicollecte@dictionaries.addons.mozilla.org": {
+        "installation_mode": "normal_installed",
+        "install_url": "https://addons.thunderbird.net/thunderbird/downloads/latest/dictionnaire-fran%C3%A7ais1/latest.xpi"
+      }
+    }
+  }
+}
