@@ -250,6 +250,17 @@ assert_not_contains "sortie de l'application absente de l'écran" "$out" "sortie
 out=$(open_detached application-introuvable 2>&1); rc=$?
 assert_eq "introuvable : retour 0" 0 "$rc"
 assert_contains "introuvable : avertissement" "$out" "Impossible de lancer application-introuvable"
+out=$(open_detached --warn "Ouvrir les réglages à la main." application-introuvable 2>&1); rc=$?
+assert_eq "--warn, introuvable : retour 0" 0 "$rc"
+assert_contains "--warn : message du module" "$out" "Ouvrir les réglages à la main."
+assert_not_contains "--warn : pas le message générique" "$out" "Impossible de lancer"
+: >"$LOG_FILE"; rm -f "$TEST_TMP/app.log"
+out=$(open_detached --warn "inutile" fakeapp c 2>&1); rc=$?
+sleep 0.3
+assert_eq "--warn, commande présente : lancée avec ses arguments" "c" "$(cat "$TEST_TMP/app.log")"
+assert_contains "--warn : commande tracée sans l'option" "$(cat "$LOG_FILE")" '$ fakeapp c (détaché)'
+assert_not_contains "--warn, lancée : aucun avertissement" "$out" "inutile"
+assert_rc "--warn sans message : erreur" 1 open_detached --warn
 assert_rc "sans commande : erreur" 1 open_detached
 
 test_done
