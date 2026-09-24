@@ -7,7 +7,7 @@ Relevé du 23 sept 2026 qui fixe la forme du helper : la release « latest » d'
 ## What Changes
 
 - **Nouveau `lib/github.sh`**, chargé par `setup.sh` :
-  - `github_release_asset_url <propriétaire/dépôt> <motif>` — interroge l'API publique de GitHub, parcourt les releases de la plus récente à la plus ancienne en écartant brouillons et préversions, et imprime l'URL de téléchargement du **premier fichier dont le nom correspond au motif** (expression régulière étendue). Échec nommé si aucune release ne contient un tel fichier ou si l'API ne répond pas.
+  - `github_release_asset_url <propriétaire/dépôt> <motif>` — interroge l'API publique de GitHub, parcourt les releases de la plus récente à la plus ancienne en écartant brouillons et préversions, et imprime l'URL de téléchargement du **premier fichier dont le nom correspond au motif** (expression régulière de `jq`, syntaxe Oniguruma). Échec nommé si le motif est invalide, si aucune release ne contient un tel fichier ou si l'API ne répond pas.
 - Aucun module ne change dans ce change : `obsidian` et `rocketchat` l'emploieront.
 
 Hors périmètre :

@@ -9,6 +9,10 @@ source "$DOTFILES_DIR/lib/github.sh"
 
 API="$TEST_TMP/api"
 GITHUB_API_URL="file://$API"
+# Temporaires des appels dans un dossier à part, vide : vérifié à la fin, rien ne
+# doit y rester (le helper s'appelle dans un `$(…)`, où add_cleanup se perd).
+export TMPDIR="$TEST_TMP/tmpdir"
+mkdir -p "$TMPDIR"
 DL=https://github.com/editeur
 
 # release <tag> <draft> <prerelease> <fichier...> : un objet release de l'API.
@@ -76,6 +80,8 @@ call e/inconnu "$DEB"
 assert_eq "code 1" 1 "$RC"
 assert_eq "stdout vide" "" "$OUT"
 assert_contains "le message nomme le dépôt" "$ERR" "e/inconnu"
+assert_contains "le message nomme le motif" "$ERR" "$DEB"
+assert_contains "le message porte la cause donnée par curl" "$ERR" "curl: ("
 
 printf '%s\n' "== JSON invalide =="
 mkdir -p "$API/repos/e/casse"
@@ -84,10 +90,22 @@ call e/casse "$DEB"
 assert_eq "code 1" 1 "$RC"
 assert_eq "stdout vide" "" "$OUT"
 assert_contains "le message nomme le dépôt" "$ERR" "e/casse"
+assert_contains "le message nomme le motif" "$ERR" "$DEB"
+
+printf '%s\n' "== Motif invalide =="
+call e/complet '(deb'
+assert_eq "code 1" 1 "$RC"
+assert_eq "stdout vide" "" "$OUT"
+assert_contains "le message dit que le motif est invalide" "$ERR" "motif invalide"
 
 printf '%s\n' "== Arguments manquants =="
 call e/complet ""
 assert_eq "motif absent → code 1" 1 "$RC"
 assert_eq "stdout vide" "" "$OUT"
+
+printf '%s\n' "== Aucun fichier temporaire laissé =="
+url=$(github_release_asset_url e/complet "$DEB")
+assert_eq "appel par substitution" "$DL/v2/app_2_amd64.deb" "$url"
+assert_eq "TMPDIR vide après tous les appels" "" "$(ls -A "$TMPDIR")"
 
 test_done
