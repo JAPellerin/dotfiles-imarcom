@@ -3,7 +3,7 @@
 Voir `proposal.md`. Le socle fournit `apt_install`, `pkg_installed`, `manual_step`.
 
 Relevés du 23 sept 2026 dans la VM Ubuntu 26.04 : `openvpn` 2.7.0-1ubuntu1.2, `network-manager-openvpn` et `network-manager-openvpn-gnome` 1.12.5-1 disponibles dans les dépôts d'Ubuntu ; NetworkManager gère le réseau du bureau.
-Relevé à la contre-vérification (index apt `resolute`) : `ubuntu-desktop-minimal` **recommande** `network-manager-openvpn-gnome`, qui dépend de `network-manager-openvpn`, qui dépend d'`openvpn` — installés d'office avec le bureau, selon toute vraisemblance (à constater sur le snapshot vierge, tâche 2.1).
+Relevé à la contre-vérification (index apt `resolute`) : `ubuntu-desktop-minimal` **recommande** `network-manager-openvpn-gnome`, qui dépend de `network-manager-openvpn`, qui dépend d'`openvpn` — installés d'office avec le bureau. **Constaté en VM le 24 sept 2026** (snapshot vierge) : les trois paquets sont installés par l'installateur d'Ubuntu (`/var/log/apt/history.log` du 26 août) ; le module n'a rien passé à apt (tâche 2.1).
 
 ## Goals / Non-Goals
 
