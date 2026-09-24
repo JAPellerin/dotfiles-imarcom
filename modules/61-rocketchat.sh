@@ -17,7 +17,7 @@
 # le sien, et son postrm supprime /etc/apparmor.d/rocketchat-desktop à chaque
 # mise à jour : le nôtre porte le nom du chemin du binaire.
 #   https://ubuntu.com/blog/ubuntu-23-10-restricted-unprivileged-user-namespaces
-# Voir openspec/changes/rocketchat/design.md.
+# Voir openspec/specs/module-rocketchat/spec.md et openspec/changes/archive/2026-09-24-rocketchat/design.md.
 MODULE_NAME="rocketchat"
 MODULE_DESC="Rocket.Chat (.deb officiel) ; serveur rocketchat.imarcom.net pré-configuré"
 MODULE_GROUP="apps"
