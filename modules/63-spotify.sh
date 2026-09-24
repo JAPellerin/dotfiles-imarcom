@@ -11,7 +11,7 @@
 # Le paquet déclare lui-même son dépôt dans spotify.list, sauf si ce fichier
 # existe : il est posé avant le paquet, sans entrée (D3 — même piège que Chrome
 # et Claude Desktop, mais sans fichier de réglage).
-# Voir openspec/changes/spotify/design.md.
+# Voir openspec/specs/module-spotify/spec.md et openspec/changes/archive/2026-09-24-spotify/design.md.
 MODULE_NAME="spotify"
 MODULE_DESC="Spotify (dépôt apt Spotify)"
 MODULE_GROUP="apps"
