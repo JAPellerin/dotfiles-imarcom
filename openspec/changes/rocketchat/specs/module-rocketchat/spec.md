@@ -39,7 +39,7 @@ Le module SHALL déployer la liste de serveurs par défaut versionnée dans le d
 - **THEN** `module_check` retourne 1 et le module la réécrit
 
 ### Requirement: Profil AppArmor qui permet au client de démarrer
-Le module SHALL déployer le profil AppArmor versionné dans le dépôt, qui autorise les espaces de noms utilisateur au binaire du client, dans `/etc/apparmor.d/`, par le helper de fichiers système du socle, et SHALL le charger dans le noyau lorsqu'il vient de l'écrire. Une relance sans changement MUST NOT recharger le profil. Si le chargement échoue, le module MUST échouer et le profil MUST NOT être laissé en place. `module_check` SHALL constater que le profil déployé est identique à celui du dépôt.
+Le module SHALL déployer le profil AppArmor versionné dans le dépôt, qui autorise les espaces de noms utilisateur au binaire du client, dans `/etc/apparmor.d/` sous un nom que les scripts de maintenance du paquet ne suppriment pas, par le helper de fichiers système du socle, et SHALL le charger dans le noyau lorsqu'il vient de l'écrire. Une relance sans changement MUST NOT recharger le profil. Si le chargement échoue, le module MUST échouer et le profil MUST NOT être laissé en place. `module_check` SHALL constater que le profil déployé est identique à celui du dépôt.
 
 #### Scenario: Premier lancement sous Ubuntu 26.04
 - **WHEN** l'utilisateur ouvre le client après le module, sur un système qui restreint les espaces de noms utilisateur non privilégiés
@@ -48,6 +48,10 @@ Le module SHALL déployer le profil AppArmor versionné dans le dépôt, qui aut
 #### Scenario: Profil retiré ou différent
 - **WHEN** le profil a été supprimé ou modifié
 - **THEN** `module_check` retourne 1 et le module réécrit puis recharge la version du dépôt
+
+#### Scenario: Mise à jour du client
+- **WHEN** le paquet `rocketchat` est mis à jour ou rétrogradé après le module
+- **THEN** le profil déployé est toujours en place et `module_check` retourne 0
 
 #### Scenario: Chargement en échec
 - **WHEN** le chargement du profil échoue

@@ -14,7 +14,8 @@
 # disparaîtrait au premier lancement (D2).
 # Profil AppArmor versionné (D6) : sans lui, Ubuntu 26.04 refuse au client les
 # espaces de noms utilisateur et il plante au lancement ; le paquet n'installe pas
-# le sien.
+# le sien, et son postrm supprime /etc/apparmor.d/rocketchat-desktop à chaque
+# mise à jour : le nôtre porte le nom du chemin du binaire.
 #   https://ubuntu.com/blog/ubuntu-23-10-restricted-unprivileged-user-namespaces
 # Voir openspec/changes/rocketchat/design.md.
 MODULE_NAME="rocketchat"
@@ -31,7 +32,7 @@ ROCKETCHAT_SERVERS_SRC="config/rocketchat/servers.json"
 ROCKETCHAT_ROOT="${ROCKETCHAT_ROOT:-}"
 ROCKETCHAT_SERVERS="$ROCKETCHAT_ROOT/opt/Rocket.Chat/resources/servers.json"
 ROCKETCHAT_APPARMOR_SRC="config/rocketchat/apparmor-profile"
-ROCKETCHAT_APPARMOR="$ROCKETCHAT_ROOT/etc/apparmor.d/rocketchat-desktop"
+ROCKETCHAT_APPARMOR="$ROCKETCHAT_ROOT/etc/apparmor.d/opt.Rocket.Chat.rocketchat-desktop.bin"
 ROCKETCHAT_LOGIN_MANUAL="Ouvrir Rocket.Chat (menu des applications) et se connecter à rocketchat.imarcom.net."
 
 # Déjà fait = paquet installé, liste de serveurs et profil AppArmor identiques à

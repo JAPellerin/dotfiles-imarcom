@@ -25,7 +25,7 @@ CALLS="$TEST_TMP/calls"; : >"$CALLS"
 SERVERS="$ROCKETCHAT_ROOT/opt/Rocket.Chat/resources/servers.json"
 USER_SERVERS="$HOME/.config/Rocket.Chat/servers.json"
 SRC="config/rocketchat/servers.json"
-PROFILE="$ROCKETCHAT_ROOT/etc/apparmor.d/rocketchat-desktop"
+PROFILE="$ROCKETCHAT_ROOT/etc/apparmor.d/opt.Rocket.Chat.rocketchat-desktop.bin"
 PROFILE_SRC="config/rocketchat/apparmor-profile"
 MOD="$DOTFILES_DIR/modules/61-rocketchat.sh"
 DEB_URL="https://github.com/RocketChat/Rocket.Chat.Electron/releases/download/4.17.2/rocketchat-4.17.2-linux-amd64.deb"
@@ -75,7 +75,7 @@ assert_eq "un seul serveur" 1 "$(jq 'length' "$DOTFILES_DIR/$SRC")"
 
 printf '%s\n' "== profil AppArmor versionné =="
 assert_contains "attaché au binaire, pas au script d'enveloppe" "$(cat "$DOTFILES_DIR/$PROFILE_SRC")" \
-  "profile rocketchat-desktop /opt/Rocket.Chat/rocketchat-desktop.bin flags=(unconfined) {"
+  "profile /opt/Rocket.Chat/rocketchat-desktop.bin flags=(unconfined) {"
 assert_contains "autorise les espaces de noms utilisateur" "$(cat "$DOTFILES_DIR/$PROFILE_SRC")" "  userns,"
 
 printf '%s\n' "== première application (sous-shells du runner) =="
@@ -92,6 +92,9 @@ assert_eq "module_configure réussit" 0 "$rc"
 assert_ok "liste de serveurs copiée, identique au dépôt" same_as_repo
 assert_ok "profil AppArmor copié, identique au dépôt" profile_as_repo
 assert_contains "profil chargé" "$(cat "$CALLS")" "apparmor_parser -r $PROFILE"
+# Le postrm du paquet supprime /etc/apparmor.d/rocketchat-desktop à chaque
+# mise à jour (design D6).
+assert_fail "pas sous le nom que retire le postrm du paquet" test -e "$ROCKETCHAT_ROOT/etc/apparmor.d/rocketchat-desktop"
 assert_fail "copie, pas un lien" test -L "$SERVERS"
 assert_eq "rien sous ~/.config/Rocket.Chat" "" "$(ls -A "$HOME/.config/Rocket.Chat" 2>/dev/null)"
 assert_ok "module_check → déjà fait" mcall module_check
