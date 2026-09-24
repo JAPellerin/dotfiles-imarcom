@@ -97,11 +97,14 @@ _ui_spinner() {
   # serait réimprimé à chaque image (vu en VM le 23 sept 2026 : les cinq paquets
   # Docker, 99 caractères, dans un terminal de 80 colonnes). Le titre complet
   # reste affiché par ui_spin une fois la commande terminée.
-  local line
+  local line owner=$BASHPID
   line=$(_ui_fit "$title" "$(( $(_ui_columns) - 3 ))")
   printf '\033[?25l' >&2
+  # L'animation tourne en arrière-plan, où bash ignore SIGINT : sur Ctrl-C, elle
+  # survivrait à son lanceur et dessinerait sans fin dans le terminal (vu en VM
+  # le 24 sept 2026). Elle s'arrête donc dès que son lanceur n'existe plus.
   (
-    while true; do
+    while kill -0 "$owner" 2>/dev/null; do
       printf '\r%s%s%s %s' "$_C_MAGENTA" "${frames[i]}" "$_C_RESET" "$line" >&2
       i=$(( (i + 1) % ${#frames[@]} ))
       sleep 0.1

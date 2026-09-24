@@ -23,4 +23,29 @@ if command -v script >/dev/null 2>&1; then
   assert_eq "terminal de 50 colonnes → 50" 50 "${out##*$'\n'}"
 fi
 
+printf '%s\n' "== spinner interrompu (Ctrl-C) =="
+# Sous un pseudo-terminal (le spinner ne s'anime que si stderr en est un) : un
+# sous-shell au premier plan s'envoie SIGINT pendant ui_wait, comme un module
+# sous Ctrl-C. L'animation tourne en arrière-plan, où bash ignore SIGINT : elle
+# ne doit pas survivre à son lanceur (orpheline, elle dessinait sans fin dans
+# le terminal — vu en VM le 24 sept 2026). Orphelin = processus de la session
+# dont le parent n'y est plus ; ceux qui restent sont tués pour ne pas bloquer script.
+if command -v script >/dev/null 2>&1; then
+  cat >"$TEST_TMP/spinner.sh" <<INNER
+LOG_FILE='$LOG_FILE'
+source '$DOTFILES_DIR/lib/core.sh'; source '$DOTFILES_DIR/lib/ui.sh'
+probe() { printf x >>'$TEST_TMP/calls'; [[ \$(wc -c <'$TEST_TMP/calls') -ge 3 ]] && kill -INT "\$BASHPID"; return 1; }
+( cleanup_scope; ui_wait "Attente" 30 0.1 probe ); echo "RC=\$?"
+sleep 0.5
+sid=\$(ps -o sid= -p \$\$ | tr -d ' ')
+orphans=\$(ps -o pid=,ppid= -s "\$sid" | awk -v me=\$\$ '{pid[\$1]=1; pp[\$1]=\$2} END {for (p in pid) if (p != me && !(pp[p] in pid)) print p}')
+echo "ORPHELINS=\$(printf '%s' "\$orphans" | grep -c .)"
+[[ -n \$orphans ]] && kill \$orphans 2>/dev/null
+exit 0
+INNER
+  out=$(timeout 20 script -qec "bash $TEST_TMP/spinner.sh" /dev/null </dev/null 2>/dev/null | tr -d '\r')
+  assert_contains "le sous-shell est interrompu (code 130)" "$out" "RC=130"
+  assert_contains "aucune animation ne survit à Ctrl-C" "$out" "ORPHELINS=0"
+fi
+
 test_done
