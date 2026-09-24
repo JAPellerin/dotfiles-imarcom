@@ -56,6 +56,7 @@ module_install() {
     return 0
   fi
   url=$(github_release_asset_url "$ROCKETCHAT_REPO" "$ROCKETCHAT_ASSET_PATTERN") || return 1
+  log_info "Rocket.Chat : $url"
   apt_install_deb_url "$url" "$ROCKETCHAT_PKG" || return 1
   manual_step "$ROCKETCHAT_LOGIN_MANUAL"
 }

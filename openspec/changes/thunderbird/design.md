@@ -11,6 +11,7 @@ Relevés du 23 sept 2026 :
 | `download.mozilla.org/?product=thunderbird-latest&os=linux64&lang=fr` | 302 → `…/thunderbird/releases/156.0.1/linux-x86_64/fr/thunderbird-156.0.1.tar.xz` |
 | Doc de Mozilla « Install Thunderbird on Linux » | deux méthodes, système (`/opt/thunderbird`, lien `/usr/local/bin/thunderbird`, `.desktop` dans `/usr/local/share/applications`, **mise à jour = réinstaller**) ou dossier personnel ; `.desktop` publié sur `github.com/mozilla/sumo-kb/…/installing-thunderbird-linux/thunderbird.desktop` (`Exec=thunderbird %u`, `Icon=/opt/thunderbird/chrome/icons/default/default128.png`, `MimeType=x-scheme-handler/mailto;…`, actions `Compose` et `Contacts`) |
 | Limite du relevé | le détail de la méthode « dossier personnel » n'a pas pu être lu (page rendue par JavaScript) : les emplacements de D2 sont une décision de ce design, à comparer à la page (tâche 2.1) |
+| Méthode « dossier personnel » (lue le 24 sept 2026 dans la copie de la Wayback Machine du 7 mai 2026, article mis à jour le 1er sept 2025) | archive extraite dans `$HOME/thunderbird` « ou ailleurs dans votre compte » ; lanceur `~/.local/share/applications/thunderbird.desktop`, `Exec` et `Icon` réécrits vers le dossier d'installation (`sed`) ; **aucun lien de commande** ; la commande `wget` de la page dépose le lanceur dans `$HOME/.local/bin/thunderbird`, en contradiction avec le `sed` qui suit (coquille de la page) → **D2 et D3 conformes** : `~/.local/share/thunderbird` est un emplacement du compte, le lanceur est au même endroit avec les mêmes réécritures ; le lien `~/.local/bin/thunderbird` est un ajout |
 
 Relevés du 24 sept 2026 (test en VM, puis demande de l'utilisateur : langue d'Ubuntu, dictionnaires anglais (Canada) et français) :
 
@@ -21,7 +22,7 @@ Relevés du 24 sept 2026 (test en VM, puis demande de l'utilisateur : langue d'U
 | Langue d'une installation | `unzip -p omni.ja res/multilocale.txt` → `fr,en-US` (langue de la version en premier) ; `unzip` est dans les paquets de `base` |
 | Dictionnaires | la version `fr` contient `dictionaries/fr.{aff,dic}` ; aucun signe que la version de Mozilla lise `/usr/share/hunspell` (VM : seul `hunspell-en-us` y est) |
 | Modules de dictionnaire (addons.thunderbird.net) | `en-CA@dictionaries.addons.mozilla.org` (« Canadian English Dictionary », 3.1.3) ; `fr-dicollecte@dictionaries.addons.mozilla.org` (« Dictionnaire français », 6.3.1, ≈ 109 000 utilisateurs) ; adresses stables par *slug* vérifiées (200, `application/x-xpinstall`) : `…/thunderbird/downloads/latest/canadian-english-dictionary/latest.xpi`, `…/thunderbird/downloads/latest/dictionnaire-fran%C3%A7ais1/latest.xpi` ; par GUID : 404 |
-| Emplacement de la stratégie | non confirmé par le README de `thunderbird/policy-templates` : `/etc/thunderbird/policies/policies.json` (comme `/etc/firefox/policies/` pour Firefox) **à vérifier en VM** (`about:policies`, tâche 2.1) |
+| Emplacement de la stratégie | non confirmé par le README de `thunderbird/policy-templates` : `/etc/thunderbird/policies/policies.json` (comme `/etc/firefox/policies/` pour Firefox) ; **constaté en VM le 24 sept 2026 : lu** — au lancement suivant, les deux dictionnaires sont installés dans le profil et actifs (`extensions.json`) |
 
 ## Goals / Non-Goals
 
@@ -54,7 +55,7 @@ Langue installée : premier élément de `res/multilocale.txt` dans `omni.ja` (`
 
 ### D7. Dictionnaires par stratégie d'entreprise (ajouté le 24 sept 2026, à la demande de l'utilisateur)
 `config/thunderbird/policies.json` : `ExtensionSettings`, `installation_mode: normal_installed` (installé d'office, l'utilisateur peut le désactiver) pour `en-CA@dictionaries.addons.mozilla.org` et `fr-dicollecte@dictionaries.addons.mozilla.org`, `install_url` par *slug* (relevé du Context) ; copié par `install_system_file` vers `$THUNDERBIRD_ETC/etc/thunderbird/policies/policies.json` (racine surchargeable pour les tests, comme `NAV_ETC`) dans `module_configure`. Même mécanisme que les extensions des navigateurs (décision du 21 sept 2026) ; Thunderbird installe les dictionnaires au démarrage suivant. Seule écriture système du module : sans changement, `install_system_file` n'appelle pas `sudo`.
-Emplacement dans `/etc` plutôt que `<installation>/distribution/policies.json` : il survit à une réinstallation (D6) et reste hors du dossier que la mise à jour intégrée réécrit. **À confirmer en VM** (`about:policies`) ; repli si Thunderbird ne lit pas `/etc/thunderbird/policies/` : `distribution/policies.json` dans le dossier d'installation, écrit sans `sudo` et réécrit après une réinstallation.
+Emplacement dans `/etc` plutôt que `<installation>/distribution/policies.json` : il survit à une réinstallation (D6) et reste hors du dossier que la mise à jour intégrée réécrit. **Constaté en VM le 24 sept 2026 : Thunderbird lit bien `/etc/thunderbird/policies/`** (dictionnaires installés et actifs au lancement suivant) ; le repli envisagé, `distribution/policies.json` dans le dossier d'installation, est inutile.
 Alternative écartée : paquets `hunspell-fr`/`hunspell-en-ca` d'Ubuntu, que la version de Mozilla ne semble pas lire (Context).
 
 ### D5. Tests
@@ -62,14 +63,12 @@ Alternative écartée : paquets `hunspell-fr`/`hunspell-en-ca` d'Ubuntu, que la 
 
 ## Risks / Trade-offs
 
-- [Thunderbird ne lit pas `/etc/thunderbird/policies/`] → vérifié en VM (tâche 2.1) ; repli décrit en D7.
 - [Thunderbird ouvert pendant une réinstallation de langue] → le processus garde ses fichiers ouverts, à relancer ; cas rare (changement de langue d'Ubuntu), l'échange lui-même reste sûr.
 - [Une future version déplace `res/multilocale.txt`] → langue illisible : l'archive extraite est refusée avec un échec nommé (D6), pas de réinstallation en boucle ; à corriger alors dans le module.
 - [Liste des langues figée] → une langue ajoutée par Mozilla retombe sur `ll` ou `en-US` jusqu'à la mise à jour de la constante.
 - [Slug d'un dictionnaire changé sur addons.thunderbird.net] → Thunderbird n'installe pas le dictionnaire ; l'adresse se corrige dans `config/thunderbird/policies.json`.
 
 - [Dépendances système de l'archive (GTK3, ALSA…) absentes] → présentes sur Ubuntu Desktop ; constaté en VM (tâche 2.1) : Thunderbird doit s'ouvrir.
-- [La méthode « dossier personnel » de la doc diffère de D2] → à comparer à la page en VM ; D2 corrigé avant l'archive si besoin.
 - [Pas de vérification de signature de l'archive] → téléchargement HTTPS depuis Mozilla, comme la doc ; la signature GPG (`.asc`) pourrait être ajoutée plus tard.
 
 ## Migration Plan
