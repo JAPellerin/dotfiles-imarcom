@@ -20,6 +20,8 @@ source "$DOTFILES_DIR/lib/core.sh"
 source "$DOTFILES_DIR/lib/ui.sh"
 # shellcheck source=lib/apt.sh
 source "$DOTFILES_DIR/lib/apt.sh"
+# shellcheck source=lib/github.sh
+source "$DOTFILES_DIR/lib/github.sh"
 # shellcheck source=lib/op.sh
 source "$DOTFILES_DIR/lib/op.sh"
 # shellcheck source=lib/files.sh
