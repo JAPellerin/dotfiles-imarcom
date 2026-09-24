@@ -20,19 +20,23 @@ Le module `rocketchat` (groupe `apps`, dépend de `base`, nécessite une session
 - **THEN** le module est annoncé « non disponible ici » et n'est pas exécuté
 
 ### Requirement: Serveur de l'entreprise pré-configuré
-Le module SHALL déployer la liste de serveurs par défaut versionnée dans le dépôt, qui désigne `https://rocketchat.imarcom.net`, à l'emplacement utilisateur que documente Rocket.Chat pour Linux, par le helper de liens du socle. Au premier lancement du client, le serveur de l'entreprise SHALL être proposé sans que l'utilisateur ait à saisir son adresse. Le module MUST NOT empêcher l'utilisateur d'ajouter d'autres serveurs. `module_check` SHALL constater l'état du lien.
+Le module SHALL déployer la liste de serveurs par défaut versionnée dans le dépôt, qui désigne `https://rocketchat.imarcom.net`, dans le dossier des ressources du paquet, emplacement que documente Rocket.Chat pour Linux et que le client relit sans jamais supprimer le fichier, par le helper de fichiers système du socle. Au premier lancement du client, le serveur de l'entreprise SHALL être proposé sans que l'utilisateur ait à saisir son adresse. Le module MUST NOT empêcher l'utilisateur d'ajouter d'autres serveurs. `module_check` SHALL constater que le fichier déployé est identique à celui du dépôt.
 
 #### Scenario: Premier lancement
 - **WHEN** l'utilisateur ouvre le client après le module, sur un poste où aucun serveur n'a encore été ajouté
 - **THEN** le client s'ouvre sur la page de connexion de `rocketchat.imarcom.net`
 
-#### Scenario: Fichier existant
-- **WHEN** un fichier de serveurs écrit à la main existe déjà à cet emplacement
-- **THEN** il est sauvegardé à côté avant que le lien ne soit créé
+#### Scenario: Après le premier lancement
+- **WHEN** le client a été ouvert une fois après le module
+- **THEN** `module_check` retourne toujours 0
 
-#### Scenario: Lien retiré
-- **WHEN** le lien de la liste de serveurs a été supprimé
-- **THEN** `module_check` retourne 1 et le module le recrée
+#### Scenario: Fichier différent
+- **WHEN** un fichier de serveurs au contenu différent existe à cet emplacement
+- **THEN** `module_check` retourne 1 et le module le remplace par la version du dépôt
+
+#### Scenario: Fichier retiré
+- **WHEN** la liste de serveurs a été supprimée
+- **THEN** `module_check` retourne 1 et le module la réécrit
 
 ### Requirement: Connexion déclarée comme étape manuelle
 Lorsque le module vient d'installer le client, il SHALL déclarer l'étape manuelle de se connecter à Rocket.Chat. Cette étape MUST NOT faire échouer le module ni entrer dans son critère « déjà fait ».
