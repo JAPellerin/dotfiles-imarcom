@@ -9,8 +9,7 @@
 # qu'un `.apk` Android (v1.13.8, relevé du 23 sept 2026) : le helper remonte à la
 # dernière release qui contient le `.deb` (design D1). Les mises à jour se font
 # dans l'application, le `.deb` n'a pas à suivre (D4).
-# Voir openspec/changes/obsidian/specs/module-obsidian/spec.md et openspec/changes/obsidian/design.md
-# (à l'archivage : spec principale et design archivé).
+# Voir openspec/specs/module-obsidian/spec.md et openspec/changes/archive/2026-09-24-obsidian/design.md.
 MODULE_NAME="obsidian"
 MODULE_DESC="Obsidian (.deb officiel des releases GitHub)"
 MODULE_GROUP="apps"
