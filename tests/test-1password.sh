@@ -11,6 +11,8 @@ source "$DOTFILES_DIR/lib/apt.sh"
 source "$DOTFILES_DIR/lib/op.sh"
 # shellcheck source=../lib/module.sh
 source "$DOTFILES_DIR/lib/module.sh"
+# shellcheck source=../lib/connexion.sh
+source "$DOTFILES_DIR/lib/connexion.sh"
 # shellcheck source=../lib/files.sh
 source "$DOTFILES_DIR/lib/files.sh"
 

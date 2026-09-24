@@ -54,8 +54,6 @@ NAV_BRAVE_PREFS="${NAV_BRAVE_PREFS:-$NAV_BRAVE_DIR/Default/Preferences}"
 # Chemin jq de la graine dans Preferences (présente une fois la chaîne rejointe ;
 # confirmée en VM le 21 sept 2026, voir design D9).
 NAV_BRAVE_SYNC_KEY='.brave_sync_v2.seed'
-NAV_WAIT_SECONDS="${NAV_WAIT_SECONDS:-300}"
-NAV_WAIT_INTERVAL="${NAV_WAIT_INTERVAL:-2}"
 NAV_SYNC_MANUAL="Brave Sync : rejoindre la chaîne (brave://settings/braveSync/setup ; code dans 1Password « Brave Sync Code », en remplaçant le 25ᵉ mot par celui du jour)"
 
 # Module à choix interne (contrat des modules, D7) : toujours « à faire ». Chaque
@@ -272,60 +270,45 @@ _nav_firefox_policy() {
 
 # --- Brave Sync guidé (D9) --------------------------------------------------------------------
 # Rejoindre la chaîne ne passe que par l'interface de Brave, et le code de 25 mots
-# expire : le 25ᵉ mot encode la date. On lit la graine (24 mots) dans 1Password,
-# on calcule le mot du jour, on met la phrase dans le presse-papiers et on ouvre
-# Brave sur la page de sync ; le script reprend quand le profil montre la chaîne.
-# Jamais bloquant : sans session, sans note ou sur « Passer », étape manuelle.
+# expire : le 25ᵉ mot encode la date. Parcours de connexion guidée du socle
+# (guided_login) : la graine lue dans 1Password et le mot du jour forment le code
+# (_nav_brave_code), copié dans le presse-papiers ; Brave s'ouvre ; le script
+# reprend quand le profil montre la chaîne. Jamais bloquant : sans session, sans
+# note ou sur « Passer », étape manuelle ; presse-papiers vidé dans tous les cas.
+# Voir openspec/changes/socle-connexion/design.md (D6).
 _nav_brave_sync() {
   pkg_installed brave-browser || return 0
-  if _nav_brave_synced; then
-    log_ok "Brave Sync : chaîne déjà rejointe."
-    return 0
-  fi
-  local seed word25 choice
+  # Liste BIP39 absente ou incomplète : dépôt cassé, pas une étape de
+  # l'utilisateur — le module échoue (vérifié avant le parcours, qui ne fait
+  # jamais échouer le module).
+  _nav_brave_word25 >/dev/null || return 1
+  guided_login "Brave Sync" _nav_brave_synced "$NAV_SYNC_MANUAL" \
+    --secret-fn _nav_brave_code \
+    --open _nav_open_brave ";" \
+    -- "Barre d'adresse : brave://settings/braveSync/setup (ou Menu ☰ › Settings › Sync)." \
+       "« I have a sync code » → coller le code (Ctrl-V) → Confirm." \
+       "Choisir les données à synchroniser (Sync everything, ou au choix)."
+}
+
+# _nav_brave_code : la phrase de 25 mots sur stdout (24 mots de graine lus dans
+# 1Password + mot du jour). Avertit et échoue si elle ne peut pas être formée.
+_nav_brave_code() {
+  local seed word25
   if ! op_session_active; then
     log_warn "Brave Sync : aucune session 1Password, le code ne peut pas être lu."
-    manual_step "$NAV_SYNC_MANUAL"
-    return 0
+    return 1
   fi
   if ! seed=$(op_read "$NAV_BRAVE_SYNC_REF" 2>>"$LOG_FILE"); then
     log_warn "Brave Sync : lecture de « $NAV_BRAVE_SYNC_REF » impossible (voir le journal)."
-    manual_step "$NAV_SYNC_MANUAL"
-    return 0
+    return 1
   fi
   seed=$(printf '%s' "$seed" | tr -s ' \t\n' '\n' | head -n 24 | paste -sd' ')
   if (( $(printf '%s' "$seed" | wc -w) != 24 )); then
     log_warn "Brave Sync : la note ne contient pas 24 mots de graine."
-    manual_step "$NAV_SYNC_MANUAL"
-    return 0
+    return 1
   fi
   word25=$(_nav_brave_word25) || return 1
-  apt_install wl-clipboard || return 1
-  if ! printf '%s %s' "$seed" "$word25" | wl-copy >/dev/null 2>&1; then
-    log_warn "Brave Sync : presse-papiers indisponible (wl-copy)."
-    manual_step "$NAV_SYNC_MANUAL"
-    return 0
-  fi
-  unset seed
-  _nav_open_brave
-  log_info "Dans Brave qui vient de s'ouvrir :"
-  log_info "  1. Barre d'adresse : brave://settings/braveSync/setup (ou Menu ☰ › Settings › Sync)."
-  log_info "  2. « I have a sync code » → coller le code (Ctrl-V, il est dans le presse-papiers) → Confirm."
-  log_info "  3. Choisir les données à synchroniser (Sync everything, ou au choix)."
-  log_info "Le script reprend dès que la chaîne est rejointe ; Ctrl-C pour abandonner."
-  while true; do
-    if ui_wait "En attente que Brave rejoigne la chaîne de synchronisation" "$NAV_WAIT_SECONDS" "$NAV_WAIT_INTERVAL" _nav_brave_synced; then
-      wl-copy --clear >/dev/null 2>&1 || true
-      log_ok "Brave Sync : chaîne rejointe (presse-papiers vidé)."
-      return 0
-    fi
-    choice=$(ui_choose "Brave Sync : la chaîne n'est pas encore rejointe. Que faire ?" \
-      "Continuer d'attendre" "Passer (étape manuelle)") || choice="Passer"
-    case $choice in
-      Continuer*) ;;
-      *) manual_step "$NAV_SYNC_MANUAL"; return 0 ;;
-    esac
-  done
+  printf '%s %s' "$seed" "$word25"
 }
 
 # Chaîne rejointe = graine présente dans le profil de Brave (lecture seule).
@@ -345,8 +328,7 @@ _nav_brave_word25() {
   printf '%s\n' "$word"
 }
 
-# _nav_open_brave : Brave détaché, sorties vers /dev/null (il hériterait sinon
-# du journal et y écrirait ses propres traces tant qu'il tourne). Sans URL :
+# _nav_open_brave : Brave détaché du script (open_detached, lib/connexion.sh). Sans URL :
 # Chromium ignore les URL brave:// reçues en ligne de commande (vu en VM le
 # 21 sept 2026), la consigne donne le chemin. L'assistant de bienvenue (navigateur
 # par défaut, thème, télémétrie) est supprimé par le fichier sentinelle « First
@@ -357,7 +339,5 @@ _nav_open_brave() {
     [[ -d $NAV_BRAVE_DIR ]] || { mkdir -p -- "$NAV_BRAVE_DIR" && chmod 0700 "$NAV_BRAVE_DIR"; }
     : >"$NAV_BRAVE_DIR/First Run"
   fi
-  printf '[%s] $ brave-browser --no-first-run (détaché)\n' "$(date +%H:%M:%S)" >>"$LOG_FILE"
-  setsid -f brave-browser --no-first-run >/dev/null 2>&1 </dev/null \
-    || log_warn "Impossible de lancer Brave : l'ouvrir à la main."
+  open_detached brave-browser --no-first-run
 }

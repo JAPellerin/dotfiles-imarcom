@@ -182,8 +182,7 @@ _op_ready() {
 
 # _op_open_settings <page...> : ouvre l'app sur onepassword://settings/<page>
 # (liens profonds de la doc d'intégration ; le paquet enregistre le schéma
-# onepassword://). Lancement détaché, sorties vers /dev/null : l'app hériterait
-# sinon du journal et y écrirait ses propres logs tant qu'elle tourne (vu en VM).
+# onepassword://). Lancement détaché du script (open_detached, lib/connexion.sh).
 # Échec non bloquant : la consigne donne aussi les menus.
 _op_open_settings() {
   local page
@@ -195,9 +194,7 @@ _op_open_settings() {
   for page in "$@"; do
     # Pause entre deux envois seulement (le temps que l'app démarre).
     (( i++ == 0 )) || sleep "$OP_OPEN_DELAY"
-    printf '[%s] $ xdg-open onepassword://settings/%s (détaché)\n' "$(date +%H:%M:%S)" "$page" >>"$LOG_FILE"
-    setsid -f xdg-open "onepassword://settings/$page" >/dev/null 2>&1 </dev/null \
-      || log_warn "Impossible d'ouvrir onepassword://settings/$page : aller dans les réglages de l'app à la main."
+    open_detached xdg-open "onepassword://settings/$page"
   done
 }
 
