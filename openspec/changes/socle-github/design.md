@@ -21,19 +21,20 @@ Relevés du 23 sept 2026 :
 
 ### D1. Une requête sur la liste des releases, filtrée par jq
 `curl -fsSL --retry 2 "https://api.github.com/repos/<dépôt>/releases?per_page=20"` puis `jq -r --arg re "<motif>" '[.[] | select((.draft or .prerelease) | not) | .assets[] | select(.name | test($re)) | .browser_download_url][0] // empty'`. `/releases/latest` est écarté : il désigne la dernière release, pas la dernière qui contient le fichier (cas d'Obsidian). 20 releases couvrent largement l'écart entre deux `.deb`.
-La réponse passe par un fichier temporaire, pas par un tube `curl | jq` : un échec de `curl` (réseau, limite de débit, dépôt inconnu) doit se distinguer d'une liste sans fichier correspondant, et nommer la bonne cause.
+La réponse est gardée dans une variable (`json=$(curl -fsSL … 2>&1)`), pas passée par un tube `curl | jq` : un échec de `curl` (réseau, limite de débit, dépôt inconnu) doit se distinguer d'une liste sans fichier correspondant, et nommer la bonne cause. Avec `-sS`, `curl` n'écrit sur stderr qu'en cas d'échec : le `2>&1` ne mêle rien au JSON d'un succès, et la variable porte le message de `curl` d'un échec, repris dans le journal. Pas de fichier temporaire (corrigé le 24 sept 2026, après revue) : le helper s'appelle dans un `$(…)`, sous-shell passager où `add_cleanup` se perd — le fichier restait dans `$TMPDIR`.
 
 ### D2. Sortie : l'URL seule sur stdout, tout le reste au journal ou sur stderr
-Le helper s'emploie en substitution : `url=$(github_release_asset_url obsidianmd/obsidian-releases '_amd64\.deb$') || return 1`. Rien d'autre ne sort sur stdout ; les messages passent par `log_*` (stderr et journal). Le `curl` n'est pas lancé par `run` (sa sortie est le document JSON lui-même) : il écrit dans le temporaire, et son échec est journalisé à la main.
+Le helper s'emploie en substitution : `url=$(github_release_asset_url obsidianmd/obsidian-releases '_amd64\.deb$') || return 1`. Rien d'autre ne sort sur stdout ; les messages passent par `log_*` (stderr et journal). Le `curl` n'est pas lancé par `run` (sa sortie est le document JSON lui-même) : sa sortie va dans une variable, et son échec est journalisé à la main.
 
-### D3. Motif : expression régulière étendue sur le nom du fichier
+### D3. Motif : expression régulière de `jq` sur le nom du fichier
+Le motif passe à `test()` de `jq` : syntaxe Oniguruma, proche de PCRE (et non POSIX étendue) ; les ancres et classes usuelles (`\.`, `$`) s'y comportent pareil. Il est vérifié **avant** l'appel réseau (`jq -n … test($re)`) : un motif invalide ferait échouer le filtre et passerait sinon pour une réponse illisible de l'API.
 Chaque module passe un motif ancré (`_amd64\.deb$`, `-linux-amd64\.deb$`) ; l'architecture est dans le motif, pas déduite par le helper — les deux projets n'ont pas la même convention de nommage.
 
 ### D4. Fichier `lib/github.sh`
 Un fichier par thème (comme `lib/fonts.sh`, `lib/groups.sh`). Chargé par `setup.sh` après `lib/apt.sh`. URL de l'API surchargeable (`GITHUB_API_URL`) pour les tests, qui servent des réponses JSON en `file://`.
 
 ### D5. Tests
-`tests/test-github.sh` : réponses JSON fabriquées, servies en `file://` par `GITHUB_API_URL`. Cas : dernière release complète ; dernière release sans le fichier (forme d'Obsidian) → précédente ; préversion et brouillon plus récents ignorés ; aucun fichier → échec nommant dépôt et motif, stdout vide ; réponse absente (`curl` en échec) → échec nommant le dépôt ; JSON invalide → échec ; stdout ne contient que l'URL.
+`tests/test-github.sh` : réponses JSON fabriquées, servies en `file://` par `GITHUB_API_URL`. Cas : dernière release complète ; dernière release sans le fichier (forme d'Obsidian) → précédente ; préversion et brouillon plus récents ignorés ; aucun fichier → échec nommant dépôt et motif, stdout vide ; réponse absente (`curl` en échec) → échec nommant le dépôt ; JSON invalide → échec ; motif invalide → échec qui le dit ; chaque échec nomme dépôt et motif, et celui de `curl` sa cause ; stdout ne contient que l'URL ; aucun fichier laissé dans `$TMPDIR` après un appel par substitution.
 
 ## Risks / Trade-offs
 

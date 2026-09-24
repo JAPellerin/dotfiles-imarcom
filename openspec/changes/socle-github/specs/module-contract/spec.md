@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: URL d'un fichier publié dans les releases GitHub
-Le socle SHALL fournir un helper qui, pour un dépôt GitHub et un motif de nom de fichier, renvoie l'URL de téléchargement du fichier correspondant dans **la plus récente des releases publiées qui en contient un**. Les brouillons et les préversions MUST être écartés. Une release récente qui ne contient aucun fichier correspondant MUST être sautée au profit de la précédente. Si aucune release ne contient un tel fichier, ou si l'API de GitHub ne répond pas, le helper MUST échouer en nommant le dépôt et le motif, sans rien imprimer sur sa sortie standard.
+Le socle SHALL fournir un helper qui, pour un dépôt GitHub et un motif de nom de fichier, renvoie l'URL de téléchargement du fichier correspondant dans **la plus récente des releases publiées qui en contient un**. Les brouillons et les préversions MUST être écartés. Une release récente qui ne contient aucun fichier correspondant MUST être sautée au profit de la précédente. Si aucune release ne contient un tel fichier, ou si l'API de GitHub ne répond pas, le helper MUST échouer en nommant le dépôt et le motif, sans rien imprimer sur sa sortie standard. Un motif invalide MUST être signalé comme tel, avant tout appel à l'API. Le helper MUST NOT laisser de fichier temporaire, y compris appelé dans une substitution de commande.
 
 #### Scenario: Dernière release complète
 - **WHEN** la release la plus récente contient un fichier correspondant au motif
@@ -21,4 +21,8 @@ Le socle SHALL fournir un helper qui, pour un dépôt GitHub et un motif de nom 
 
 #### Scenario: API injoignable
 - **WHEN** l'API de GitHub ne répond pas ou renvoie une erreur
-- **THEN** le helper échoue en nommant le dépôt
+- **THEN** le helper échoue en nommant le dépôt, le motif et la cause rapportée par `curl`
+
+#### Scenario: Motif invalide
+- **WHEN** le motif n'est pas une expression régulière valide
+- **THEN** le helper échoue en disant que le motif est invalide, sans interroger l'API
