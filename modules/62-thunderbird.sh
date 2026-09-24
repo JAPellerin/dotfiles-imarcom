@@ -16,7 +16,7 @@
 # tirée de celle d'Ubuntu, constatée dans l'installation et rétablie par une
 # réinstallation si elle diffère (D6) ; dictionnaires par stratégie d'entreprise
 # dans /etc, seule écriture système du module (D7).
-# Voir openspec/changes/thunderbird/design.md.
+# Voir openspec/specs/module-thunderbird/spec.md et openspec/changes/archive/2026-09-24-thunderbird/design.md.
 MODULE_NAME="thunderbird"
 MODULE_DESC="Thunderbird (archive officielle de Mozilla dans le dossier personnel ; langue d'Ubuntu) ; dictionnaires en-CA et fr"
 MODULE_GROUP="apps"

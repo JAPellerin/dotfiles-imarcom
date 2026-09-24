@@ -7,7 +7,7 @@
 # couperait sinon la commande) ; Icon est une valeur simple, sans guillemets.
 # Fichier publié par Mozilla, seuls Exec et Icon adaptés :
 #   https://github.com/mozilla/sumo-kb/blob/main/installing-thunderbird-linux/thunderbird.desktop
-# Voir openspec/changes/thunderbird/design.md (D3).
+# Voir openspec/changes/archive/2026-09-24-thunderbird/design.md (D3).
 [Desktop Entry]
 Encoding=UTF-8
 Name=Thunderbird Mail
