@@ -16,6 +16,8 @@ source "$DOTFILES_DIR/lib/op.sh"
 source "$DOTFILES_DIR/lib/files.sh"
 # shellcheck source=../lib/module.sh
 source "$DOTFILES_DIR/lib/module.sh"
+# shellcheck source=../lib/connexion.sh
+source "$DOTFILES_DIR/lib/connexion.sh"
 
 command -v jq >/dev/null 2>&1 || { printf 'jq absent : test sauté.\n'; exit 0; }
 
@@ -117,11 +119,13 @@ chmod +x "$TEST_TMP/bin/"*
 export PATH="$TEST_TMP/bin:$PATH"
 
 export NAV_ETC="$TEST_TMP/root" APT_KEYRINGS_DIR="$TEST_TMP/root/etc/apt/keyrings" APT_SOURCES_DIR="$TEST_TMP/root/etc/apt/sources.list.d"
-export NAV_BRAVE_DIR="$TEST_TMP/brave-profile" NAV_BRAVE_PREFS="$TEST_TMP/prefs.json" NAV_WAIT_SECONDS=3 NAV_WAIT_INTERVAL=0.1
+export NAV_BRAVE_DIR="$TEST_TMP/brave-profile" NAV_BRAVE_PREFS="$TEST_TMP/prefs.json" CONNEXION_WAIT_SECONDS=3 CONNEXION_WAIT_INTERVAL=0.1
 export OP_SESSION_FILE="$TEST_TMP/op-session"
 mkdir -p "$APT_SOURCES_DIR"
 # shellcheck source=../modules/25-navigateur.sh
 source "$DOTFILES_DIR/modules/25-navigateur.sh"
+# Parcours de Brave Sync : session graphique supposée (has_gui est faux dans la WSL).
+has_gui() { return 0; }
 
 # reset [paquets installés…] : remet l'environnement à zéro (lignes « paquet<TAB>version »).
 reset() {
@@ -246,7 +250,7 @@ wait
 assert_eq "module_configure réussit" 0 "$rc"
 assert_eq "une lecture op de la note" 1 "$(events 'op read')"
 assert_eq "presse-papiers vidé après la chaîne rejointe" "" "$(cat "$TEST_TMP/clipboard")"
-assert_contains "chaîne rejointe signalée" "$out" "chaîne rejointe"
+assert_contains "chaîne rejointe signalée" "$out" "Brave Sync : fait (presse-papiers vidé)"
 assert_not_contains "aucune étape manuelle" "$(cat "$MANUAL_STEPS_FILE")" "Brave Sync"
 sleep 0.3
 assert_eq "Brave lancé sans assistant ni URL (ignorée par Chromium)" "--no-first-run" "$(cat "$TEST_TMP/brave.log")"
@@ -257,15 +261,19 @@ assert_not_contains "la graine n'est pas à l'écran" "$out" "mot1 mot2"
 # Même parcours sans que la chaîne n'arrive : contenu du presse-papiers et « Passer ».
 reset 'brave-browser\t1.80'; touch "$TEST_TMP/session"
 seq -f 'mot%g' 1 25 | paste -sd' ' >"$TEST_TMP/note"
+# Le presse-papiers est relevé pendant l'attente : « Passer » le vide ensuite.
+( sleep 0.3; cp "$TEST_TMP/clipboard" "$TEST_TMP/clipboard-pendant" ) &
 out=$(NAV_NOW=1790013600 FAKE_SYNC="Passer (étape manuelle)" module_configure 2>&1); rc=$?
+wait
 assert_eq "« Passer » : réussit" 0 "$rc"
-assert_eq "phrase = 24 mots de graine + mot du jour (le 25ᵉ de la note ignoré)" "$(seq -f 'mot%g' 1 24 | paste -sd' ') $expected25" "$(cat "$TEST_TMP/clipboard")"
+assert_eq "phrase = 24 mots de graine + mot du jour (le 25ᵉ de la note ignoré)" "$(seq -f 'mot%g' 1 24 | paste -sd' ') $expected25" "$(cat "$TEST_TMP/clipboard-pendant")"
 assert_contains "« Passer » : étape manuelle" "$(cat "$MANUAL_STEPS_FILE")" "Brave Sync"
+assert_eq "« Passer » : presse-papiers vidé ensuite" "" "$(cat "$TEST_TMP/clipboard")"
 # Chaîne déjà rejointe : rien.
 reset 'brave-browser\t1.80'; touch "$TEST_TMP/session"; printf '{"brave_sync_v2":{"seed":"x"}}' >"$NAV_BRAVE_PREFS"
 out=$(module_configure 2>&1)
 assert_eq "déjà synchronisé : aucune lecture op" 0 "$(events 'op read')"
-assert_contains "déjà synchronisé : signalé" "$out" "déjà rejointe"
+assert_contains "déjà synchronisé : signalé" "$out" "Brave Sync : déjà fait"
 assert_fail "déjà synchronisé : Brave non ouvert" test -f "$TEST_TMP/brave.log"
 # Note absente ou mal formée.
 reset 'brave-browser\t1.80'; touch "$TEST_TMP/session"
@@ -276,6 +284,14 @@ assert_contains "note absente : étape manuelle" "$(cat "$MANUAL_STEPS_FILE")" "
 reset 'brave-browser\t1.80'; touch "$TEST_TMP/session"; printf 'seulement trois mots\n' >"$TEST_TMP/note"
 out=$(module_configure 2>&1)
 assert_contains "note trop courte : avertissement" "$out" "24 mots"
+# Liste BIP39 absente : dépôt cassé, le module échoue sans lire 1Password (D6).
+reset 'brave-browser\t1.80'; touch "$TEST_TMP/session"
+seq -f 'mot%g' 1 25 | paste -sd' ' >"$TEST_TMP/note"
+out=$(NAV_BIP39_LIST="$TEST_TMP/absente.txt" module_configure 2>&1); rc=$?
+assert_eq "liste BIP39 absente : module en échec" 1 "$rc"
+assert_contains "liste BIP39 absente : erreur nommée" "$out" "Liste BIP39 introuvable"
+assert_eq "liste BIP39 absente : aucune lecture op" 0 "$(events 'op read')"
+assert_fail "liste BIP39 absente : Brave non ouvert" test -f "$TEST_TMP/brave.log"
 # Sans Brave : rien du tout.
 reset 'firefox\t154.0'; touch "$TEST_TMP/session"
 module_configure >/dev/null 2>&1
