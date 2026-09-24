@@ -8,7 +8,7 @@
 # la méthode de connexion fournis par l'équipe TI restent à retrouver ; l'import
 # du profil est une étape manuelle, et le module reste « à faire » tant qu'aucune
 # connexion VPN OpenVPN n'existe dans NetworkManager (D2).
-# Voir openspec/changes/vpn/design.md.
+# Voir openspec/specs/module-vpn/spec.md et openspec/changes/archive/2026-09-24-vpn/design.md.
 MODULE_NAME="vpn"
 MODULE_DESC="OpenVPN et son greffon NetworkManager ; import du profil (manuel)"
 MODULE_GROUP="apps"
