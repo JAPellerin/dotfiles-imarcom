@@ -193,11 +193,15 @@ _thunderbird_first_run() {
   add_cleanup "kill -KILL $pid 2>/dev/null"
   start=$SECONDS
   # installs.ini exigé : Thunderbird écrit aussi un profil « …default » dans
-  # profiles.ini, qui n'est pas celui de l'installation (relevé en VM).
+  # profiles.ini, qui n'est pas celui de l'installation (relevé en VM). Puis
+  # prefs.js attendu jusqu'au même délai : un SIGTERM envoyé dès l'apparition
+  # du dossier arrête Thunderbird avant qu'il l'écrive (≈ 1 s, relevé en VM le
+  # 25 sept 2026) ; au-delà du délai, SIGTERM quand même (prefs.js exigé après).
   while (( SECONDS - start < THUNDERBIRD_START_TIMEOUT )); do
-    if [[ -f $(_thunderbird_root)/installs.ini ]] && profile=$(_thunderbird_profile) && [[ -d $profile ]]; then
-      found=1; break
+    if (( ! found )) && [[ -f $(_thunderbird_root)/installs.ini ]] && profile=$(_thunderbird_profile) && [[ -d $profile ]]; then
+      found=1
     fi
+    (( found )) && [[ -f $profile/prefs.js ]] && break
     _thunderbird_alive "$pid" || break
     sleep "$THUNDERBIRD_POLL_INTERVAL"
   done

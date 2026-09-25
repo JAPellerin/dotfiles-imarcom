@@ -358,7 +358,8 @@ chmod +x "$TEST_TMP/bin/op" "$TEST_TMP/bin/wl-copy"
 # (fichier tb-mode) du premier lancement sans fenêtre : normal (crée le profil
 # de l'installation et un profil « …default » dans profiles.ini, pose le
 # verrou), rien (ne crée rien), ignore-term (ignore SIGTERM), prefs-a-l-arret
-# (n'écrit prefs.js qu'en s'arrêtant). --attente : tourne jusqu'à SIGTERM (un
+# (n'écrit prefs.js qu'en s'arrêtant), prefs-en-retard (écrit prefs.js 0,5 s
+# après le profil, rien s'il est arrêté avant : le vrai Thunderbird 156). --attente : tourne jusqu'à SIGTERM (un
 # Thunderbird ouvert). Sans argument (parcours guidé) : écrit l'autorisation
 # Google si tb-connecte existe. Boucle de sleep courts : aucun processus
 # orphelin après un arrêt forcé.
@@ -377,8 +378,9 @@ case ${1:-} in
       mkdir -p "$P" "$R/zzzz.default"
       printf '[General]\nStartWithLastProfile=1\n\n[Profile0]\nName=default\nIsRelative=1\nPath=zzzz.default\nDefault=1\n' >"$R/profiles.ini"
       printf '[AABBCCDD]\nDefault=abcd.default-release\nLocked=1\n' >"$R/installs.ini"
-      [[ $mode == prefs-a-l-arret ]] || printf 'user_pref("app.x", 1);\n' >"$P/prefs.js"
       ln -sfn "127.0.1.1:+$$" "$P/lock"
+      [[ $mode == prefs-en-retard ]] && sleep 0.5
+      [[ $mode == prefs-a-l-arret ]] || printf 'user_pref("app.x", 1);\n' >"$P/prefs.js"
     fi
     while :; do sleep 0.1; done ;;
   --attente) trap 'exit 0' TERM; while :; do sleep 0.1; done ;;
@@ -484,6 +486,13 @@ printf '%s\n' "== prefs.js écrit seulement à l'arrêt =="
 reset_tb; printf 'prefs-a-l-arret' >"$TEST_TMP/tb-mode"; touch "$TEST_TMP/tb-connecte"
 assert_ok "module_configure réussit" mcall module_configure
 assert_eq "compte écrit" "account1" "$(pref "$(PREFS_OF abcd.default-release)" mail.accountmanager.accounts)"
+
+printf '%s\n' "== prefs.js écrit peu après le profil (VM, 25 sept 2026) =="
+reset_tb; printf 'prefs-en-retard' >"$TEST_TMP/tb-mode"; touch "$TEST_TMP/tb-connecte"
+assert_ok "module_configure réussit" mcall module_configure
+assert_file "prefs.js écrit avant l'arrêt" "$(PREFS_OF abcd.default-release)"
+assert_eq "compte écrit" "account1" "$(pref "$(PREFS_OF abcd.default-release)" mail.accountmanager.accounts)"
+assert_fail "premier lancement arrêté" headless_alive
 
 printf '%s\n' "== premier lancement en échec =="
 reset_tb; printf 'rien' >"$TEST_TMP/tb-mode"
