@@ -8,7 +8,7 @@ Le serveur de l'entreprise n'offre pas d'OAuth : la connexion se fait par le for
 
 - **`rocketchat`** : après l'installation et la configuration du client, **connexion guidée** par le helper du socle — identifiant de `op://Imarcom/RocketChat` affiché, mot de passe copié dans le presse-papiers (jamais affiché ni journalisé, vidé à la fin), client ouvert, consigne, attente du signe de connexion dans la configuration du client.
 - **« Connecté » entre dans l'état « déjà fait »** (convention du socle) : tant que l'utilisateur n'est pas connecté à `rocketchat.imarcom.net`, `module_check` rend 1 et une relance repropose le parcours, sans rien retélécharger.
-- L'étape manuelle « se connecter » n'est plus déclarée d'office à l'installation : seulement si le parcours n'aboutit pas (pas de session 1Password, pas de session graphique, « Passer »).
+- L'étape manuelle « se connecter » n'est plus déclarée d'office à l'installation : seulement si le parcours n'aboutit pas (pas de session 1Password, mot de passe illisible, « Passer »).
 
 Hors périmètre : réglages du client (thème, notifications, serveurs supplémentaires) ; authentification à deux facteurs du serveur, si elle venait à être activée (l'utilisateur la saisit dans le client, le parcours attend simplement la connexion).
 
