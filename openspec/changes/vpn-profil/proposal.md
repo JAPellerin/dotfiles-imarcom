@@ -5,9 +5,10 @@ Le module `vpn` (vague 3) n'installe qu'OpenVPN et son greffon NetworkManager : 
 ## What Changes
 
 - **`vpn`** : quand aucune connexion VPN OpenVPN n'existe, le module **importe le profil** lu dans 1Password dans NetworkManager, sous le nom **« Imarcom »**, avec l'identifiant et le mot de passe de l'élément ; le mot de passe est gardé par NetworkManager dans sa configuration système (lisible par root seulement — décision de l'utilisateur, 25 sept 2026), sans invite à la connexion. La connexion n'est **pas** démarrée automatiquement : l'utilisateur l'active depuis le menu système du bureau.
-- Le profil (qui contient une clé privée) et le mot de passe ne sont **jamais affichés ni journalisés** ; le profil ne transite sur disque que dans un fichier temporaire privé, retiré à la fin dans tous les cas.
+- Le profil (qui contient une clé privée) et le mot de passe ne sont **jamais affichés ni journalisés** ; le profil ne transite sur disque que dans un fichier temporaire privé, retiré à la fin dans tous les cas ; seuls restent la configuration de NetworkManager et les certificats et la clé que son greffon extrait (0600, à l'utilisateur).
+- Jamais de connexion à moitié créée : sur échec **ou interruption** (Ctrl-C), la connexion en cours et les fichiers extraits sont retirés.
 - Une connexion OpenVPN déjà présente n'est **jamais modifiée** (« déjà fait », comme aujourd'hui).
-- Sans session 1Password ou sans le profil dans l'élément : l'étape manuelle d'import actuelle, sans échec.
+- Sans session 1Password, sans autorisation de modifier les connexions système (session distante) ou sans le profil dans l'élément : l'étape manuelle d'import actuelle, sans échec.
 - Description du module mise à jour (le profil n'est plus « manuel »).
 
 Hors périmètre (reportés, décision du 24 sept 2026) : reconnexion automatique (`connection.secondaries`, démarrage avec une autre connexion), commande `vpn` ; routage (on garde celui que décrit le profil) ; plusieurs profils.
