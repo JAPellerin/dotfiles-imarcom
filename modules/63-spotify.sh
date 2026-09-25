@@ -39,11 +39,11 @@ SPOTIFY_PREFS="${SPOTIFY_PREFS:-${XDG_CONFIG_HOME:-$HOME/.config}/spotify/prefs}
 # _spotify_logged_in : vrai si le client est connecté (D5) — ligne
 # autologin.username non vide dans ses préférences ; le client la retire à la
 # déconnexion (autologin.canonical_username, lui, reste : pas un signe). Fichier
-# absent → faux, sans message, et 1 (grep rendrait 2 : module_check rend 0 ou
-# 1 seulement). grep lit le fichier, sans tube.
+# absent ou illisible → faux, sans message, et 1 (grep rendrait 2 : module_check
+# rend 0 ou 1 seulement). grep lit le fichier, sans tube.
 _spotify_logged_in() {
   [[ -f $SPOTIFY_PREFS ]] || return 1
-  grep -Eq '^autologin\.username="?[^"]+' -- "$SPOTIFY_PREFS"
+  grep -Eqs '^autologin\.username="?[^"]+' -- "$SPOTIFY_PREFS" || return 1
 }
 
 # Déjà fait = paquet installé, spotify.list en place avec le contenu versionné
