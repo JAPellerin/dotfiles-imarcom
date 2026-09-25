@@ -24,7 +24,7 @@ _Aucune._
 
 - Modifiés : `modules/65-vpn.sh`, `tests/test-vpn.sh`.
 - 1Password : lecture de `op://Imarcom/VPN/username`, `op://Imarcom/VPN/password` et du fichier joint `jpellerin.ovpn`, seulement quand aucune connexion n'existe ; jamais dans `module_check`.
-- Écritures système : une connexion NetworkManager (`/etc/NetworkManager/system-connections/`, par NetworkManager) ; certificats et clé extraits du profil par le greffon à l'import (emplacement relevé en VM).
+- Écritures système : une connexion NetworkManager, enregistrée par netplan dans `/etc/netplan/90-NM-<uuid>.yaml` (root, 0600 ; relevé en VM le 25 sept 2026) ; certificats et clé extraits du profil par le greffon dans `~/.local/share/networkmanagement/certificates/nm-openvpn/` (0600).
 - Réseau : aucun (import local ; la connexion n'est pas démarrée).
 - **Module graphique** : validation en VM (import, puis connexion réelle au VPN de l'entreprise).
 - Docs : `ROADMAP.md` (vague 4 : `vpn` fait).
