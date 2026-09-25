@@ -72,7 +72,7 @@ Après l'installation du client, la liste de serveurs et le profil AppArmor, le 
 
 #### Scenario: Sans session 1Password
 - **WHEN** aucune session 1Password n'est active
-- **THEN** le résumé final demande de se connecter à Rocket.Chat et le module se termine sans erreur
+- **THEN** le résumé final demande de se connecter à Rocket.Chat, le module se termine sans erreur et `module_check` retourne 1
 
 #### Scenario: Passer
 - **WHEN** le délai d'attente s'écoule et l'utilisateur choisit de passer
