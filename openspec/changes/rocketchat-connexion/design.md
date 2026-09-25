@@ -50,6 +50,8 @@ Constantes en tête de fichier : `ROCKETCHAT_USER_REF="op://Imarcom/RocketChat/u
 Aujourd'hui, `module_configure` se termine par un `return 0` anticipé quand le profil AppArmor est déjà à jour : ce retour est restructuré pour que le parcours s'exécute dans tous les cas.
 Lectures dans 1Password (comportement de `guided_login`) : un **mot de passe** illisible → avertissement et étape manuelle ; un **identifiant** illisible → simple avertissement, le parcours continue sans l'afficher.
 
+**Dépendance à `1password`** (décision de l'utilisateur, 25 sept 2026) : `MODULE_DEPS="base 1password"`, comme `git` et `navigateur` — `./setup.sh rocketchat` lancé seul fait d'abord passer `1password` (session pour lire l'élément) ; delta de spec : exigence « Client Rocket.Chat depuis son .deb… » (dépendances).
+
 ### D9. Étape manuelle
 `module_install` ne déclare plus `ROCKETCHAT_LOGIN_MANUAL` : c'est `guided_login` qui la déclare, seulement si le parcours n'aboutit pas. Libellé inchangé. Commentaires devenus faux, réécrits : celui qui précède `module_install` (« L'étape de connexion est déclarée ici… », renvoi à D3 du change `rocketchat` → installation seule ; connexion dans `module_configure`, D8) et celui de `module_check` (« Déjà fait = paquet installé, liste de serveurs et profil AppArmor… (D4) » → complété : et connecté, constaté par `_rocketchat_logged_in`, D7, sans `op`).
 

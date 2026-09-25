@@ -22,7 +22,7 @@ _Aucune._
 
 ## Impact
 
-- Modifiés : `modules/61-rocketchat.sh`, `tests/test-rocketchat.sh`.
+- Modifiés : `modules/61-rocketchat.sh` (dont la dépendance à `1password`), `tests/test-rocketchat.sh`.
 - 1Password : lecture de `op://Imarcom/RocketChat/username` et `op://Imarcom/RocketChat/password` pendant le parcours seulement ; jamais dans `module_check`.
 - Aucun nouveau paquet, aucune nouvelle écriture système. Réseau : aucun nouveau (le client joint son serveur, comme avant).
 - **Module graphique** : validation en VM (connexion réelle au serveur de l'entreprise).

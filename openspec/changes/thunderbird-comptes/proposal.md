@@ -31,8 +31,8 @@ _Aucune._
 
 ## Impact
 
-- Modifiés : `modules/62-thunderbird.sh`, `tests/test-thunderbird.sh`. Nouveau : `config/thunderbird/compte.js` (gabarit des préférences du compte, sans aucune donnée personnelle).
-- 1Password : nouvel élément `op://Imarcom/Thunderbird` à créer par l'utilisateur (champs `nom`, `adresse`, signature en note, agendas en section), plus `op://Imarcom/Google Workspace/password` (existant) ; lus seulement quand le compte manque ; jamais dans `module_check`.
+- Modifiés : `modules/62-thunderbird.sh` (dont la dépendance à `1password`), `tests/test-thunderbird.sh`. Nouveau : `config/thunderbird/compte.js` (gabarit des préférences du compte, sans aucune donnée personnelle).
+- 1Password : nouvel élément `op://Imarcom/Thunderbird` à créer par l'utilisateur (champs `nom`, `adresse`, signature en note, agendas en section), plus `op://Imarcom/Google Workspace/password` (existant) ; lus quand le compte manque, et l'adresse aussi quand le compte est là mais pas connecté (parcours guidé) ; jamais dans `module_check`.
 - Écritures : profil de l'utilisateur (`~/.config/thunderbird/`), aucune écriture système nouvelle ; aucun `sudo` nouveau.
 - Réseau : le script n'appelle rien lui-même ; le premier lancement sans fenêtre de Thunderbird (création du profil) peut joindre les serveurs de Mozilla le temps de son exécution, puis Thunderbird joint Google à la connexion.
 - **Module graphique** : validation en VM avec le vrai compte de travail.
