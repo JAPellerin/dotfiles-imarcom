@@ -26,4 +26,5 @@ _Aucune._
 - 1Password : aucune lecture par le script.
 - Aucun nouveau paquet, aucune nouvelle écriture système, aucun nouveau réseau.
 - **Module graphique** : validation en VM (connexion réelle).
-- Docs : `ROADMAP.md` (vague 4 : `spotify` fait).
+- Docs : `ROADMAP.md` (vague 4 : `spotify` fait ; parcours décrit : code QR au lieu de « Continuer avec Google »).
+- Relance : comme aujourd'hui, elle repasse par `module_install` et demande le réseau (clé du dépôt retéléchargée) — accepté.
