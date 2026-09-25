@@ -15,7 +15,11 @@ assert_eq "code de sortie 0" 0 "$rc"
 assert_contains "b installé avant a" "$out" $'install b\n✔ Fait.\n\n[2/2] a'
 assert_file "marqueur b posé par module_install" "$FIXTURE_STATE_DIR/b"
 assert_file "marqueur a posé" "$FIXTURE_STATE_DIR/a"
-assert_contains "résumé : a fait" "$out" "✔ a              fait"
+assert_contains "résumé : b fait (aucune étape manuelle)" "$out" "✔ b              fait"
+assert_contains "résumé : a à terminer (étape manuelle déclarée)" "$out" "! a              à terminer (étape manuelle)"
+assert_not_contains "a n'est pas marqué fait" "$out" "✔ a              fait"
+assert_contains "journal : a à terminer" "$(cat "$LOG_FILE")" "RESUME a : a-terminer"
+assert_contains "journal : b fait" "$(cat "$LOG_FILE")" "RESUME b : fait"
 assert_contains "étapes manuelles reprises dans le résumé" "$out" $'Étapes manuelles restantes\n  • [a] Redémarrer la session pour a'
 assert_contains "chemin du journal affiché" "$out" "Journal : $LOG_FILE"
 
@@ -41,6 +45,17 @@ assert_fail "gui n'a pas été installé" test -f "$FIXTURE_STATE_DIR/gui"
 assert_contains "journal indiqué en cas d'échec" "$out" "Au moins un module a échoué. Journal complet : $LOG_FILE"
 assert_contains "le journal contient la sortie de la commande fautive" "$(cat "$LOG_FILE")" "detail-echec"
 assert_contains "le journal contient le résumé" "$(cat "$LOG_FILE")" "RESUME dependant : saute"
+assert_contains "échec après une étape manuelle : l'étape reste listée" "$out" "• [echec] Étape manuelle de echec"
+assert_contains "journal : echec reste échoué" "$(cat "$LOG_FILE")" "RESUME echec : echoue"
+
+printf '%s\n' "== dépendant d'un module à terminer =="
+rm -f "$FIXTURE_STATE_DIR/a" "$FIXTURE_STATE_DIR/b"
+out=$(FIXTURE_B_MANUAL=1 setup a) && rc=0 || rc=$?
+assert_eq "code de sortie 0 (à terminer n'est pas un échec)" 0 "$rc"
+assert_contains "b à terminer" "$out" "! b              à terminer (étape manuelle)"
+assert_not_contains "a non sauté" "$out" "sauté"
+assert_file "a exécuté malgré b à terminer" "$FIXTURE_STATE_DIR/a"
+assert_contains "étape de b listée" "$out" "• [b] Étape manuelle de b"
 
 printf '%s\n' "== module graphique avec GUI =="
 out=$(env -u WSL_DISTRO_NAME XDG_SESSION_TYPE=wayland MODULES_DIR="$FIXTURES_DIR/modules" bash "$DOTFILES_DIR/setup.sh" gui 2>&1) && rc=0 || rc=$?
