@@ -56,9 +56,11 @@ _rocketchat_logged_in() {
   url=$(jq -r 'first(.[])' "$DOTFILES_DIR/$ROCKETCHAT_SERVERS_SRC" 2>/dev/null) || return 1
   url=${url%/}
   [[ -n $url ]] || return 1
+  # jq rend 2 ou plus sur un fichier absent ou illisible : ramené à 1, seul code
+  # « à faire » de module_check.
   jq -e --arg url "$url" \
     'any(.servers[]?; ((.url // "") | rtrimstr("/")) == $url and .userLoggedIn == true)' \
-    "$ROCKETCHAT_CONFIG" >/dev/null 2>&1
+    "$ROCKETCHAT_CONFIG" >/dev/null 2>&1 || return 1
 }
 
 # Déjà fait = paquet installé, liste de serveurs et profil AppArmor identiques à
