@@ -49,7 +49,7 @@ USAGE
 # --- Registre des modules découverts (indexé par nom) --------------------------------
 declare -A MOD_FILE MOD_DESC MOD_GROUP MOD_DEPS MOD_GUI MOD_STATE
 MOD_NAMES=()          # noms dans l'ordre des fichiers (préfixe NN)
-declare -A RESULT     # nom → fait | deja-fait | saute | echoue | indisponible
+declare -A RESULT     # nom → fait | a-terminer | deja-fait | saute | echoue | indisponible
 declare -A RESULT_WHY # nom → précision (ex. dépendance échouée)
 
 # discover_modules : charge les métadonnées de chaque $MODULES_DIR/NN-*.sh
@@ -234,8 +234,16 @@ run_modules() {
       continue
     fi
     if module_call "${MOD_FILE[$name]}" module_install && module_call "${MOD_FILE[$name]}" module_configure; then
-      RESULT[$name]=fait
-      log_ok "Fait."
+      # Étape manuelle déclarée pendant ce passage → « à terminer » (le fichier des
+      # étapes est propre à l'exécution). Champ comparé tel quel par awk, sans
+      # expression régulière tirée du nom ni grep -q en tube (SIGPIPE sous pipefail).
+      if awk -F'\t' -v n="$name" '$1 == n { found = 1 } END { exit !found }' "$MANUAL_STEPS_FILE" 2>/dev/null; then
+        RESULT[$name]=a-terminer
+        log_warn "Fait, avec une étape manuelle à terminer (voir le résumé)."
+      else
+        RESULT[$name]=fait
+        log_ok "Fait."
+      fi
     else
       RESULT[$name]=echoue
       log_error "Échec du module « $name » — les modules qui en dépendent seront sautés."
@@ -253,6 +261,7 @@ print_summary() {
     why=${RESULT_WHY[$name]:+ (${RESULT_WHY[$name]})}
     case ${RESULT[$name]} in
       fait)         symbol='✔' color=$_C_GREEN  ;;
+      a-terminer)   symbol='!' color=$_C_YELLOW ;;
       deja-fait)    symbol='·' color=$_C_DIM    ;;
       saute)        symbol='↷' color=$_C_YELLOW ;;
       indisponible) symbol='–' color=$_C_DIM    ;;
@@ -276,6 +285,7 @@ print_summary() {
 result_label() {
   case $1 in
     fait)         printf 'fait' ;;
+    a-terminer)   printf 'à terminer (étape manuelle)' ;;
     deja-fait)    printf 'déjà fait' ;;
     saute)        printf 'sauté' ;;
     indisponible) printf 'non disponible ici' ;;
