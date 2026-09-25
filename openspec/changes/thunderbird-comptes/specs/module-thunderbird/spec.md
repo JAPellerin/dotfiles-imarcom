@@ -32,7 +32,7 @@ Lorsque le profil de Thunderbird ne porte aucun compte, le module SHALL y écrir
 - **THEN** le module échoue en le nommant, sans laisser Thunderbird en cours d'exécution
 
 #### Scenario: Seulement les dossiers locaux
-- **WHEN** Thunderbird a été ouvert une fois et fermé sans compte, de sorte que le profil ne porte que les dossiers locaux
+- **WHEN** le profil ne porte que les dossiers locaux (par exemple après la suppression du compte par l'utilisateur)
 - **THEN** le module écrit le compte de travail, conserve les dossiers locaux et se termine sans étape manuelle à ce titre
 
 #### Scenario: Session perdue pendant la lecture
