@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Client Rocket.Chat depuis son .deb officiel le plus récent
-Le module `rocketchat` (groupe `apps`, dépend de `base`, nécessite une session graphique) SHALL installer le paquet `rocketchat` à partir du `.deb` amd64 publié par l'éditeur dans ses releases GitHub, en retenant la plus récente des releases publiées qui en contient un, par les helpers du socle. Un paquet déjà installé MUST NOT être retéléchargé ni réinstallé. L'échec de la recherche ou du téléchargement MUST faire échouer le module en le nommant.
+Le module `rocketchat` (groupe `apps`, dépend de `base` et de `1password`, nécessite une session graphique) SHALL installer le paquet `rocketchat` à partir du `.deb` amd64 publié par l'éditeur dans ses releases GitHub, en retenant la plus récente des releases publiées qui en contient un, par les helpers du socle. Un paquet déjà installé MUST NOT être retéléchargé ni réinstallé. L'échec de la recherche ou du téléchargement MUST faire échouer le module en le nommant.
 
 #### Scenario: Machine fraîche
 - **WHEN** le module s'exécute sur une machine sans client Rocket.Chat
@@ -18,6 +18,10 @@ Le module `rocketchat` (groupe `apps`, dépend de `base`, nécessite une session
 #### Scenario: Sans session graphique
 - **WHEN** le runner s'exécute là où aucune session graphique n'est disponible
 - **THEN** le module est annoncé « non disponible ici » et n'est pas exécuté
+
+#### Scenario: Lancé seul
+- **WHEN** l'utilisateur lance `setup.sh rocketchat` sans autre module
+- **THEN** le module `1password` est exécuté avant lui
 
 ### Requirement: Serveur de l'entreprise pré-configuré
 Le module SHALL déployer la liste de serveurs par défaut versionnée dans le dépôt, qui désigne `https://rocketchat.imarcom.net`, dans le dossier des ressources du paquet, emplacement que documente Rocket.Chat pour Linux et que le client relit sans jamais supprimer le fichier, par le helper de fichiers système du socle. Au premier lancement du client, le serveur de l'entreprise SHALL être proposé sans que l'utilisateur ait à saisir son adresse. Le module MUST NOT empêcher l'utilisateur d'ajouter d'autres serveurs. `module_check` SHALL constater que le fichier déployé est identique à celui du dépôt.

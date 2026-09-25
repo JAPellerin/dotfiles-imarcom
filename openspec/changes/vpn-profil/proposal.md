@@ -23,7 +23,7 @@ _Aucune._
 
 ## Impact
 
-- Modifiés : `modules/65-vpn.sh`, `tests/test-vpn.sh`.
+- Modifiés : `modules/65-vpn.sh` (dont la dépendance à `1password`), `tests/test-vpn.sh`.
 - 1Password : lecture de `op://Imarcom/VPN/username`, `op://Imarcom/VPN/password` et du fichier joint `jpellerin.ovpn`, seulement quand aucune connexion n'existe ; jamais dans `module_check`.
 - Écritures système : une connexion NetworkManager, enregistrée par netplan dans `/etc/netplan/90-NM-<uuid>.yaml` (root, 0600 ; relevé en VM le 25 sept 2026) ; certificats et clé extraits du profil par le greffon dans `~/.local/share/networkmanagement/certificates/nm-openvpn/` (0600).
 - Réseau : aucun (import local ; la connexion n'est pas démarrée).

@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: OpenVPN et son greffon NetworkManager depuis les dépôts Ubuntu
-Le module `vpn` (groupe `apps`, dépend de `base`, nécessite une session graphique) SHALL installer `openvpn` et le greffon OpenVPN de NetworkManager pour GNOME depuis les dépôts d'Ubuntu. Le module MUST NOT utiliser de dépôt tiers. Seuls les paquets manquants SHALL être passés à apt.
+Le module `vpn` (groupe `apps`, dépend de `base` et de `1password`, nécessite une session graphique) SHALL installer `openvpn` et le greffon OpenVPN de NetworkManager pour GNOME depuis les dépôts d'Ubuntu. Le module MUST NOT utiliser de dépôt tiers. Seuls les paquets manquants SHALL être passés à apt.
 
 #### Scenario: Machine fraîche
 - **WHEN** le module s'exécute sur une machine sans OpenVPN
@@ -14,6 +14,10 @@ Le module `vpn` (groupe `apps`, dépend de `base`, nécessite une session graphi
 #### Scenario: Sans session graphique
 - **WHEN** le runner s'exécute là où aucune session graphique n'est disponible
 - **THEN** le module est annoncé « non disponible ici » et n'est pas exécuté
+
+#### Scenario: Lancé seul
+- **WHEN** l'utilisateur lance `setup.sh vpn` sans autre module
+- **THEN** le module `1password` est exécuté avant lui
 
 ### Requirement: Profil VPN importé
 Le module SHALL n'être « déjà fait » que si les paquets sont installés **et** qu'une connexion VPN OpenVPN existe dans NetworkManager, constatée sans `sudo`, sans réseau et sans 1Password. Lorsqu'aucune n'existe et qu'une session 1Password est active, le module SHALL créer dans NetworkManager la connexion OpenVPN « Imarcom » à partir du profil joint à l'élément 1Password du VPN, avec l'identifiant et le mot de passe de cet élément, le mot de passe gardé par NetworkManager dans sa configuration système de sorte que la connexion s'établisse sans invite. La connexion MUST NOT démarrer automatiquement. Le profil et le mot de passe MUST NOT apparaître à l'écran ni dans le journal. À la fin du module, qu'il réussisse, échoue ou soit interrompu, une copie du profil MUST NOT subsister ailleurs que dans la configuration de NetworkManager et dans les fichiers que son greffon en extrait, lisibles par l'utilisateur seul. Si la création échoue ou est interrompue, le module MUST NOT laisser de connexion incomplète ni les fichiers extraits par le greffon, et un échec MUST être nommé. Sans session 1Password, sans autorisation de modifier les connexions système de NetworkManager, ou si l'élément est illisible ou ne porte pas le profil, le module SHALL déclarer l'étape manuelle d'importer le profil et MUST NOT échouer. Le module MUST NOT modifier une connexion VPN OpenVPN existante.
