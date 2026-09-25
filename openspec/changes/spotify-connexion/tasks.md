@@ -1,6 +1,7 @@
 ## 0. Prérequis
 
-- [x] 0.1 VM (snapshot « vierge », `base`, `1password`, `navigateur`, `spotify`) : se connecter à la main par le code QR (application Spotify du téléphone) et relever **pendant que Spotify tourne** `~/.config/spotify/prefs` (`autologin.username`) et les libellés exacts de l'écran de connexion ; consigner dans `design.md` (D5, D6) et les corriger si besoin — **fait le 25 sept 2026** : `prefs` créé à la connexion, pendant que le client tourne, `autologin.username="…"` ; écran en deux parties (navigateur / code QR)
+- [x] 0.1 VM (snapshot « vierge », `base`, `1password`, `navigateur`, `spotify`) : se connecter à la main par le code QR (téléphone) et relever **pendant que Spotify tourne** `~/.config/spotify/prefs` (`autologin.username`) et la disposition de l'écran de connexion ; consigner dans `design.md` (D5, D6) et les corriger si besoin — **fait le 25 sept 2026** : `prefs` créé à la connexion, pendant que le client tourne, `autologin.username="…"` ; écran en deux parties (navigateur / code QR)
+- [x] 0.2 VM : « Se déconnecter » dans Spotify, client laissé ouvert, puis relire `~/.config/spotify/prefs` — quelles clés `autologin.*` restent ; choisir la clé de la sonde (D5) en conséquence ; relever aussi les libellés exacts de l'écran de connexion pour la consigne (D6 : client en anglais, « Scan code to log in » à droite, « Log in » à gauche) — **fait le 25 sept 2026** : à la déconnexion, `prefs` réécrit aussitôt, `autologin.username`, `saved_credentials` et `blob` retirés, `canonical_username` conservé → sonde sur `autologin.username` confirmée (D5)
 
 ## 1. Module `spotify`
 
@@ -9,5 +10,5 @@
 
 ## 2. Validation en VM et documentation
 
-- [ ] 2.1 VM (snapshot « vierge ») : bootstrap → `base`, `1password`, `navigateur`, `spotify` → Spotify s'ouvre, consigne affichée, connexion par le code QR (téléphone) → « Spotify : fait », aucune étape au résumé ; relance → « déjà fait », Spotify pas rouvert ; se déconnecter → `module_check` à faire, relance → parcours reproposé sans réinstallation ; « Passer » → étape manuelle au résumé ; aucun appel `op` pour Spotify au journal ; consigner ici
-- [ ] 2.2 `ROADMAP.md` : vague 4, `spotify` fait (date) ; `openspec validate spotify-connexion --strict` vert
+- [ ] 2.1 VM (snapshot « vierge ») : bootstrap → `base`, `1password`, `navigateur`, `spotify` → Spotify s'ouvre (une seule fenêtre, aussi quand il était déjà ouvert), consigne affichée, connexion par le code QR (téléphone) → « Spotify : fait », aucune étape au résumé ; relance → « déjà fait », Spotify pas rouvert ; se déconnecter → `module_check` à faire, relance → parcours reproposé sans réinstallation ; « Passer » → étape manuelle au résumé ; aucun appel `op` pour Spotify au journal ; consigner ici
+- [ ] 2.2 `ROADMAP.md` : vague 4, `spotify` fait (date) — et remplacer le parcours décrit (« connexion guidée par « Continuer avec Google », compte Google Workspace personnel ») par la connexion par code QR ; `openspec validate spotify-connexion --strict` vert

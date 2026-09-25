@@ -18,10 +18,10 @@
 ## ADDED Requirements
 
 ### Requirement: Connexion guidée
-Après l'installation, le module SHALL lancer le parcours de connexion guidée du socle, sans secret : Spotify ouvert, consigne de se connecter par le code QR que le client affiche, à scanner avec l'application Spotify du téléphone de l'utilisateur, puis attente de la connexion. La connexion SHALL être constatée, sans `sudo`, sans réseau et sans 1Password, dans les préférences du client, par la même sonde dans le parcours et dans `module_check`. Le module MUST NOT lire de secret dans 1Password pour Spotify. Si le parcours n'aboutit pas (« Passer »), le module SHALL déclarer l'étape manuelle de se connecter à Spotify, MUST NOT échouer, et reste à faire.
+Après l'installation, le module SHALL lancer le parcours de connexion guidée du socle, sans secret : Spotify ouvert, consigne de se connecter par le code QR que le client affiche, à scanner avec le téléphone de l'utilisateur, puis attente de la connexion. La connexion SHALL être constatée, sans `sudo`, sans réseau et sans 1Password, dans les préférences du client, par la même sonde dans le parcours et dans `module_check`. Le module MUST NOT lire de secret dans 1Password pour Spotify. Si le parcours n'aboutit pas (« Passer »), le module SHALL déclarer l'étape manuelle de se connecter à Spotify, MUST NOT échouer, et reste à faire.
 
 #### Scenario: Connexion guidée réussie
-- **WHEN** le module ouvre Spotify et que l'utilisateur scanne le code QR avec l'application Spotify de son téléphone
+- **WHEN** le module ouvre Spotify et que l'utilisateur scanne le code QR avec son téléphone
 - **THEN** la connexion est constatée, aucune étape manuelle n'est déclarée et `module_check` retourne 0
 
 #### Scenario: Déjà connecté

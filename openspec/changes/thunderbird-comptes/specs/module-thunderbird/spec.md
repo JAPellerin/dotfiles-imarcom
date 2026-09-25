@@ -20,12 +20,28 @@ Lorsque le profil de Thunderbird ne porte aucun compte, le module SHALL y écrir
 - **THEN** le profil n'est pas modifié, l'étape manuelle est déclarée et le module se termine sans erreur
 
 #### Scenario: Autre compte présent
-- **WHEN** le profil porte un compte, mais pas le compte Google de travail
+- **WHEN** le profil porte un compte de courriel, mais pas le compte Google de travail
+- **THEN** le profil n'est pas modifié, l'étape manuelle est déclarée et le module se termine sans erreur
+
+#### Scenario: Élément sans nom ou sans adresse
+- **WHEN** l'élément 1Password de Thunderbird n'a pas de nom ou pas d'adresse
+- **THEN** aucun profil n'est créé ni modifié, l'étape manuelle est déclarée et le module se termine sans erreur
+
+#### Scenario: Profil impossible à créer
+- **WHEN** Thunderbird n'a jamais été lancé et que la création de son profil échoue
+- **THEN** le module échoue en le nommant, sans laisser Thunderbird en cours d'exécution
+
+#### Scenario: Seulement les dossiers locaux
+- **WHEN** Thunderbird a été ouvert une fois et fermé sans compte, de sorte que le profil ne porte que les dossiers locaux
+- **THEN** le module écrit le compte de travail, conserve les dossiers locaux et se termine sans étape manuelle à ce titre
+
+#### Scenario: Session perdue pendant la lecture
+- **WHEN** la session 1Password tombe pendant la lecture de l'élément
 - **THEN** le profil n'est pas modifié, l'étape manuelle est déclarée et le module se termine sans erreur
 
 #### Scenario: Sans session 1Password
 - **WHEN** aucune session 1Password n'est active et que le profil ne porte aucun compte
-- **THEN** le profil n'est pas modifié, l'étape manuelle est déclarée et le module se termine sans erreur
+- **THEN** aucun profil n'est créé ni modifié, l'étape manuelle est déclarée et le module se termine sans erreur
 
 ### Requirement: Connexion Google guidée
 Une fois le compte présent, le module SHALL lancer le parcours de connexion guidée du socle : adresse de travail affichée, mot de passe Google Workspace de travail lu dans 1Password et copié dans le presse-papiers, Thunderbird ouvert, consigne de se connecter dans la fenêtre Google de Thunderbird, puis attente. La connexion SHALL être constatée, sans `sudo`, sans réseau et sans 1Password, par la présence d'une autorisation OAuth2 de Google dans le profil, par la même sonde dans le parcours et dans `module_check`. Le mot de passe MUST NOT apparaître à l'écran ni dans le journal. Si le parcours n'aboutit pas, le module SHALL déclarer l'étape manuelle, MUST NOT échouer, et reste à faire.
@@ -40,7 +56,7 @@ Une fois le compte présent, le module SHALL lancer le parcours de connexion gui
 
 #### Scenario: Passer
 - **WHEN** l'utilisateur passe l'étape de connexion
-- **THEN** le presse-papiers est vidé, l'étape manuelle est déclarée et le module se termine sans erreur
+- **THEN** le presse-papiers est vidé, l'étape manuelle déclarée demande de se connecter au compte (et non de l'ajouter) et le module se termine sans erreur
 
 ### Requirement: État du module avec compte et connexion
 `module_check` SHALL, en plus de l'installation, de la langue, de la commande, du lanceur et de la stratégie des dictionnaires, exiger que le profil de Thunderbird porte le compte Google de travail et une autorisation OAuth2 de Google, constatés sans `sudo`, sans réseau et sans 1Password. Tant que l'un manque, une relance SHALL reprendre l'étape qui manque sans retélécharger Thunderbird.
