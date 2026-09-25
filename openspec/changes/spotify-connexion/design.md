@@ -8,9 +8,9 @@ Relevés et hypothèses :
 
 | Sujet | État |
 |---|---|
-| Signe de connexion | `~/.config/spotify/prefs`, ligne `autologin.username=…` après connexion (design de `socle-connexion`, Context) — **à vérifier en VM**, ainsi que le moment où le client l'écrit |
-| Parcours de connexion du client Linux 1.2.x | la page de connexion propose « Continuer avec Google » ; **à vérifier en VM** si Google s'ouvre dans le navigateur par défaut (l'extension 1Password y remplit) ou dans une fenêtre du client (rien n'y remplit) |
-| Compte | Google Workspace **personnel** (pas `…@imarcom.net`) ; aucun élément 1Password Spotify |
+| Signe de connexion (VM, 25 sept 2026, 1.2.95) | `~/.config/spotify/` **n'existe pas** avant la connexion, même client ouvert ; à la connexion par code QR (10:43:14), le client crée `prefs` **pendant qu'il tourne**, avec `autologin.username="…"` (valeur entre guillemets), `autologin.canonical_username`, `autologin.saved_credentials`, `autologin.blob` ; la sonde de D1 y est vraie |
+| Parcours de connexion | écran de connexion **en deux parties** : l'une ouvre le navigateur pour s'authentifier, l'autre affiche le **code QR**, scanné avec l'application Spotify du téléphone (décision de l'utilisateur, 25 sept 2026, à la place de « Continuer avec Google ») |
+| Compte | lié au Google Workspace **personnel** (pas `…@imarcom.net`) ; aucun élément 1Password Spotify |
 | Commande | `spotify` (`/usr/bin/spotify`, paquet `spotify-client`) |
 
 ## Goals / Non-Goals
@@ -22,18 +22,16 @@ Relevés et hypothèses :
 ## Decisions
 
 ### D1. Sonde `_spotify_logged_in`
-Vraie si `~/.config/spotify/prefs` contient une ligne `autologin.username=` à valeur non vide (`grep -Eq '^autologin\.username="?[^"]+' -- "$SPOTIFY_PREFS"` : grep lit le fichier lui-même, sans tube, donc sans le piège de `grep -q` sous `pipefail`). Fichier absent → faux. Chemin surchargeable par `SPOTIFY_PREFS` (tests). **À vérifier en VM** (tâche 0.1) ; si le signe diffère (autre clé, autre fichier), D1 est corrigé avant le code.
+Vraie si `~/.config/spotify/prefs` contient une ligne `autologin.username=` à valeur non vide (`grep -Eq '^autologin\.username="?[^"]+' -- "$SPOTIFY_PREFS"` : grep lit le fichier lui-même, sans tube, donc sans le piège de `grep -q` sous `pipefail`). Fichier absent → faux. Chemin surchargeable par `SPOTIFY_PREFS` (tests). Vérifié en VM le 25 sept 2026 (Context).
 
 ### D2. Parcours dans `module_configure`
 ```
 guided_login "Spotify" _spotify_logged_in "$SPOTIFY_LOGIN_MANUAL" \
   --open open_detached spotify ";" \
-  -- "Dans Spotify : « Continuer avec Google »." \
-     "Choisir le compte Google personnel (pas celui d'Imarcom) ; 1Password remplit dans le navigateur." \
-     "Revenir à Spotify une fois la page Google acceptée."
+  -- "Dans Spotify, l'écran de connexion affiche un code QR (l'autre partie de l'écran ouvre le navigateur)." \
+     "Scanner le code avec l'application Spotify du téléphone, puis confirmer sur le téléphone."
 ```
-Sans secret : ni session 1Password requise, ni presse-papiers. Les consignes sont ajustées après la tâche 0.1 (libellés exacts du client, en français si le client l'est).
-Si la tâche 0.1 montre que Google s'ouvre **dans une fenêtre du client** (où l'extension ne remplit rien), la consigne le dit et le parcours reste sans secret : aucun élément 1Password n'identifie ce compte personnel (relevé du 24 sept 2026) ; en ajouter un serait une décision de l'utilisateur, hors de ce change.
+Sans secret : ni session 1Password requise, ni presse-papiers. Le client garde « Continuer avec Google » et le mot de passe : l'utilisateur reste libre de s'en servir, la sonde constate la connexion quelle qu'en soit la voie.
 
 ### D3. Étape manuelle
 `module_install` ne déclare plus `SPOTIFY_LOGIN_MANUAL` ; la variable `fresh` disparaît. `guided_login` déclare l'étape si le parcours n'aboutit pas. Libellé inchangé.
@@ -43,8 +41,7 @@ Si la tâche 0.1 montre que Google s'ouvre **dans une fenêtre du client** (où 
 
 ## Risks / Trade-offs
 
-- [Le client n'écrit `prefs` qu'à la fermeture] → vérifié en VM (tâche 0.1) ; sinon, la consigne demande de fermer Spotify une fois connecté (la sonde le constate alors), et D1/D2 le disent.
-- [Mauvais compte Google choisi] → hors de portée de la sonde (elle constate une connexion, pas laquelle) ; la consigne nomme le compte.
+- [Le téléphone est connecté à un autre compte Spotify] → hors de portée de la sonde (elle constate une connexion, pas laquelle).
 
 ## Migration Plan
 
