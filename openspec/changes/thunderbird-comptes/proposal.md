@@ -19,7 +19,7 @@ Décisions de l'utilisateur (24 et 25 sept 2026) :
 - **Jamais bloquant** : sans session 1Password, élément incomplet, Thunderbird resté ouvert, profil qui porte déjà un autre compte, ou « Passer » → avertissement et étape manuelle, sans échec.
 - L'étape « ajouter les comptes » n'est plus déclarée d'office à l'installation.
 
-Hors périmètre : filtres, carnets d'adresses, OpenPGP, réglages d'affichage ; importer les courriels de l'actuel (IMAP : tout est sur le serveur) ; Thunderbird comme application de courriel par défaut ; un second compte.
+Hors périmètre : filtres, carnets d'adresses, OpenPGP, réglages d'affichage ; importer les courriels de l'actuel (IMAP : tout est sur le serveur) ; faire de Thunderbird l'application de courriel par défaut (le module désactive seulement la question que Thunderbird pose au premier démarrage) ; un second compte.
 
 ## Capabilities
 
@@ -32,7 +32,7 @@ _Aucune._
 ## Impact
 
 - Modifiés : `modules/62-thunderbird.sh` (dont la dépendance à `1password`), `tests/test-thunderbird.sh`. Nouveau : `config/thunderbird/compte.js` (gabarit des préférences du compte, sans aucune donnée personnelle).
-- 1Password : nouvel élément `op://Imarcom/Thunderbird` à créer par l'utilisateur (champs `nom`, `adresse`, signature en note, agendas en section), plus `op://Imarcom/Google Workspace/password` (existant) ; lus quand le compte manque, et l'adresse aussi quand le compte est là mais pas connecté (parcours guidé) ; jamais dans `module_check`.
+- 1Password : nouvel élément `op://Imarcom/Thunderbird` à créer par l'utilisateur (champs `nom`, `adresse`, signature en note, agendas en section), plus `op://Imarcom/Google Workspace/password` (existant) ; l'élément `Thunderbird` est lu quand le compte manque ; l'adresse et le mot de passe Google Workspace le sont à chaque parcours de connexion (compte présent mais pas connecté compris) ; jamais dans `module_check`.
 - Écritures : profil de l'utilisateur (`~/.config/thunderbird/`), aucune écriture système nouvelle ; aucun `sudo` nouveau.
 - Réseau : le script n'appelle rien lui-même ; le premier lancement sans fenêtre de Thunderbird (création du profil) peut joindre les serveurs de Mozilla le temps de son exécution, puis Thunderbird joint Google à la connexion.
 - **Module graphique** : validation en VM avec le vrai compte de travail.

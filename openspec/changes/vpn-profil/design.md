@@ -84,6 +84,7 @@ Cas existants adaptés : ceux qui attendent l'étape d'import « aucun profil »
 
 ## Risks / Trade-offs
 
+- [Module `1password` en échec, sauté ou « Abandonner » choisi] → le runner saute aussi ce module, qui en dépend : il n'est **pas même installé** (et non « installé, connexion en étape manuelle »). Voulu (décision de l'utilisateur, 25 sept 2026) : c'est déjà ce qu'annonce `1password` (« les modules qui ont besoin de secrets seront sautés »), comme pour `git` et `navigateur` ; une relance après la connexion à 1Password les reprend. L'étape manuelle « sans session » ne joue que si la session tombe entre `1password` et ce module.
 - [Syntaxe de `vpn.secrets` dans l'éditeur de `nmcli`] → vérifiée en VM avec un faux mot de passe contenant `,` et `\` (tâche 0.2) ; le vrai est confirmé à la tâche 2.1 (connexion établie sans invite) ; échappement couvert par les tests, et le contrôle de D6 compare la valeur enregistrée.
 - [Éditeur de `nmcli` qui répète le mot de passe] → sortie vers `/dev/null` (D6) ; test : la doublure de `nmcli` répète son entrée standard comme le vrai, et le mot de passe ne doit apparaître ni dans la sortie du module ni dans le journal.
 - [Clé privée extraite dans `~/.local/share/networkmanagement/certificates/nm-openvpn/`] → c'est le fonctionnement du greffon, fichiers 0600 de l'utilisateur (relevé en VM), admis par la spec ; retirés par le module sur échec ou interruption (D6), droits constatés à la tâche 2.1.
