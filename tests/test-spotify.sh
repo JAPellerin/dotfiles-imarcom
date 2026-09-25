@@ -161,6 +161,16 @@ rm -f "$SPOTIFY_PREFS"
 assert_rc "fichier absent → faux (code 1)" 1 probe
 out=$(probe 2>&1)
 assert_eq "fichier absent : rien d'affiché" "" "$out"
+# Fichier illisible : seulement hors root (root lit malgré chmod 000).
+if (( EUID != 0 )); then
+  write_prefs $'autologin.username="121abc"\n'
+  chmod 000 "$SPOTIFY_PREFS"
+  assert_rc "fichier illisible → faux (code 1)" 1 probe
+  out=$(probe 2>&1)
+  assert_eq "fichier illisible : rien d'affiché" "" "$out"
+  chmod 600 "$SPOTIFY_PREFS"
+  rm -f "$SPOTIFY_PREFS"
+fi
 mkdir -p "$TEST_TMP/xdg/spotify"
 printf 'autologin.username="121abc"\n' >"$TEST_TMP/xdg/spotify/prefs"
 # shellcheck disable=SC2016  # développé par le bash lancé, pas ici
