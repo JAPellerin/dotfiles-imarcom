@@ -50,7 +50,7 @@ Le fichier charge en plus `lib/op.sh` et `lib/connexion.sh`. `guided_login` rée
 ## Risks / Trade-offs
 
 - [Format de `prefs` privé, changé par une mise à jour du client] → la sonde rend faux : le module reste « à faire » et repropose le parcours à chaque relance, sans rien casser ; la sonde se corrige alors.
-- [Spotify déjà ouvert, déconnecté] → `open_detached spotify` ramène-t-il la fenêtre existante ou lance-t-il une seconde instance ? À observer à la tâche 2.1 ; si une seconde instance s'ouvre, D6 n'ouvre pas Spotify quand le client tourne déjà (la consigne suffit), et la tâche 2.1 le consigne.
+- [Spotify déjà ouvert, déconnecté] → `open_detached spotify` ramène-t-il la fenêtre existante ou lance-t-il une seconde instance ? À observer à la tâche 2.1 ; si une seconde instance s'ouvre, D6 n'ouvre pas Spotify quand le client tourne déjà (la consigne suffit), et la tâche 2.1 le consigne. **Constaté le 25 sept 2026 (VM, client 1.2.95) : une seule fenêtre**, Spotify ouvert ou non — D6 reste tel quel.
 - [Relance hors ligne] → une relance pour seulement se connecter repasse par `module_install`, dont `apt_add_repo` retélécharge la clé du dépôt à chaque passage (`lib/apt.sh`) : sans réseau, ou si `download.spotify.com` est indisponible, le module échoue avant que le parcours de connexion soit proposé. Accepté (décision de l'utilisateur, 25 sept 2026) : une relance demande le réseau, comme toute réinstallation vérifiée du module.
 - [Le téléphone est connecté à un autre compte Spotify] → hors de portée de la sonde (elle constate une connexion, pas laquelle).
 
