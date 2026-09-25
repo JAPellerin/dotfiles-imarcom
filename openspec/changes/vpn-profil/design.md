@@ -26,7 +26,7 @@ Relevés :
 Numérotation : les décisions de ce change suivent celles du change `vpn` (D1 à D3, `openspec/changes/archive/2026-09-24-vpn/design.md`), que citent déjà les commentaires du module ; un « Dn » du module désigne donc sans ambiguïté l'un ou l'autre design, et l'en-tête du module renvoie aux deux.
 
 ### D4. Quand importer
-Dans `module_configure`, seulement si `vpn_profile_present` est faux (constat refait : sous-shell du runner). Ordre — chaque empêchement donne `log_warn` + `manual_step "$VPN_IMPORT_MANUAL"`, retour 0 :
+Dans `module_configure`, seulement si `vpn_profile_present` est faux (constat refait : sous-shell du runner). Ordre — aux étapes 1 à 4, chaque empêchement donne `log_warn` + `manual_step "$VPN_IMPORT_MANUAL"`, retour 0 ; à l'étape 5, un échec est une erreur nommée (D6) :
 1. session 1Password (`op_session_active`) ;
 2. autorisation de modifier les connexions système : `nmcli -t -f PERMISSION,VALUE general permissions` porte `org.freedesktop.NetworkManager.settings.modify.system:yes` (sinon : session sans droits polkit, par exemple `ssh -X` où `has_gui` est vrai) ;
 3. profil (D5) — lu **avant** l'identifiant et le mot de passe : sans profil joint, le mot de passe n'est jamais lu ;
