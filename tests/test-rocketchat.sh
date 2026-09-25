@@ -286,11 +286,11 @@ assert_fail ".servers absent → faux" probe
 write_config '{"servers":[{"url":null,"userLoggedIn":true}]}'
 assert_fail "url nulle → faux" probe
 write_config '{pas du json'
-assert_fail "JSON invalide → faux" probe
+assert_rc "JSON invalide → faux (code 1)" 1 probe
 out=$(probe 2>&1)
 assert_eq "JSON invalide : rien d'affiché" "" "$out"
 rm -f "$ROCKETCHAT_CONFIG"
-assert_fail "fichier absent → faux" probe
+assert_rc "fichier absent → faux (code 1)" 1 probe
 mkdir -p "$TEST_TMP/xdg/Rocket.Chat"
 printf '{"servers":[{"url":"https://rocketchat.imarcom.net/","userLoggedIn":true}]}\n' >"$TEST_TMP/xdg/Rocket.Chat/config.json"
 # shellcheck disable=SC2016  # développé par le bash lancé, pas ici

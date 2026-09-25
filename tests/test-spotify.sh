@@ -158,7 +158,7 @@ assert_fail "déconnecté (canonical_username seul) → faux" probe
 write_prefs $'autologin.username=""\n'
 assert_fail "valeur vide → faux" probe
 rm -f "$SPOTIFY_PREFS"
-assert_fail "fichier absent → faux" probe
+assert_rc "fichier absent → faux (code 1)" 1 probe
 out=$(probe 2>&1)
 assert_eq "fichier absent : rien d'affiché" "" "$out"
 mkdir -p "$TEST_TMP/xdg/spotify"
