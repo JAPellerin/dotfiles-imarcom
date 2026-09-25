@@ -1,11 +1,11 @@
 ## 0. Prérequis
 
-- [x] 0.1 VM (snapshot « vierge », `base`, `1password`, `navigateur`, `spotify`) : se connecter à la main par le code QR (application Spotify du téléphone) et relever **pendant que Spotify tourne** `~/.config/spotify/prefs` (`autologin.username`) et les libellés exacts de l'écran de connexion ; consigner dans `design.md` (D1, D2) et les corriger si besoin — **fait le 25 sept 2026** : `prefs` créé à la connexion, pendant que le client tourne, `autologin.username="…"` ; écran en deux parties (navigateur / code QR)
+- [x] 0.1 VM (snapshot « vierge », `base`, `1password`, `navigateur`, `spotify`) : se connecter à la main par le code QR (application Spotify du téléphone) et relever **pendant que Spotify tourne** `~/.config/spotify/prefs` (`autologin.username`) et les libellés exacts de l'écran de connexion ; consigner dans `design.md` (D5, D6) et les corriger si besoin — **fait le 25 sept 2026** : `prefs` créé à la connexion, pendant que le client tourne, `autologin.username="…"` ; écran en deux parties (navigateur / code QR)
 
 ## 1. Module `spotify`
 
-- [ ] 1.1 `modules/63-spotify.sh` : `SPOTIFY_PREFS` (surchargeable), sonde `_spotify_logged_in` (D1) ; `module_check` l'exige ; `module_install` sans étape manuelle ni variable `fresh` (D3) ; `module_configure` lance `guided_login` sans secret (D2) ; en-tête mis à jour (renvoi à ce change) ; vérifier `shellcheck` propre et `./setup.sh --list` → « non disponible ici » dans la WSL
-- [ ] 1.2 `tests/test-spotify.sh` : cas de D4, cas existants adaptés ; vérifier `bash tests/run-all.sh` vert et la ligne `shellcheck` de `CLAUDE.md` propre
+- [ ] 1.1 `modules/63-spotify.sh` : `SPOTIFY_PREFS` (surchargeable, `XDG_CONFIG_HOME`), sonde `_spotify_logged_in` (D5) ; `module_check` l'exige ; `module_install` sans étape manuelle ni variable `fresh` (D7) ; `module_configure` lance `guided_login` sans secret (D6) ; commentaires de `module_install` et `module_configure` réécrits (D7) ; en-tête : renvoi aux deux designs (`archive/2026-09-24-spotify`, D1 à D4, et ce change, D5 à D8) — les « Dn » existants gardent leur sens ; vérifier `shellcheck` propre et `./setup.sh --list` → « non disponible ici » dans la WSL
+- [ ] 1.2 `tests/test-spotify.sh` : chargement de `lib/op.sh` et `lib/connexion.sh`, cas de D8, cas existants adaptés (assertion d'étape après `module_install` retirée, `prefs` « connecté » posé avant `module_configure`) ; vérifier `bash tests/run-all.sh` vert et la ligne `shellcheck` de `CLAUDE.md` propre
 
 ## 2. Validation en VM et documentation
 

@@ -32,7 +32,7 @@ Une fois le compte présent, le module SHALL lancer le parcours de connexion gui
 
 #### Scenario: Connexion guidée réussie
 - **WHEN** l'utilisateur colle le mot de passe dans la fenêtre Google ouverte par Thunderbird et autorise Thunderbird
-- **THEN** l'autorisation est constatée dans le profil, le presse-papiers est vidé, aucune étape manuelle n'est déclarée, et courriels et agendas se chargent
+- **THEN** l'autorisation est constatée dans le profil, le presse-papiers est vidé, aucune étape manuelle n'est déclarée, courriels et agendas se chargent, et le mot de passe ne figure ni dans la sortie du script ni dans son journal, alors que l'adresse y est affichée
 
 #### Scenario: Déjà connecté
 - **WHEN** le profil porte le compte et une autorisation OAuth2 de Google

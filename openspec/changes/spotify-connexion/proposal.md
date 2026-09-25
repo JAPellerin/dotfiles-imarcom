@@ -8,7 +8,7 @@ Le compte Spotify de l'utilisateur est lié à son **compte Google Workspace per
 
 - **`spotify`** : après l'installation, **connexion guidée** par le helper du socle, **sans secret** — Spotify ouvert, consigne (scanner le code QR avec l'application Spotify du téléphone), attente du signe de connexion dans les préférences du client.
 - **« Connecté » entre dans l'état « déjà fait »** (convention du socle) : tant que l'utilisateur n'est pas connecté, `module_check` rend 1 et une relance repropose le parcours, sans rien réinstaller.
-- L'étape manuelle « se connecter » n'est plus déclarée d'office à la première installation : seulement si le parcours n'aboutit pas (« Passer », pas de session graphique).
+- L'étape manuelle « se connecter » n'est plus déclarée d'office à la première installation : seulement si le parcours n'aboutit pas (« Passer »).
 
 Hors périmètre : réglages du client ; connexion par Google ou par mot de passe (possible dans le client, pas guidée).
 
