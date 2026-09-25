@@ -9,7 +9,7 @@ Relevés :
 | Source | Constat |
 |---|---|
 | Client Windows de l'utilisateur (24 sept 2026) | `AppData/Roaming/Rocket.Chat/config.json` : `servers[]` avec `url` et `userLoggedIn: true` une fois connecté |
-| Design de `socle-connexion`, Context | signe de connexion retenu pour Linux : `~/.config/Rocket.Chat/config.json`, `servers[].userLoggedIn == true` — **à vérifier en VM** (emplacement et moment d'écriture) |
+| Design de `socle-connexion`, Context | signe de connexion retenu pour Linux : `~/.config/Rocket.Chat/config.json`, `servers[].userLoggedIn == true` — vérifié en VM le 25 sept 2026 (ligne « `~/.config/Rocket.Chat/config.json` » ci-dessous) |
 | 1Password | élément `Imarcom/RocketChat`, type Login (champs `username`, `password`), formulaire du serveur ; pas d'OAuth sur le serveur |
 | Paquet `rocketchat` (VM, 25 sept 2026) | **aucune commande dans le `PATH`** (`/usr/bin/rocketchat*` absent) ; lanceur `Exec=/opt/Rocket.Chat/rocketchat-desktop %U`, qui démarre `rocketchat-desktop.bin --disable-gpu --ozone-platform=x11` |
 | `~/.config/Rocket.Chat/config.json` (VM, 25 sept 2026, 4.17.2) | **écrit pendant que le client tourne**, à la connexion (10:38:22, client lancé à 10:37) ; `servers: [{"url": "https://rocketchat.imarcom.net/", "userLoggedIn": true, "title": "Imarcom"}]` — URL **avec** `/` final ; D7 confirmé |
@@ -42,24 +42,26 @@ Après `servers.json` et le profil AppArmor (le client doit pouvoir démarrer et
 guided_login "Rocket.Chat" _rocketchat_logged_in "$ROCKETCHAT_LOGIN_MANUAL" \
   --user "$ROCKETCHAT_USER_REF" --secret "$ROCKETCHAT_PASSWORD_REF" \
   --open open_detached "$ROCKETCHAT_BIN" ";" \
-  -- "Dans Rocket.Chat (rocketchat.imarcom.net) : saisir l'identifiant affiché ci-dessus." \
-     "Mot de passe : coller (Ctrl-V), puis « Se connecter »."
+  -- "Dans Rocket.Chat (rocketchat.imarcom.net) : saisir l'identifiant affiché ci-dessus dans le premier champ du formulaire." \
+     "Mot de passe : le coller (Ctrl-V) dans le second champ, puis valider (Entrée)."
 ```
+Consigne **indépendante de la langue** (décision de l'utilisateur, 25 sept 2026) : le client suit la langue du système, que le script n'impose pas ; la consigne désigne les champs par leur place et la validation par la touche Entrée, jamais par un libellé d'interface.
 Constantes en tête de fichier : `ROCKETCHAT_USER_REF="op://Imarcom/RocketChat/username"`, `ROCKETCHAT_PASSWORD_REF="op://Imarcom/RocketChat/password"` (convention `op://` : coffre `Imarcom` nommé) ; `ROCKETCHAT_BIN="$ROCKETCHAT_ROOT/opt/Rocket.Chat/rocketchat-desktop"`, la commande du lanceur du paquet (aucune commande dans le `PATH`, relevé en VM le 25 sept 2026), **préfixée par `$ROCKETCHAT_ROOT`** comme `ROCKETCHAT_SERVERS` et `ROCKETCHAT_APPARMOR` : `open_detached` vérifie que la commande existe avant de la lancer (`command -v`), les tests y posent donc un exécutable factice.
 Aujourd'hui, `module_configure` se termine par un `return 0` anticipé quand le profil AppArmor est déjà à jour : ce retour est restructuré pour que le parcours s'exécute dans tous les cas.
 Lectures dans 1Password (comportement de `guided_login`) : un **mot de passe** illisible → avertissement et étape manuelle ; un **identifiant** illisible → simple avertissement, le parcours continue sans l'afficher.
 
 ### D9. Étape manuelle
-`module_install` ne déclare plus `ROCKETCHAT_LOGIN_MANUAL` : c'est `guided_login` qui la déclare, seulement si le parcours n'aboutit pas. Libellé inchangé. Le commentaire qui précède `module_install` (« L'étape de connexion est déclarée ici… », renvoi à D3 du change `rocketchat`) devient faux : il est réécrit (installation seule ; connexion dans `module_configure`, D8).
+`module_install` ne déclare plus `ROCKETCHAT_LOGIN_MANUAL` : c'est `guided_login` qui la déclare, seulement si le parcours n'aboutit pas. Libellé inchangé. Commentaires devenus faux, réécrits : celui qui précède `module_install` (« L'étape de connexion est déclarée ici… », renvoi à D3 du change `rocketchat` → installation seule ; connexion dans `module_configure`, D8) et celui de `module_check` (« Déjà fait = paquet installé, liste de serveurs et profil AppArmor… (D4) » → complété : et connecté, constaté par `_rocketchat_logged_in`, D7, sans `op`).
 
 ### D10. Tests (`tests/test-rocketchat.sh`)
-Le fichier charge en plus `lib/op.sh` et `lib/connexion.sh`. `guided_login` réel (pas de doublure) avec les doublures du socle déjà employées par `test-connexion.sh` / `test-navigateur.sh` : `op` (session et lecture ; échec sur demande), `wl-copy` (presse-papiers dans un fichier), `has_gui` vrai, `CONNEXION_WAIT_SECONDS=1`, `CONNEXION_WAIT_INTERVAL=0.1`, `ui_choose` scripté, `setsid` journalisé ; `ROCKETCHAT_CONFIG` dans le `HOME` du test ; exécutable factice `$ROCKETCHAT_ROOT/opt/Rocket.Chat/rocketchat-desktop` qui journalise son lancement.
+Le fichier charge en plus `lib/op.sh` et `lib/connexion.sh`. `guided_login` réel (pas de doublure) avec les doublures du socle déjà employées par `test-connexion.sh` / `test-navigateur.sh` : `op` (session et lecture ; échec sur demande), `wl-copy` (presse-papiers dans un fichier), `has_gui` vrai, `CONNEXION_WAIT_SECONDS=1`, `CONNEXION_WAIT_INTERVAL=0.1`, `ui_choose` scripté, doublure `setsid` qui journalise puis exécute la commande reçue ; `ROCKETCHAT_CONFIG="$TEST_TMP/rocketchat/config.json"` **exporté** en tête du fichier, avant tout `module_call` (jamais déduit de `HOME` ni de `XDG_CONFIG_HOME`, que `tests/lib.sh` ne redéfinit pas) ; exécutable factice `$ROCKETCHAT_ROOT/opt/Rocket.Chat/rocketchat-desktop` qui journalise son lancement et, quand le test le demande (fichier drapeau), écrit après un court délai le `config.json` « connecté » — comme le vrai client, pendant qu'il tourne, sans `&` dans le test (pièges du SIGINT ignoré et du processus orphelin).
 Nouveaux cas :
 - sonde : vrai pour le serveur de l'entreprise connecté, URL avec **et** sans `/` final ; faux pour `userLoggedIn: false`, autre serveur, `.servers` absent, `url` nulle, fichier absent, JSON invalide ;
 - `module_check` : installé + fichiers + connecté → 0 ; pas connecté → 1 ;
-- `module_configure` : connexion pendant l'attente (fichier écrit en arrière-plan) → aucune étape, presse-papiers vide, mot de passe absent de la sortie et du journal, identifiant présent, client lancé ; déjà connecté → aucun `op`, aucun lancement ; sans session → étape déclarée, retour 0 ; « Passer » → étape, retour 0 ; identifiant illisible → avertissement, parcours poursuivi ;
-- installation fraîche → aucune étape déclarée par `module_install`.
-Cas existants adaptés : un `config.json` « connecté » est posé avant les cas qui appellent `module_configure` sans porter sur la connexion (sinon chacun lancerait le parcours et attendrait) ; les deux assertions « étape de connexion » après `module_install` (lignes 88 et 177 aujourd'hui) sont retirées ou inversées ; `module_check` à 0 exige désormais la connexion.
+- `module_configure` : connexion pendant l'attente (fichier écrit par l'exécutable factice) → aucune étape, presse-papiers vide, mot de passe absent de la sortie et du journal, identifiant présent, client lancé ; déjà connecté → aucun `op`, aucun lancement (aucune ligne de `setsid` ni de l'exécutable factice au journal) ; sans session → étape déclarée, retour 0 ; « Passer » → étape, retour 0 ; identifiant illisible → avertissement, parcours poursuivi ;
+- installation fraîche → aucune étape déclarée par `module_install` ;
+- sonde sur le chemin par défaut : `ROCKETCHAT_CONFIG` non défini et `XDG_CONFIG_HOME` pointé dans le dossier du test → le fichier y est lu.
+Cas existants adaptés : un `config.json` « connecté » est posé avant les cas qui appellent `module_configure` sans porter sur la connexion (sinon chacun lancerait le parcours et attendrait) ; les deux assertions « étape de connexion » après `module_install` (lignes 88 et 177 aujourd'hui) sont retirées ou inversées ; `module_check` à 0 exige désormais la connexion ; l'assertion « rien sous ~/.config/Rocket.Chat » (ligne 99 aujourd'hui) devient « aucun `servers.json` sous ~/.config/Rocket.Chat » (le `config.json` du test n'y est plus, mais l'intention — la liste de serveurs n'est déployée que dans `/opt` — reste).
 
 ## Risks / Trade-offs
 
