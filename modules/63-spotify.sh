@@ -16,7 +16,7 @@
 # « connecté » fait partie du « déjà fait ». Aucune lecture dans 1Password.
 # Voir openspec/specs/module-spotify/spec.md,
 # openspec/changes/archive/2026-09-24-spotify/design.md (D1 à D4) et
-# openspec/changes/spotify-connexion/design.md (D5 à D8).
+# openspec/changes/archive/2026-09-28-spotify-connexion/design.md (D5 à D8).
 MODULE_NAME="spotify"
 MODULE_DESC="Spotify (dépôt apt Spotify) ; connexion guidée par code QR"
 MODULE_GROUP="apps"
