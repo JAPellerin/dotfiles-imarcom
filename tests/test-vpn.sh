@@ -41,7 +41,10 @@ FAKE
 # (valeur enregistrée, en clair), nm/<uuid>.autoconnect. Drapeaux : perm (valeur
 # de settings.modify.system, yes par défaut), import-refuse, import-noop,
 # modify-refuse, edit-refuse, edit-noop (réussit sans rien enregistrer),
-# edit-alter (enregistre autre chose), edit-interrupt (interrompt le module).
+# edit-alter (enregistre autre chose), edit-interrupt (interrompt le module),
+# import-interrupt (interrompt le module une fois la connexion importée),
+# list-after-import-once / list-after-import-refuse (liste en erreur après
+# l'import, une fois / toujours), delete-refuse.
 cat >"$TEST_TMP/bin/nmcli" <<'FAKE'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >>"$FAKE_DIR/nmcli-log"
@@ -51,7 +54,12 @@ NM=$FAKE_DIR/nm
 # gform : forme de -g — « \ » doublé, « : » précédé d'un « \ ».
 gform() { local v=${1//\\/\\\\}; printf '%s' "${v//:/\\:}"; }
 case "$*" in
-  "-t -f UUID,TYPE connection show") cat "$NM/connections" ;;
+  "-t -f UUID,TYPE connection show")
+    if [[ -e $FAKE_DIR/imported ]]; then
+      [[ -e $FAKE_DIR/list-after-import-refuse ]] && { echo "Error: list" >&2; exit 8; }
+      [[ -e $FAKE_DIR/list-after-import-once ]] && { rm -f "$FAKE_DIR/list-after-import-once"; echo "Error: list" >&2; exit 8; }
+    fi
+    cat "$NM/connections" ;;
   "-g vpn.service-type connection show uuid "*)
     [[ -t 0 ]] || cat >/dev/null
     cat "$NM/${*: -1}" 2>/dev/null || exit 10 ;;
@@ -71,7 +79,9 @@ case "$*" in
     printf 'org.freedesktop.NetworkManager.openvpn\n' >"$NM/$u"
     printf 'connection-type = password-tls, remote = vpn.example.invalid\:1194' >"$NM/$u.data"
     printf 'yes' >"$NM/$u.autoconnect"
-    printf "Connection '%s' (%s) successfully added.\n" "$name" "$u" ;;
+    touch "$FAKE_DIR/imported"
+    printf "Connection '%s' (%s) successfully added.\n" "$name" "$u"
+    if [[ -e $FAKE_DIR/import-interrupt ]]; then kill -INT "$PPID"; kill -INT $$; fi ;;
   "connection modify uuid "*)
     [[ -e $FAKE_DIR/modify-refuse ]] && { echo "Error: modify" >&2; exit 1; }
     u=$4; shift 4
@@ -99,6 +109,7 @@ case "$*" in
     f="$NM/${*: -1}.secret"
     [[ -f $f ]] && { v=$(cat "$f"); printf 'password = %s\n' "$(gform "${v//,/\\,}")"; } ;;
   "connection delete uuid "*)
+    [[ -e $FAKE_DIR/delete-refuse ]] && { echo "Error: delete" >&2; exit 1; }
     u=${*: -1}
     grep -v "^$u:" "$NM/connections" >"$NM/reste"; mv "$NM/reste" "$NM/connections"
     rm -f "$NM/$u" "$NM/$u".* ;;
@@ -240,7 +251,7 @@ assert_eq "rendu de -g : « : » échappé" 'Mdp\\,a\\b\:9' "$(bash -c 'source "
 reset_vpn() {
   printf '1111-eth:ethernet\n2222-wg:vpn\n' >"$CONNS"
   printf 'org.freedesktop.NetworkManager.wireguard\n' >"$TEST_TMP/nm/2222-wg"
-  rm -f "$TEST_TMP"/{import-refuse,import-noop,modify-refuse,edit-refuse,edit-noop,edit-alter,edit-interrupt,ovpn-refuse,ovpn-empty,perm}
+  rm -f "$TEST_TMP"/{import-refuse,import-noop,modify-refuse,edit-refuse,edit-noop,edit-alter,edit-interrupt,ovpn-refuse,ovpn-empty,perm,imported,import-interrupt,list-after-import-once,list-after-import-refuse,delete-refuse}
   rm -rf "$VPN_CERT_DIR" "${XDG_RUNTIME_DIR:?}"/*
   touch "$TEST_TMP/session"
   : >"$CALLS"; : >"$MANUAL_STEPS_FILE"; : >"$LOG_FILE"; : >"$NMCLI_LOG"
@@ -272,7 +283,7 @@ assert_contains "WireGuard toujours listée" "$(cat "$CONNS")" "2222-wg:vpn"
 assert_not_contains "WireGuard jamais modifiée" "$(cat "$NMCLI_LOG")" "modify uuid 2222-wg"
 assert_not_contains "mot de passe absent de la sortie" "$out" "$SECRET"
 assert_not_contains "mot de passe absent du journal" "$(cat "$LOG_FILE")" "$SECRET"
-assert_not_contains "mot de passe absent des arguments de nmcli" "$(cat "$NMCLI_LOG")" "a\\b"
+assert_not_contains "mot de passe absent des arguments de nmcli" "$(cat "$NMCLI_LOG")" "Mdp"
 assert_not_contains "profil absent de la sortie" "$out" "$PROFILE_MARK"
 assert_not_contains "profil absent du journal" "$(cat "$LOG_FILE")" "$PROFILE_MARK"
 assert_not_contains "profil absent des arguments de nmcli" "$(cat "$NMCLI_LOG")" "$PROFILE_MARK"
@@ -331,6 +342,7 @@ fail_case() {
   assert_contains "$1 : échec nommé" "$out" "Création de la connexion VPN « Imarcom » impossible : $2"
   assert_eq "$1 : aucune étape manuelle" "" "$(cat "$MANUAL_STEPS_FILE")"
   assert_not_contains "$1 : mot de passe absent de la sortie" "$out" "$SECRET"
+  assert_not_contains "$1 : mot de passe absent du journal" "$(cat "$LOG_FILE")" "$SECRET"
   no_leftovers "$1"
   assert_fail "$1 : module_check → à faire" mcall module_check
 }
@@ -341,12 +353,37 @@ fail_case modify-refuse "identifiant et réglages"
 fail_case edit-refuse "enregistrement du mot de passe"
 fail_case edit-noop "contrôle du mot de passe enregistré"
 fail_case edit-alter "contrôle du mot de passe enregistré"
+fail_case list-after-import-once "liste des connexions illisible après l'import"
+
+printf '%s\n' "== liste toujours illisible après l'import =="
+reset_vpn; touch "$TEST_TMP/list-after-import-refuse"
+out=$(mcall module_configure 2>&1); rc=$?
+assert_eq "module_configure échoue" 1 "$rc"
+assert_contains "échec nommé" "$out" "impossible : liste des connexions illisible après l'import"
+assert_contains "connexion restante possible nommée" "$out" "incomplète a pu rester : la retirer dans Paramètres > Réseau > VPN"
+assert_eq "fichiers extraits retirés" "" "$(ls -A "$VPN_CERT_DIR" 2>/dev/null)"
+
+printf '%s\n' "== retrait refusé =="
+reset_vpn; touch "$TEST_TMP/edit-refuse" "$TEST_TMP/delete-refuse"
+out=$(mcall module_configure 2>&1); rc=$?
+u=$(new_uuid)
+assert_eq "module_configure échoue" 1 "$rc"
+assert_contains "échec nommé" "$out" "impossible : enregistrement du mot de passe"
+assert_contains "connexion non retirée nommée" "$out" "connexion incomplète ($u) non retirée"
 
 printf '%s\n' "== interruption pendant la création =="
 reset_vpn; touch "$TEST_TMP/edit-interrupt"
 mcall module_configure >/dev/null 2>&1; rc=$?
 assert_eq "module interrompu (SIGINT)" 130 "$rc"
 no_leftovers "interruption"
+assert_fail "module_check → à faire" mcall module_check
+assert_contains "WireGuard « Imarcom » intacte" "$(cat "$CONNS")" "2222-wg:vpn"
+
+printf '%s\n' "== interruption juste après l'import =="
+reset_vpn; touch "$TEST_TMP/import-interrupt"
+mcall module_configure >/dev/null 2>&1; rc=$?
+assert_eq "module interrompu (SIGINT)" 130 "$rc"
+no_leftovers "interruption après l'import"
 assert_fail "module_check → à faire" mcall module_check
 assert_contains "WireGuard « Imarcom » intacte" "$(cat "$CONNS")" "2222-wg:vpn"
 

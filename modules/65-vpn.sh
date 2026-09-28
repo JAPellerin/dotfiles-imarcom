@@ -79,18 +79,41 @@ _vpn_shown() {
   printf '%s' "${v//:/\\:}"
 }
 
-# Connexion en cours de création, retirée par _vpn_abandon si le module échoue ou
-# s'interrompt avant le contrôle (D6) ; vidée une fois le contrôle réussi.
+# Création en cours (D6) : _VPN_BEFORE, liste des connexions OpenVPN d'avant
+# l'import, posée avec la garde avant l'import ; _VPN_PENDING_UUID, la connexion
+# créée, une fois connue. Tout est vidé une fois le contrôle réussi.
+_VPN_IMPORTING=0
+_VPN_BEFORE=""
 _VPN_PENDING_UUID=""
 
 # _vpn_abandon : retire la connexion en cours de création et les fichiers que le
 # greffon en a extraits (delete les laisse, relevé 0.3). Enregistré par
-# add_cleanup dès l'UUID connu : s'exécute aussi sur Ctrl-C. Sans connexion en
-# cours, ne fait rien.
+# add_cleanup avant l'import : s'exécute aussi sur Ctrl-C. UUID pas encore connu
+# (interruption ou liste illisible juste après l'import) : connexions créées
+# depuis l'import retrouvées par différence. Ce qui ne peut être retiré est
+# nommé : `module_check` prendrait une connexion restante pour « déjà fait ».
+# Hors création, ne fait rien.
 _vpn_abandon() {
-  [[ -n ${_VPN_PENDING_UUID:-} ]] || return 0
-  nmcli connection delete uuid "$_VPN_PENDING_UUID" >>"$LOG_FILE" 2>&1 </dev/null || true
+  local uuids after uuid
+  (( _VPN_IMPORTING )) || return 0
+  uuids=$_VPN_PENDING_UUID
+  if [[ -z $uuids ]]; then
+    if after=$(_vpn_openvpn_uuids); then
+      uuids=$(comm -13 <(printf '%s
+' "$_VPN_BEFORE") <(printf '%s
+' "$after") | grep -v '^$') || uuids=""
+    else
+      log_warn "VPN : liste des connexions illisible, une connexion « $VPN_CONNECTION_NAME » incomplète a pu rester : la retirer dans Paramètres > Réseau > VPN."
+    fi
+  fi
+  while IFS= read -r uuid; do
+    [[ -n $uuid ]] || continue
+    nmcli connection delete uuid "$uuid" >>"$LOG_FILE" 2>&1 </dev/null \
+      || log_warn "VPN : connexion incomplète ($uuid) non retirée : la retirer dans Paramètres > Réseau > VPN."
+  done <<<"$uuids"
   rm -f -- "$VPN_CERT_DIR/$VPN_CONNECTION_NAME"-*.pem
+  _VPN_IMPORTING=0
+  _VPN_BEFORE=""
   _VPN_PENDING_UUID=""
 }
 
@@ -122,12 +145,12 @@ _vpn_import() {
   # 3. Profil (clé privée) : fichier temporaire privé, nettoyage enregistré avant
   #    l'écriture, jamais par $(…) ni par run (D5).
   if [[ -n ${XDG_RUNTIME_DIR:-} && -d $XDG_RUNTIME_DIR && -w $XDG_RUNTIME_DIR ]]; then
-    dir=$(mktemp -d -p "$XDG_RUNTIME_DIR" dotfiles-vpn.XXXXXX) || return 1
+    dir=$(mktemp -d -p "$XDG_RUNTIME_DIR" dotfiles-vpn.XXXXXX) || { _vpn_fail "dossier temporaire du profil"; return; }
   else
-    dir=$(mktemp -d -t dotfiles-vpn.XXXXXX) || return 1
+    dir=$(mktemp -d -t dotfiles-vpn.XXXXXX) || { _vpn_fail "dossier temporaire du profil"; return; }
   fi
   add_cleanup "rm -rf -- '$dir'"
-  chmod 700 -- "$dir" || return 1
+  chmod 700 -- "$dir" || { _vpn_fail "dossier temporaire du profil"; return; }
   file="$dir/$VPN_CONNECTION_NAME.ovpn"
   if ! (umask 077; op_read "$VPN_OVPN_REF" >"$file" 2>>"$LOG_FILE"); then
     _vpn_manual "VPN : profil illisible dans 1Password (« $VPN_OVPN_REF »)."
@@ -149,7 +172,12 @@ _vpn_import() {
   # 5. Import. UUID par différence des listes avant et après : la sortie de
   #    l'import part au journal et suit la langue du système ; un nom peut exister
   #    deux fois (D6).
+  #    Garde posée avant l'import : une interruption ou une liste illisible juste
+  #    après ne laisse pas de connexion sans mot de passe.
   before=$(_vpn_openvpn_uuids) || { unset password; _vpn_fail "liste des connexions illisible"; return; }
+  _VPN_BEFORE=$before
+  _VPN_IMPORTING=1
+  add_cleanup _vpn_abandon
   if ! run nmcli connection import type openvpn file "$file"; then
     unset password; _vpn_fail "import du profil"; return
   fi
@@ -159,7 +187,6 @@ _vpn_import() {
     unset password; _vpn_fail "l'import n'a pas créé une et une seule connexion OpenVPN"; return
   fi
   _VPN_PENDING_UUID=$uuid
-  add_cleanup _vpn_abandon
   # Identifiant et réglages avant l'éditeur : avec autoconnect à yes, l'éditeur
   # demanderait une confirmation au « save ».
   if ! run nmcli connection modify uuid "$uuid" connection.autoconnect no \
@@ -184,6 +211,8 @@ _vpn_import() {
     unset password secrets; _vpn_fail "contrôle du mot de passe enregistré"; return
   fi
   unset password secrets
+  _VPN_IMPORTING=0
+  _VPN_BEFORE=""
   _VPN_PENDING_UUID=""
   log_ok "Connexion VPN « $VPN_CONNECTION_NAME » créée (inactive : l'activer depuis le menu système)."
 }
