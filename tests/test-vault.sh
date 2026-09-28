@@ -207,6 +207,11 @@ assert_contains "trace de la connexion au journal, sans secret" "$(cat "$LOG_FIL
 printf 'vault\n' >"$INSTALLED"
 assert_ok "module_check → déjà fait" mcall module_check
 
+printf '%s\n' "== avis VAULT_ADDR pour le shell courant =="
+reset_login; old_token 1
+assert_contains "shell sans VAULT_ADDR → avis" "$(VAULT_ADDR='' mcall module_configure 2>&1)" "VAULT_ADDR : ouvrir un nouveau terminal"
+assert_not_contains "shell avec VAULT_ADDR → aucun avis" "$(VAULT_ADDR=https://vault.imarcom.net mcall module_configure 2>&1)" "ouvrir un nouveau terminal"
+
 printf '%s\n' "== jeton récent =="
 reset_login; old_token 29; printf 'vault\n' >"$INSTALLED"
 assert_ok "jeton de 29 jours : module_check → déjà fait" mcall module_check

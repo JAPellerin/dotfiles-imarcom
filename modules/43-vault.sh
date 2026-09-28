@@ -166,9 +166,13 @@ module_install() {
   apt_install vault
 }
 
-# Fragment (VAULT_ADDR dans les shells), puis connexion si le jeton manque ou est
-# ancien. Constat refait ici : install et configure tournent dans deux sous-shells.
+# Fragment (VAULT_ADDR dans les shells, avis si le shell courant ne l'a pas),
+# puis connexion si le jeton manque ou est ancien. Constat refait ici : install et configure tournent dans deux sous-shells.
 module_configure() {
   link_config "$VAULT_FRAGMENT" "$VAULT_FRAGMENT_TARGET" || return 1
+  # Le shell qui a lancé le script ne voit pas le fragment : sans VAULT_ADDR, la
+  # CLI vise 127.0.0.1:8200 (« connection refused »), d'où l'avis (D3).
+  [[ ${VAULT_ADDR:-} == "$VAULT_ADDR_URL" ]] \
+    || log_info "VAULT_ADDR : ouvrir un nouveau terminal (ou « source $VAULT_FRAGMENT_TARGET ») avant d'utiliser vault."
   _vault_login
 }
