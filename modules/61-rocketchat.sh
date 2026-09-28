@@ -22,7 +22,7 @@
 # ~/.config/Rocket.Chat/config.json ; « connecté » fait partie du « déjà fait ».
 # Voir openspec/specs/module-rocketchat/spec.md,
 # openspec/changes/archive/2026-09-24-rocketchat/design.md (D1 à D6) et
-# openspec/changes/rocketchat-connexion/design.md (D7 à D10).
+# openspec/changes/archive/2026-09-28-rocketchat-connexion/design.md (D7 à D10).
 MODULE_NAME="rocketchat"
 MODULE_DESC="Rocket.Chat (.deb officiel) ; serveur rocketchat.imarcom.net pré-configuré ; connexion guidée par 1Password"
 MODULE_GROUP="apps"
