@@ -5,5 +5,5 @@
 
 ## 2. Validation et documentation
 
-- [ ] 2.1 VM : relancer `./setup.sh rocketchat` client déconnecté, « Passer » → résumé `! rocketchat     à terminer (étape manuelle)` en jaune, étape listée dessous, journal `RESUME rocketchat : a-terminer` ; relance après connexion → « déjà fait » ; consigner ici.
-- [ ] 2.2 `ROADMAP.md` : vague 4, change de socle `resume-etape-manuelle` (constat de la validation de `rocketchat-connexion`), fait (date) ; `openspec validate resume-etape-manuelle --strict` vert.
+- [x] 2.1 VM : relancer `./setup.sh rocketchat` client déconnecté, « Passer » → résumé `! rocketchat     à terminer (étape manuelle)` en jaune, étape listée dessous, journal `RESUME rocketchat : a-terminer` ; relance après connexion → « déjà fait » ; consigner ici. — **fait les 25 et 28 sept 2026** (main `1722ea4` puis `9bce943`) : Rocket.Chat déconnecté, « Passer » → ligne jaune « à terminer (étape manuelle) », étape listée dessous, `RESUME rocketchat : a-terminer`, reconnexion puis relance → « déjà fait » ; même état vu avec Spotify (« Passer ») et Thunderbird (ouvert, profil sans compte) ; 1Password injoignable (VPN actif) → étape manuelle sans « Passer », aussi « à terminer ».
+- [x] 2.2 `ROADMAP.md` : vague 4, change de socle `resume-etape-manuelle` (constat de la validation de `rocketchat-connexion`), fait (date) ; `openspec validate resume-etape-manuelle --strict` vert. — **fait le 28 sept 2026** (ligne de la vague 4) ; `validate --strict` vert

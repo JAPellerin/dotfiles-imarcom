@@ -92,6 +92,7 @@ Cas existants adaptés : ceux qui attendent l'étape d'import « aucun profil »
 - [Format de `--show-secrets -g` changé par une version de NetworkManager] → le contrôle échoue et nomme l'étape : la connexion est retirée, rien d'incomplet ne reste ; la forme attendue se corrige (relevé 0.3).
 - [Le fichier joint change de nom dans 1Password] → lecture en échec : étape manuelle, avertissement qui nomme la référence ; la constante se corrige.
 - [Mot de passe du VPN changé] → la connexion existante n'est pas modifiée (spec) : l'utilisateur le change dans les paramètres réseau, ou supprime la connexion et relance le module.
+- [VPN actif dans la VM de test : rien ne sort] → constaté le 25 sept 2026 : route par défaut via `tun0`, DNS poussé `172.20.5.3` sans réponse, 1Password, GitHub et `rocketchat.imarcom.net` injoignables (l'adresse IP de GitHub répond) ; sur le poste Windows, le même VPN laisse tout passer. Hors du module (la connexion s'établit, l'authentification passe) : **point ouvert**, à examiner sur le laptop (DNS ou routes du profil importé, ou réseau de la VM Hyper-V). Conséquence vue : `op read` échoue, les parcours guidés deviennent des étapes manuelles.
 - [Profil renouvelé par l'équipe TI (nouveau certificat ou clé) et remplacé dans 1Password] → la connexion existante n'est pas mise à jour (spec) : la supprimer (retour arrière ci-dessous), puis relancer le module.
 
 ## Migration Plan
