@@ -14,7 +14,7 @@
 # et jeton passent par l'entrée standard, jamais en argument ni au journal (D5).
 # Vault injoignable (adresse privée : réseau de l'entreprise ou VPN) ou 1Password
 # indisponible : étape manuelle, jamais d'échec.
-# Voir openspec/changes/vault/specs/module-vault/spec.md et openspec/changes/vault/design.md.
+# Voir openspec/specs/module-vault/spec.md et openspec/changes/archive/2026-09-28-vault/design.md.
 MODULE_NAME="vault"
 MODULE_DESC="CLI Vault (dépôt HashiCorp) ; VAULT_ADDR d'Imarcom ; connexion LDAP depuis 1Password"
 MODULE_GROUP="dev"
