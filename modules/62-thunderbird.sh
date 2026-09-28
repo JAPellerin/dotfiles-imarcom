@@ -22,7 +22,7 @@
 # « Compte présent et connecté » fait partie du « déjà fait ».
 # Voir openspec/specs/module-thunderbird/spec.md,
 # openspec/changes/archive/2026-09-24-thunderbird/design.md (D1 à D7) et
-# openspec/changes/thunderbird-comptes/design.md (D8 à D14).
+# openspec/changes/archive/2026-09-28-thunderbird-comptes/design.md (D8 à D14).
 MODULE_NAME="thunderbird"
 MODULE_DESC="Thunderbird (archive officielle de Mozilla dans le dossier personnel ; langue d'Ubuntu) ; dictionnaires en-CA et fr ; compte Google et agendas depuis 1Password"
 MODULE_GROUP="apps"

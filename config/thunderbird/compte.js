@@ -7,7 +7,7 @@
 // d'identité et de serveur sortant sont les premiers libres du profil.
 // Préférences reprises du profil Thunderbird 156 de l'utilisateur et du compte
 // ajouté par l'assistant en VM (25 sept 2026), en OAuth2 (authMethod 10).
-// Voir openspec/changes/thunderbird-comptes/design.md (D11).
+// Voir openspec/changes/archive/2026-09-28-thunderbird-comptes/design.md (D11).
 user_pref("mail.accountmanager.accounts", "@ACCOUNTS@");
 user_pref("mail.accountmanager.defaultaccount", "@ACCOUNT@");
 user_pref("mail.account.lastKey", @LASTKEY@);
