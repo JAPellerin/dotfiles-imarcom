@@ -120,8 +120,8 @@ RC_SHELLS=(sh bash)
 [[ -n $REAL_ZSH ]] && RC_SHELLS+=("$REAL_ZSH")
 # rc_stderr <shell> : sortie d'erreur du chargement de commonrc, HOME isolé.
 rc_stderr() { { env -i HOME="$RC_HOME" PATH=/usr/bin:/bin "$1" -c ". '$RC_FILE'" >/dev/null; } 2>&1; }
-# rc_value <shell> : « <ESSAI> <VAULT_ADDR> » après chargement.
-rc_value() { env -i HOME="$RC_HOME" PATH=/usr/bin:/bin "$1" -c ". '$RC_FILE'; printf '%s %s' \"\$ESSAI\" \"\$VAULT_ADDR\"" 2>/dev/null; }
+# rc_value <shell> : « <ESSAI> <NVM_DIR> » après chargement.
+rc_value() { env -i HOME="$RC_HOME" PATH=/usr/bin:/bin "$1" -c ". '$RC_FILE'; printf '%s %s' \"\$ESSAI\" \"\$NVM_DIR\"" 2>/dev/null; }
 
 for rc_sh in "${RC_SHELLS[@]}"; do
   assert_eq "$(basename -- "$rc_sh") : dossier absent, aucun message" "" "$(rc_stderr "$rc_sh")"
@@ -130,7 +130,7 @@ mkdir -p "$RC_HOME/.commonrc.d"
 for rc_sh in "${RC_SHELLS[@]}"; do
   assert_eq "$(basename -- "$rc_sh") : dossier vide, aucun message" "" "$(rc_stderr "$rc_sh")"
 done
-printf 'ESSAI=fragment\nVAULT_ADDR=surcharge\n' >"$RC_HOME/.commonrc.d/zz-essai.sh"
+printf 'ESSAI=fragment\nNVM_DIR=surcharge\n' >"$RC_HOME/.commonrc.d/zz-essai.sh"
 for rc_sh in "${RC_SHELLS[@]}"; do
   assert_eq "$(basename -- "$rc_sh") : fragment chargé, et il surcharge commonrc" \
     "fragment surcharge" "$(rc_value "$rc_sh")"

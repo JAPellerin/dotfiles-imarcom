@@ -11,9 +11,6 @@ export PATH
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
-# Vault Imarcom
-export VAULT_ADDR=https://vault.imarcom.net
-
 # Fragments déposés par les modules (~/.commonrc.d/<module>.sh, un lien par
 # module). En dernier : un fragment peut surcharger une valeur ci-dessus.
 # Dossier absent ou vide : bash et dash laissent le motif littéral, que `[ -r ]`
