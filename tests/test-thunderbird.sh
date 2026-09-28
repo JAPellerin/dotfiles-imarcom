@@ -519,6 +519,33 @@ assert_eq "compte ajouté" "account1" "$(pref "$P" mail.accountmanager.accounts)
 assert_eq "aucun premier lancement" 0 "$(count_calls 'thunderbird --headless')"
 assert_eq "aucun fichier temporaire" "" "$(find "$THUNDERBIRD_PROFILES" -name '.prefs.js.*')"
 
+printf '%s\n' "== profil inscrit, dossier disparu =="
+reset_tb; touch "$TEST_TMP/tb-connecte"
+mkdir -p "$THUNDERBIRD_PROFILES"
+printf '[X]\nDefault=abcd.default-release\n' >"$THUNDERBIRD_PROFILES/installs.ini"
+out=$(mcall module_configure 2>&1); rc=$?
+assert_eq "module_configure réussit" 0 "$rc"
+assert_eq "premier lancement" 1 "$(count_calls 'thunderbird --headless')"
+assert_eq "compte écrit" "account1" "$(pref "$(PREFS_OF abcd.default-release)" mail.accountmanager.accounts)"
+assert_fail "premier lancement arrêté" headless_alive
+
+printf '%s\n' "== profil déjà démarré : agenda « Home » =="
+reset_tb; touch "$TEST_TMP/tb-connecte"
+mkdir -p "$THUNDERBIRD_PROFILES/abcd.default-release"
+printf '[X]\nDefault=abcd.default-release\n' >"$THUNDERBIRD_PROFILES/installs.ini"
+P=$(PREFS_OF abcd.default-release)
+printf '%s\n' 'user_pref("calendar.list.sortOrder", "home-1");' \
+  'user_pref("calendar.registry.home-1.calendar-main-default", true);' \
+  'user_pref("calendar.registry.home-1.name", "Home");' \
+  'user_pref("calendar.registry.autre-2.calendar-main-default", false);' >"$P"
+assert_ok "module_configure réussit" mcall module_configure
+U1=$(cal_uuid "$P" "Équipe"); U2=$(cal_uuid "$P" "Moi"); U5=$(cal_uuid "$P" "Fériés")
+assert_eq "agendas de l'élément d'abord, « Home » gardé à la suite" "$U1 $U2 $U5 home-1" "$(pref "$P" calendar.list.sortOrder)"
+assert_eq "agenda de l'adresse = défaut" "true" "$(pref "$P" "calendar.registry.$U2.calendar-main-default")"
+assert_eq "« Home » n'est plus le défaut" "false" "$(pref "$P" "calendar.registry.home-1.calendar-main-default")"
+assert_eq "« Home » gardé" "Home" "$(pref "$P" "calendar.registry.home-1.name")"
+assert_eq "un seul agenda par défaut" 0 "$(grep -c 'autre-2.calendar-main-default", true' "$P")"
+
 printf '%s\n' "== seulement les dossiers locaux =="
 reset_tb; touch "$TEST_TMP/tb-connecte"
 mkdir -p "$THUNDERBIRD_PROFILES/abcd.default-release"

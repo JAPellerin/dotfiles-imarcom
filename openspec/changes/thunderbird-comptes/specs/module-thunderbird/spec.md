@@ -26,7 +26,7 @@ Le module `thunderbird` (groupe `apps`, dépend de `base`, de `shell` et de `1pa
 ## ADDED Requirements
 
 ### Requirement: Compte de travail, identité et agendas depuis 1Password
-Lorsque le profil de Thunderbird ne porte aucun compte de courriel (les dossiers locaux ne comptent pas), le module SHALL y écrire, à partir de l'élément 1Password de Thunderbird, le compte Google de travail — un compte Gmail à l'adresse du domaine de l'entreprise, `@imarcom.net` — (réception IMAP sur `imap.gmail.com`, envoi SMTP sur `smtp.gmail.com`, authentification OAuth2), l'identité (nom, adresse, signature HTML placée sous la réponse et au-dessus de la citation, réponse au-dessus de la citation, dossiers d'envoyés, de brouillons et d'archives de Gmail) et chaque agenda Google de l'élément (nom, couleur, lecture seule ou non, affiché ou masqué), dans l'ordre de l'élément, l'agenda Google de l'adresse de travail devenant l'agenda par défaut des nouveaux événements ; Thunderbird MUST NOT demander, au premier démarrage, à devenir l'application de courriel par défaut. Si Thunderbird n'a encore jamais été lancé, le module SHALL d'abord créer le profil que Thunderbird ouvrira. Les données personnelles (nom, adresse, signature, agendas) MUST NOT être versionnées dans le dépôt. Le module MUST NOT écrire dans un profil pendant que Thunderbird l'utilise, MUST NOT poser de question à l'utilisateur pour écrire le compte (le parcours de connexion garde les siennes), et MUST NOT réécrire ni compléter un compte déjà présent : une fois écrits, compte, identité et agendas appartiennent à l'utilisateur. Le module MUST NOT écrire un compte incomplet : si la session 1Password tombe ou qu'une lecture échoue pour une autre raison qu'un champ absent, rien n'est écrit. Sans session 1Password, avec un élément sans nom ou sans adresse, avec une lecture en échec, avec plusieurs installations de Thunderbird sur le poste, ou avec un profil qui porte déjà un autre compte (y compris un compte Gmail hors du domaine de l'entreprise), le module SHALL avertir, déclarer l'étape manuelle d'ajouter le compte et les agendas, et MUST NOT échouer ; avec Thunderbird ouvert, il SHALL déclarer l'étape manuelle de fermer Thunderbird et de relancer le module.
+Lorsque le profil de Thunderbird ne porte aucun compte de courriel (les dossiers locaux ne comptent pas), le module SHALL y écrire, à partir de l'élément 1Password de Thunderbird, le compte Google de travail — un compte Gmail à l'adresse du domaine de l'entreprise, `@imarcom.net` — (réception IMAP sur `imap.gmail.com`, envoi SMTP sur `smtp.gmail.com`, authentification OAuth2), l'identité (nom, adresse, signature HTML placée sous la réponse et au-dessus de la citation, réponse au-dessus de la citation, dossiers d'envoyés, de brouillons et d'archives de Gmail) et chaque agenda Google de l'élément (nom, couleur, lecture seule ou non, affiché ou masqué), dans l'ordre de l'élément, l'agenda Google de l'adresse de travail devenant l'agenda par défaut des nouveaux événements, à la place de tout agenda du profil qui l'était, et les agendas déjà présents dans le profil étant gardés à la suite ; Thunderbird MUST NOT demander, au premier démarrage, à devenir l'application de courriel par défaut. Si Thunderbird n'a encore jamais été lancé, le module SHALL d'abord créer le profil que Thunderbird ouvrira. Les données personnelles (nom, adresse, signature, agendas) MUST NOT être versionnées dans le dépôt. Le module MUST NOT écrire dans un profil pendant que Thunderbird l'utilise, MUST NOT poser de question à l'utilisateur pour écrire le compte (le parcours de connexion garde les siennes), et MUST NOT réécrire ni compléter un compte déjà présent : une fois écrits, compte, identité et agendas appartiennent à l'utilisateur. Le module MUST NOT écrire un compte incomplet : si la session 1Password tombe ou qu'une lecture échoue pour une autre raison qu'un champ absent, rien n'est écrit. Sans session 1Password, avec un élément sans nom ou sans adresse, avec une adresse hors du domaine de l'entreprise, avec une lecture en échec, avec plusieurs installations de Thunderbird sur le poste, ou avec un profil qui porte déjà un autre compte (y compris un compte Gmail hors du domaine de l'entreprise), le module SHALL avertir, déclarer l'étape manuelle d'ajouter le compte et les agendas, et MUST NOT échouer ; avec Thunderbird ouvert, il SHALL déclarer l'étape manuelle de fermer Thunderbird et de relancer le module.
 
 #### Scenario: Premier passage
 - **WHEN** le module s'exécute sur un poste où Thunderbird n'a jamais été lancé et qu'une session 1Password est active
@@ -52,6 +52,10 @@ Lorsque le profil de Thunderbird ne porte aucun compte de courriel (les dossiers
 - **WHEN** l'élément 1Password de Thunderbird n'a pas de nom ou pas d'adresse
 - **THEN** aucun profil n'est créé ni modifié, l'étape manuelle est déclarée et le module se termine sans erreur
 
+#### Scenario: Adresse hors du domaine de l'entreprise
+- **WHEN** l'adresse de l'élément 1Password de Thunderbird n'est pas du domaine de l'entreprise
+- **THEN** rien n'est écrit, le module avertit, déclare l'étape manuelle et se termine sans erreur
+
 #### Scenario: Profil impossible à créer
 - **WHEN** Thunderbird n'a jamais été lancé et que la création de son profil échoue
 - **THEN** le module échoue en le nommant, sans laisser Thunderbird en cours d'exécution
@@ -59,6 +63,14 @@ Lorsque le profil de Thunderbird ne porte aucun compte de courriel (les dossiers
 #### Scenario: Seulement les dossiers locaux
 - **WHEN** le profil ne porte que les dossiers locaux (par exemple après la suppression du compte par l'utilisateur)
 - **THEN** le module écrit le compte de travail, conserve les dossiers locaux et se termine sans étape manuelle à ce titre
+
+#### Scenario: Profil déjà démarré, avec son agenda local
+- **WHEN** le profil, sans compte de courriel, porte déjà un agenda local par défaut
+- **THEN** le module écrit les agendas de l'élément en tête, garde l'agenda local à leur suite, et seul l'agenda de l'adresse de travail reste l'agenda par défaut
+
+#### Scenario: Profil inscrit dont le dossier a disparu
+- **WHEN** Thunderbird désigne un profil dont le dossier n'existe plus
+- **THEN** le module crée le profil comme au premier lancement, puis y écrit le compte de travail
 
 #### Scenario: Session perdue pendant la lecture
 - **WHEN** la session 1Password tombe, ou une lecture échoue pour une autre raison qu'un champ absent, pendant la lecture de l'élément

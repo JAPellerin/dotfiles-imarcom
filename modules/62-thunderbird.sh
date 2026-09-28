@@ -180,6 +180,15 @@ _thunderbird_running() {
   [[ $comm == thunderbird* ]]
 }
 
+# _thunderbird_headless_kill : tue le premier lancement s'il tourne encore
+# (interruption). Vidé dès le processus attendu : à la sortie du module, parcours
+# guidé compris, son PID a pu être repris par un autre processus.
+_TB_HEADLESS_PID=""
+_thunderbird_headless_kill() {
+  [[ -n $_TB_HEADLESS_PID ]] && kill -KILL "$_TB_HEADLESS_PID" 2>/dev/null
+  _TB_HEADLESS_PID=""
+}
+
 # _thunderbird_first_run : premier lancement sans fenêtre qui crée le profil de
 # l'installation (D9). Lancé directement pour garder le PID de Thunderbird ;
 # arrêté par SIGTERM, KILL au-delà du délai ; prefs.js exigé après l'arrêt.
@@ -190,7 +199,8 @@ _thunderbird_first_run() {
   printf '[%s] $ %s --headless (arrière-plan)\n' "$(date +%H:%M:%S)" "$THUNDERBIRD_DIR/thunderbird" >>"$LOG_FILE"
   "$THUNDERBIRD_DIR/thunderbird" --headless >>"$LOG_FILE" 2>&1 </dev/null &
   pid=$!
-  add_cleanup "kill -KILL $pid 2>/dev/null"
+  _TB_HEADLESS_PID=$pid
+  add_cleanup _thunderbird_headless_kill
   start=$SECONDS
   # installs.ini exigé : Thunderbird écrit aussi un profil « …default » dans
   # profiles.ini, qui n'est pas celui de l'installation (relevé en VM). Puis
@@ -213,10 +223,12 @@ _thunderbird_first_run() {
   if _thunderbird_alive "$pid"; then
     kill -KILL "$pid" 2>/dev/null
     wait "$pid" 2>/dev/null
+    _TB_HEADLESS_PID=""
     log_error "Thunderbird ne s'est pas arrêté après la création du profil (arrêt forcé)."
     return 1
   fi
   wait "$pid" 2>/dev/null
+  _TB_HEADLESS_PID=""
   if (( ! found )) || ! profile=$(_thunderbird_profile) || [[ ! -f $profile/prefs.js ]]; then
     log_error "Création du profil de Thunderbird impossible (premier lancement sans fenêtre, $THUNDERBIRD_START_TIMEOUT s)."
     return 1
@@ -309,14 +321,19 @@ _thunderbird_op() {
 }
 
 # _thunderbird_read_calendars <adresse> : lit les agendas de l'élément ; leurs
-# préférences (D11) dans _TB_CAL_PREFS, leur nombre dans _TB_CAL_COUNT. Rend 1 sur
+# préférences (D11) dans _TB_CAL_PREFS, leur nombre dans _TB_CAL_COUNT, leurs UUID
+# dans l'ordre de l'élément dans _TB_CAL_ORDER, _TB_CAL_DEFAULT à 1 si l'un
+# d'eux devient l'agenda par défaut (ordre et défaut rendus à l'écriture, qui
+# connaît le profil : _thunderbird_calendar_merge). Rend 1 sur
 # une erreur de lecture autre que la fin de liste. Lignes mal formées : averties,
 # sautées.
 _TB_CAL_PREFS=""
 _TB_CAL_COUNT=0
+_TB_CAL_ORDER=""
+_TB_CAL_DEFAULT=0
 _thunderbird_read_calendars() {
-  local address=$1 i rc fields name id color access view uuid order="" enc
-  _TB_CAL_PREFS=""; _TB_CAL_COUNT=0
+  local address=$1 i rc fields name id color access view uuid enc
+  _TB_CAL_PREFS=""; _TB_CAL_COUNT=0; _TB_CAL_ORDER=""; _TB_CAL_DEFAULT=0
   for (( i = 1; i <= THUNDERBIRD_AGENDAS_MAX; i++ )); do
     _thunderbird_op "agendas/$i" "agendas.$i"; rc=$?
     (( rc == 3 )) && break
@@ -330,7 +347,8 @@ _thunderbird_read_calendars() {
       continue
     fi
     uuid=$(</proc/sys/kernel/random/uuid)
-    enc=${id//%/%25}; enc=${enc//@/%40}; enc=${enc//#/%23}
+    # « % » refusé plus haut : aucun « %25 » à produire (D11).
+    enc=${id//@/%40}; enc=${enc//#/%23}
     _TB_CAL_PREFS+="user_pref(\"calendar.registry.$uuid.type\", \"caldav\");"$'\n'
     _TB_CAL_PREFS+="user_pref(\"calendar.registry.$uuid.uri\", \"$(_thunderbird_js "$THUNDERBIRD_CALDAV_URL/$enc/events/")\");"$'\n'
     _TB_CAL_PREFS+="user_pref(\"calendar.registry.$uuid.name\", \"$(_thunderbird_js "$name")\");"$'\n'
@@ -339,11 +357,33 @@ _thunderbird_read_calendars() {
     _TB_CAL_PREFS+="user_pref(\"calendar.registry.$uuid.username\", \"$(_thunderbird_js "$address")\");"$'\n'
     _TB_CAL_PREFS+="user_pref(\"calendar.registry.$uuid.cache.enabled\", true);"$'\n'
     _TB_CAL_PREFS+="user_pref(\"calendar.registry.$uuid.calendar-main-in-composite\", $([[ $view == affiche ]] && echo true || echo false));"$'\n'
-    [[ $id == "$address" ]] && _TB_CAL_PREFS+="user_pref(\"calendar.registry.$uuid.calendar-main-default\", true);"$'\n'
-    order+="${order:+ }$uuid"
+    if [[ $id == "$address" ]]; then
+      _TB_CAL_PREFS+="user_pref(\"calendar.registry.$uuid.calendar-main-default\", true);"$'\n'
+      _TB_CAL_DEFAULT=1
+    fi
+    _TB_CAL_ORDER+="${_TB_CAL_ORDER:+ }$uuid"
     _TB_CAL_COUNT=$(( _TB_CAL_COUNT + 1 ))
   done
-  [[ -n $order ]] && _TB_CAL_PREFS+="user_pref(\"calendar.list.sortOrder\", \"$order\");"$'\n'
+  return 0
+}
+
+# _thunderbird_calendar_merge <prefs.js> : préférences qui rangent les agendas
+# écrits parmi ceux du profil (D11) — un profil déjà démarré porte l'agenda local
+# « Home », par défaut. Ordre : ceux de l'élément d'abord, puis ceux du profil,
+# gardés. Agenda par défaut écrit : ceux du profil qui l'étaient ne le sont plus
+# (préférence redéfinie après la leur : la dernière définition l'emporte).
+_thunderbird_calendar_merge() {
+  local order uuid
+  [[ -n $_TB_CAL_ORDER ]] || return 0
+  order=$(_thunderbird_pref "$1" calendar.list.sortOrder)
+  printf 'user_pref("calendar.list.sortOrder", "%s");\n' "$_TB_CAL_ORDER${order:+ $order}"
+  (( _TB_CAL_DEFAULT )) || return 0
+  while IFS= read -r uuid; do
+    [[ -n $uuid ]] || continue
+    [[ $(_thunderbird_pref "$1" "calendar.registry.$uuid.calendar-main-default") == true ]] \
+      && printf 'user_pref("calendar.registry.%s.calendar-main-default", false);\n' "$uuid"
+  done < <(grep -oE 'calendar\.registry\.[^".]+\.calendar-main-default"' -- "$1" 2>/dev/null \
+             | sed -E 's/^calendar\.registry\.([^.]+)\..*/\1/' | sort -u)
   return 0
 }
 
@@ -361,7 +401,7 @@ _thunderbird_manual() {
 # empêchements sans 1Password, puis lecture de l'élément, puis profil, puis écriture.
 _thunderbird_write_account() {
   local profile rc prefs name address signature tpl block tmp keys_account keys_server keys_id keys_smtp
-  local accounts smtps lastkey
+  local accounts smtps lastkey merge
   # 1. Sans lire 1Password : plusieurs installations, autre compte, Thunderbird ouvert.
   profile=$(_thunderbird_profile); rc=$?
   (( rc == 2 )) && { _thunderbird_manual "Thunderbird : plusieurs installations inscrites sur le poste, profil à retenir inconnu ; compte non écrit." "$THUNDERBIRD_ACCOUNTS_MANUAL"; return; }
@@ -398,8 +438,9 @@ _thunderbird_write_account() {
   _thunderbird_read_calendars "$address" \
     || { _thunderbird_manual "Thunderbird : agendas illisibles dans 1Password (voir le journal) ; compte non écrit." "$THUNDERBIRD_ACCOUNTS_MANUAL"; return; }
   op_session_active || { _thunderbird_manual "Thunderbird : session 1Password perdue pendant la lecture ; compte non écrit." "$THUNDERBIRD_ACCOUNTS_MANUAL"; return; }
-  # 3. Profil.
-  if ! profile=$(_thunderbird_profile); then
+  # 3. Profil. Inscrit mais dossier absent (mis de côté à la main) : traité
+  #    comme aucun profil, le premier lancement le recrée.
+  if ! profile=$(_thunderbird_profile) || [[ ! -d $profile ]]; then
     _thunderbird_first_run || return 1
     profile=$(_thunderbird_profile) || return 1
   fi
@@ -442,6 +483,8 @@ _thunderbird_write_account() {
   tpl=${tpl//@NOM@/"$(_thunderbird_js "$name")"}
   tpl=${tpl//@SIGNATURE@/"$(_thunderbird_js "$signature")"}
   block=$(grep -v '^//' <<<"$tpl")$'\n'$_TB_CAL_PREFS
+  merge=$(_thunderbird_calendar_merge "$prefs")
+  block+=${merge:+$merge$'\n'}
   unset signature name
   # 6. Écriture atomique : copie de sauvegarde, temporaire du même dossier, mv.
   tmp=$(mktemp -- "$profile/.prefs.js.XXXXXX") || return 1
