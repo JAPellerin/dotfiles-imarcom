@@ -20,10 +20,13 @@ MODULES_DIR="${MODULES_DIR:-$DOTFILES_DIR/modules}"
 MODULE_GROUPS="systeme shell dev apps bureau projets"
 
 # Fichier des étapes manuelles déclarées par les modules ; le runner le lit pour
-# le résumé final. Hérité par les sous-shells des modules.
-MANUAL_STEPS_FILE="${MANUAL_STEPS_FILE:-$(mktemp -t dotfiles-manual.XXXXXX)}"
+# le résumé final. Hérité par les sous-shells des modules. Fourni par l'appelant
+# (tests) : il lui appartient, jamais supprimé ici.
+if [[ -z ${MANUAL_STEPS_FILE:-} ]]; then
+  MANUAL_STEPS_FILE=$(mktemp -t dotfiles-manual.XXXXXX)
+  add_cleanup "rm -f '$MANUAL_STEPS_FILE'"
+fi
 export MODULES_DIR MANUAL_STEPS_FILE
-add_cleanup "rm -f '$MANUAL_STEPS_FILE'"
 
 # manual_step <texte> : déclare une étape que le script ne peut pas automatiser.
 # Appelée depuis un module ; consignée sous la forme « <module><TAB><texte> ».
