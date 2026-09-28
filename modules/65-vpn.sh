@@ -15,7 +15,7 @@
 # modifiée (D8).
 # Voir openspec/specs/module-vpn/spec.md,
 # openspec/changes/archive/2026-09-24-vpn/design.md (D1 à D3) et
-# openspec/changes/vpn-profil/design.md (D4 à D9).
+# openspec/changes/archive/2026-09-28-vpn-profil/design.md (D4 à D9).
 MODULE_NAME="vpn"
 MODULE_DESC="OpenVPN et son greffon NetworkManager ; profil Imarcom depuis 1Password"
 MODULE_GROUP="apps"
