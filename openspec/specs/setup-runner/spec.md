@@ -22,7 +22,7 @@ Le runner SHALL s'exécuter sous le compte de l'utilisateur (jamais en root) et 
 - **THEN** aucun mot de passe `sudo` n'est demandé
 
 ### Requirement: Menu interactif par défaut
-Sans argument, le runner SHALL afficher un menu à sélection multiple listant tous les modules découverts, chacun sous la forme `[groupe] nom — description — état`, puis exécuter la sélection. Les modules pas encore faits SHALL être présélectionnés ; les modules déjà faits SHALL être présentés mais non présélectionnés. Ainsi, valider le menu sans rien changer installe tout ce qui manque.
+Sans argument, le runner SHALL afficher un menu à sélection multiple listant tous les modules découverts, chacun sous la forme `[groupe] nom — description — état`, puis exécuter la sélection. Les modules pas encore faits SHALL être présélectionnés ; les modules déjà faits SHALL être présentés mais non présélectionnés. Ainsi, valider le menu sans rien changer installe tout ce qui manque. Le menu SHALL annoncer, dans son en-tête, les gestes pour cocher ou décocher un module, pour tout cocher ou tout décocher d'un coup, et pour lancer la sélection.
 
 #### Scenario: Machine vierge
 - **WHEN** l'utilisateur lance `setup.sh` sur une machine où aucun module n'est fait et valide le menu sans rien changer
@@ -35,6 +35,10 @@ Sans argument, le runner SHALL afficher un menu à sélection multiple listant t
 #### Scenario: État visible
 - **WHEN** le module `base` a déjà été appliqué sur la machine
 - **THEN** le menu l'affiche sous `[systeme] base` avec un marqueur « déjà fait » et il n'est pas présélectionné
+
+#### Scenario: Tout décocher
+- **WHEN** l'utilisateur ouvre le menu et suit l'en-tête pour tout décocher, puis coche un seul module
+- **THEN** seul ce module (et ses dépendances) s'exécute
 
 ### Requirement: Exécution ciblée par nom
 Le runner SHALL accepter un ou plusieurs noms de modules en argument (`setup.sh git node`) et les exécuter sans afficher le menu. Il SHALL aussi accepter `--all` (tous les modules) et `--list` (affiche les modules avec leur groupe, leur description et leur état, puis quitte). Un nom inconnu MUST provoquer une erreur listant les noms valides.
