@@ -1,6 +1,6 @@
 ## Context
 
-Voir `proposal.md`. `select_from_menu` (`setup.sh`) appelle `ui_choose_multi "Modules à exécuter (espace : cocher, entrée : valider) :" …`, qui lance `gum choose --no-limit --header …`. Relevé le 29 sept 2026 (gum 0.17, pseudo-terminal) : `Ctrl+A` une fois → tout coché ; deux fois → rien de coché. Source de `gum` 0.17.0 (`choose/choose.go`) : `ToggleAll` = `a`, `A`, `Ctrl+A` (une seule liaison, donc même comportement pour `a` — le relevé initial qui disait le contraire est à refaire, tâche 1.2) ; la ligne d'aide de `gum` (`--show-help`, actif) liste « x toggle · ctrl+a select all · enter submit ». Le `gum` factice de `tests/test-run.sh` ignore ses arguments.
+Voir `proposal.md`. `select_from_menu` (`setup.sh`) appelle `ui_choose_multi "Modules à exécuter (espace : cocher, entrée : valider) :" …`, qui lance `gum choose --no-limit --header …`. Relevé le 29 sept 2026 (gum 0.17, pseudo-terminal) : `Ctrl+A` une fois → tout coché ; deux fois → rien de coché. Source de `gum` 0.17.0 (`choose/choose.go`) : `ToggleAll` = `a`, `A`, `Ctrl+A` (une seule liaison, donc même comportement pour `a` — confirmé à la tâche 1.2 : le relevé initial qui disait le contraire envoyait les deux touches d'un bloc, sans délai) ; la ligne d'aide de `gum` (`--show-help`, actif) liste « x toggle · ctrl+a select all · enter submit ». Le `gum` factice de `tests/test-run.sh` trace son option `--header` (D2).
 
 ## Goals / Non-Goals
 
