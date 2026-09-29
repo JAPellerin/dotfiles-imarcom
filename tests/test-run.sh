@@ -69,6 +69,8 @@ mkdir -p "$TEST_TMP/bin"
 cat >"$TEST_TMP/bin/gum" <<'FAKE'
 #!/usr/bin/env bash
 [[ $1 == choose ]] || exit 0
+# En-tête du menu gardé pour les assertions.
+for ((i = 1; i <= $#; i++)); do [[ ${!i} == --header ]] && { j=$((i + 1)); printf '%s\n' "${!j}" >"$FIXTURE_STATE_DIR/gum-header"; }; done
 [[ -n ${FAKE_GUM_OUT:-} ]] && printf '%s\n' "$FAKE_GUM_OUT"
 exit "${FAKE_GUM_RC:-0}"
 FAKE
@@ -84,6 +86,8 @@ rm -f "$FIXTURE_STATE_DIR/b"
 out=$(FAKE_GUM_OUT="[shell] b — Module b sans dépendance — à faire" setup) && rc=0 || rc=$?
 assert_eq "sélection d'un module → code 0" 0 "$rc"
 assert_contains "le module choisi s'exécute" "$out" "install b"
+assert_contains "en-tête du menu : Ctrl+A pour tout cocher ou décocher" "$(cat "$FIXTURE_STATE_DIR/gum-header")" "Ctrl+A : tout cocher/tout décocher"
+assert_contains "en-tête du menu : espace et entrée" "$(cat "$FIXTURE_STATE_DIR/gum-header")" "espace : cocher/décocher"
 
 
 printf '%s\n' "== commandes des projets =="

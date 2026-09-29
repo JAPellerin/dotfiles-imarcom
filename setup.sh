@@ -158,7 +158,7 @@ select_from_menu() {
     labels+=("$label")
     [[ ${MOD_STATE[$name]} == a-faire ]] && preselected+="${preselected:+,}$label"
   done
-  chosen=$(ui_choose_multi "Modules à exécuter (espace : cocher, entrée : valider) :" "$preselected" "${labels[@]}") || rc=$?
+  chosen=$(ui_choose_multi "Modules à exécuter — espace : cocher/décocher · Ctrl+A : tout cocher/tout décocher · entrée : lancer" "$preselected" "${labels[@]}") || rc=$?
   (( rc == 0 )) || die "Sélection annulée."
   while IFS= read -r label; do
     [[ -n $label ]] || continue
