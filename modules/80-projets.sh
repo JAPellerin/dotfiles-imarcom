@@ -14,7 +14,7 @@
 # relevé et mise à jour passent par `setup.sh --snapshot-projets` et
 # `--pull-projets` (projets_snapshot, projets_pull, D8 à D10). `make setup`
 # reste au projet : étape manuelle pour chaque dépôt fraîchement cloné (D3).
-# Voir openspec/changes/projets/specs/module-projets/spec.md et openspec/changes/projets/design.md.
+# Voir openspec/specs/module-projets/spec.md et openspec/changes/archive/2026-09-29-projets/design.md.
 MODULE_NAME="projets"
 MODULE_DESC="dépôts de travail depuis 1Password ; mkcert ; domaines locaux ; accès SSH legacy"
 MODULE_GROUP="projets"

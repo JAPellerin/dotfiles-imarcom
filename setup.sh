@@ -303,7 +303,7 @@ result_label() {
 # module 1password passe d'abord s'il n'est pas fait, dans ce même processus :
 # sans l'application, la session ne vit que dans le processus qui l'ouvre. Pas
 # de sudo_keepalive : la commande demande sudo elle-même, au besoin.
-# Voir openspec/changes/projets/design.md (D10).
+# Voir openspec/changes/archive/2026-09-29-projets/design.md (D10).
 run_projets_command() {
   local fn=$1
   [[ -n ${MOD_FILE[projets]:-} ]] \
