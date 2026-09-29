@@ -116,7 +116,7 @@ _op_connect() {
 # la CLI retirée après ~10 min sans commande `op`. Même parcours, sans le message
 # « seront sautés ». Ne pas renommer sans modifier setup.sh et le module factice
 # tests/fixtures/modules/10-1password.sh.
-# Voir openspec/changes/socle-session-op/design.md (D2).
+# Voir openspec/changes/archive/2026-09-29-socle-session-op/design.md (D2).
 _op_reconnect() { _op_connect --quiet; }
 
 _op_no_session() {

@@ -223,7 +223,7 @@ _depends_on_op() {
 # (autorisation de la CLI retirée après ~10 min sans commande `op`) — seulement
 # si 1password a réussi ou était fait dans cette exécution. Jamais bloquant : un
 # échec est signalé et le module s'exécute quand même. Pas dans module_check.
-# Voir openspec/changes/socle-session-op/design.md (D1, D2).
+# Voir openspec/changes/archive/2026-09-29-socle-session-op/design.md (D1, D2).
 _op_session_ensure_for() {
   local name=$1
   [[ $name != 1password && -n ${MOD_FILE[1password]:-} ]] || return 0
