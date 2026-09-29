@@ -27,7 +27,7 @@ Commandes utiles : `openspec list`, `openspec status --change <nom>`, `openspec 
 ## Commandes de développement
 
 - `shellcheck setup.sh bootstrap.sh lib/*.sh modules/*.sh tests/*.sh tests/fixtures/*/*.sh config/shell/commonrc config/shell/bashrc-extra.sh $(git ls-files 'config/*/commonrc.sh')` — lint (aucun avertissement toléré). Le `git ls-files` couvre les fragments `commonrc.d` des modules ; il ne donne rien tant qu'aucun module n'en dépose, là où un motif `config/*/commonrc.sh` ferait échouer `shellcheck` sur un fichier inexistant.
-- `bash tests/run-all.sh` (ou `bash tests/test-<sujet>.sh`) — tests Bash maison de `lib/` et du runner, hors ligne et sans sudo (modules factices sous `tests/fixtures/` — jeux `modules/`, `contrat/`, `cycle/`, `dep-inconnue/` — et `MODULES_DIR=tests/fixtures/modules ./setup.sh` pour essayer le runner dessus) ; `bash tests/demo-ui.sh` — démo interactive des wrappers `gum`
+- `bash tests/run-all.sh` (ou `bash tests/test-<sujet>.sh`) — tests Bash maison de `lib/` et du runner, hors ligne et sans sudo (modules factices sous `tests/fixtures/` — jeux `modules/`, `contrat/`, `cycle/`, `dep-inconnue/`, `projets/` — et `MODULES_DIR=tests/fixtures/modules ./setup.sh` pour essayer le runner dessus) ; `bash tests/demo-ui.sh` — démo interactive des wrappers `gum`
 - `./setup.sh --list` — modules découverts, description, état
 - `./setup.sh <module>` — exécuter un module (et ses dépendances) pour le tester isolément
 - Test de bout en bout : VM Hyper-V, restaurer le snapshot « vierge », `curl -fsSL https://raw.githubusercontent.com/JAPellerin/dotfiles-imarcom/main/bootstrap.sh | bash`

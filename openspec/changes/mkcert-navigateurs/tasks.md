@@ -4,8 +4,8 @@
 
 ## 1. Module
 
-- [ ] 1.1 `modules/80-projets.sh` : base partagée (D1), bases visées (D2), ajout et reconnaissance par empreinte (D3), `module_check` (D4) ; vérifier `shellcheck` propre
-- [ ] 1.2 `tests/test-projets.sh` : cas de D5 ; vérifier `bash tests/run-all.sh` vert
+- [x] 1.1 `modules/80-projets.sh` : base partagée (D1), bases visées (D2), ajout et reconnaissance par empreinte (D3), `module_check` (D4) ; vérifier `shellcheck` propre
+- [x] 1.2 `tests/test-projets.sh` : cas de D5 ; vérifier `bash tests/run-all.sh` vert — **fait le 29 sept 2026** : `certutil` et `openssl` réels (D5), 17 assertions (base partagée créée en 0700 avec l'autorité ; profils Firefox aux deux emplacements complétés ; autre certificat gardé ; autorité déjà posée sous le surnom de `mkcert -install` reconnue par empreinte, rien ajouté ; relance sans ajout ; base partagée retirée → à faire puis recréée) — 10 échouent sans le correctif ; méthode de lecture de D3 confirmée sur de vraies bases (en-tête de 4 lignes, surnom puis attributs de confiance)
 
 ## 2. Validation
 
