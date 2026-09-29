@@ -2,7 +2,7 @@
 
 Voir `proposal.md`. Relevé en VM (29 sept 2026, journal de la tâche 2.2 de `projets`) : `1password` fait à 12:41 (session ouverte), dernière commande `op` vers 12:46 (`navigateur`, Brave Sync), `projets` à 13:00 → « aucune session 1Password » ; verrouillage de l'application à 60 min, écran non verrouillé ; `op whoami` par SSH → « account is not signed in ». Au lancement suivant, le runner a exécuté `1password` (non fait : `module_check` exige la session), dont le parcours `_op_connect` → `_op_connect_via_app` → agent prêt → `_op_try_signin` (`op signin`, fenêtre d'autorisation) a rouvert la session.
 
-Code : `run_modules` (`setup.sh`) enchaîne `module_check`, puis `module_install` et `module_configure` par `module_call` ; `MOD_DEPS` donne les dépendances directes ; `_op_connect` (`modules/10-1password.sh`) rend 0 si une session est active ou a été ouverte. `op_session_active` (`lib/op.sh`) = `op whoami` (recharge d'abord `OP_SESSION_FILE`), sans rien demander.
+Code : `run_modules` (`setup.sh`) enchaîne `module_check`, puis `module_install` et `module_configure` par `module_call` ; `MOD_DEPS` donne les dépendances directes ; `_op_connect` (`modules/10-1password.sh`) rend 0 si une session est active ou a été ouverte. `op_session_active` (`lib/op.sh`) = `op whoami` (recharge d'abord `OP_SESSION_FILE`), sans rien demander. **Relevé 0.1 (29 sept 2026)** : 11 min sans commande `op` → `op whoami` : « account is not signed in », code 1 ; `op signin` rouvre par l'application.
 
 ## Goals / Non-Goals
 

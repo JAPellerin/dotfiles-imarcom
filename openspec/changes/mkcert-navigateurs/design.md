@@ -1,6 +1,6 @@
 ## Context
 
-Voir `proposal.md`. Code actuel (`modules/80-projets.sh`) : `_projets_ca_ok` = `rootCA.pem` sous `mkcert -CAROOT` **et** `mkcert_development_CA_*.crt` dans le magasin du système ; `_projets_mkcert` lance `mkcert -install` si ce constat échoue — donc plus jamais une fois le magasin du système rempli. Relevés en VM (29 sept 2026) : `libnss3-tools` installé par le module (fournit `certutil`) ; Brave lancé mais `~/.pki/nssdb` absent ; Firefox 157, jamais lancé, aucun des dossiers `~/.mozilla/firefox`, `~/.config/mozilla/firefox`. `mkcert` 1.4.4 cherche `~/.pki/nssdb`, `~/.mozilla/firefox/*` et le chemin du snap seulement.
+Voir `proposal.md`. Code actuel (`modules/80-projets.sh`) : `_projets_ca_ok` = `rootCA.pem` sous `mkcert -CAROOT` **et** `mkcert_development_CA_*.crt` dans le magasin du système ; `_projets_mkcert` lance `mkcert -install` si ce constat échoue — donc plus jamais une fois le magasin du système rempli. Relevés en VM (29 sept 2026) : `libnss3-tools` installé par le module (fournit `certutil`) ; Brave lancé mais `~/.pki/nssdb` absent ; Firefox 157, jamais lancé, aucun des dossiers `~/.mozilla/firefox`, `~/.config/mozilla/firefox`. `mkcert` 1.4.4 cherche `~/.pki/nssdb`, `~/.mozilla/firefox/*` et le chemin du snap seulement. **Relevé 0.1 (29 sept 2026)** : Firefox 157 crée ses profils sous `~/.config/mozilla/firefox/` (`profiles.ini`, `<n>.default-release` utilisé) ; un profil n'a de `cert9.db` qu'après un premier démarrage de Firefox sur lui (`-CreateProfile` crée le dossier seul).
 
 ## Goals / Non-Goals
 

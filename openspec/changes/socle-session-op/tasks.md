@@ -1,6 +1,6 @@
 ## 0. Relevé
 
-- [ ] 0.1 VM, terminal de la session graphique, application déverrouillée et intégration CLI active : `op whoami` (ouvre ou constate) ; attendre 11 minutes sans commande `op` ; `op whoami` → relever le message et le code ; `op signin` → la fenêtre d'autorisation apparaît, l'accepter ; `op whoami` → réussit ; consigner dans `design.md` (Context)
+- [x] 0.1 VM, terminal de la session graphique, application déverrouillée et intégration CLI active : `op whoami` (ouvre ou constate) ; attendre 11 minutes sans commande `op` ; `op whoami` → relever le message et le code ; `op signin` → la fenêtre d'autorisation apparaît, l'accepter ; `op whoami` → réussit ; consigner dans `design.md` (Context) — **fait le 29 sept 2026** (utilisateur, VM) : après 11 min sans commande `op`, `op whoami` → « account is not signed in », code 1, sans rien demander ; `op signin` rouvre par l'application
 
 ## 1. Runner
 
@@ -9,4 +9,4 @@
 
 ## 2. Validation
 
-- [ ] 2.1 VM : `./setup.sh` avec `navigateur` puis un module qui lit 1Password (par ex. `vault` ou `projets`) ; laisser passer plus de 10 minutes pendant l'attente de Brave Sync ; au module suivant → message de réouverture, fenêtre d'autorisation, module sans étape « session » ; consigner ici ; `openspec validate socle-session-op --strict` vert
+- [x] 2.1 VM : `./setup.sh` avec `navigateur` puis un module qui lit 1Password (par ex. `vault` ou `projets`) ; laisser passer plus de 10 minutes pendant l'attente de Brave Sync ; au module suivant → message de réouverture, fenêtre d'autorisation, module sans étape « session » ; consigner ici ; `openspec validate socle-session-op --strict` vert — **clos le 29 sept 2026 (accord de l'utilisateur), avec une limite** : vus en réel dans la VM — l'expiration (0.1), la réouverture par le parcours de `1password` via l'application quand la session a expiré (journaux `setup-20260929-133832`, `-161150` : « Session 1Password active via l'application »), un passage `navigateur` → `vault` sans erreur (`-155559`) ; le « quand » (avant le module, et entre installation et configuration) couvert par `tests/test-run.sh` (14 assertions). **Non vu en réel** : une expiration au milieu d'une exécution, rattrapée par le runner (`_op_reconnect`) — aucun module long restait à faire dans la VM ; le cas se présentera sur le laptop au premier `setup.sh` complet (Brave Sync, puis `vault` / `projets`)
