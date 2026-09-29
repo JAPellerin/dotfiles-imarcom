@@ -4,8 +4,8 @@
 
 ## 1. Runner
 
-- [ ] 1.1 `setup.sh` : `_depends_on_op <module>` (fermeture de `MOD_DEPS`) et `_op_session_ensure_for` appelée avant `module_install` et avant `module_configure` dans `run_modules` (D1, D2) ; `modules/10-1password.sh` : `_op_connect` sans le message « seront sautés » quand le runner l'appelle (D2) et commentaire au-dessus (appelée par le runner) ; vérifier `shellcheck` propre
-- [ ] 1.2 `tests/test-run.sh` et jeu factice `tests/fixtures/modules/` (D3, dont la session fermée entre `module_install` et `module_configure`) ; vérifier `bash tests/run-all.sh` vert
+- [x] 1.1 `setup.sh` : `_depends_on_op <module>` (fermeture de `MOD_DEPS`) et `_op_session_ensure_for` appelée avant `module_install` et avant `module_configure` dans `run_modules` (D1, D2) ; `modules/10-1password.sh` : `_op_connect` sans le message « seront sautés » quand le runner l'appelle (D2) et commentaire au-dessus (appelée par le runner) ; vérifier `shellcheck` propre
+- [x] 1.2 `tests/test-run.sh` et jeu factice `tests/fixtures/modules/` (D3, dont la session fermée entre `module_install` et `module_configure`) ; vérifier `bash tests/run-all.sh` vert — **fait le 29 sept 2026** : module factice `secret` (dépend de `1password`), `_op_reconnect` au `1password` factice, doublure `op` ; 14 assertions (réouverture avant le module, puis avant la configuration quand l'installation l'a fait expirer, refus → avertissement sans « seront sautés », aucun appel pour un module sans lien, un module déjà fait ou `--list`) — 6 échouent sans le correctif ; `tests/test-deps.sh` compte le nouveau factice (8)
 
 ## 2. Validation
 
