@@ -29,7 +29,7 @@ Helpers réutilisés : `ensure_git_clone` (clone ; même origine → rien ; doss
 - `op://Private/Legacy SSH` (clé SSH, importée par l'utilisateur ; coffre **`Private`**, comme `GitHub SSH Key` : l'agent de 1Password n'en sert pas d'autre sans `agent.toml` — corrigé le 29 sept 2026, contre-vérification ; écarté : un `agent.toml`, qui, une fois présent, ne sert que les clés qu'il liste et obligerait à y déclarer aussi la clé GitHub) : `private key` (lue avec `?ssh-format=openssh`), `public key`, `notesPlain` = bloc `Host` tel qu'il est dans `~/.ssh/config` aujourd'hui.
 - Noms neutres (décision de l'utilisateur, 29 sept 2026) : ils figurent dans le code public.
 - Constantes : `PROJETS_LEGACY_ITEM="op://Private/Legacy SSH"`.
-- Champ `hosts` absent : `op read` rend « does not have a field » → traité comme vide (même lecture que `_thunderbird_op`, message relevé à la tâche 0.4 de `thunderbird-comptes`).
+- Champ `hosts` absent : `op read` rend 1 et « item 'Imarcom/<élément>' does not have a field '<champ>' » (relevé 0.2) → traité comme vide (même lecture que `_thunderbird_op`, message relevé à la tâche 0.4 de `thunderbird-comptes`).
 
 ### D2. Validation de l'arbre (le contenu de 1Password décide où le module écrit)
 Chemin : relatif, commence par `projets/` (constante `PROJETS_ROOT_REL="projets"`, racine `PROJETS_ROOT="$HOME/$PROJETS_ROOT_REL"`), sans segment `..`, `.` ni vide, caractères `[A-Za-z0-9._/-]` seulement. URL : `git@<hôte>:<chemin>` ou `ssh://…` ou `https://…` (motif en constante `PROJETS_URL_RE`, surchargeable pour les tests, qui clonent depuis `file://`). Ligne invalide → `log_warn` qui la nomme, ligne sautée (spec : pas d'échec).
@@ -58,7 +58,7 @@ Constantes `PROJETS_LEGACY_ITEM` (D1), `PROJETS_LEGACY_KEY="$HOME/.ssh/id_ed2551
 Élément absent ou champ illisible → `manual_step "$PROJETS_LEGACY_MANUAL"` (« Importer la clé SSH legacy dans 1Password (coffre Private, élément Legacy SSH, bloc Host en note) »), retour 0.
 
 ### D8. Relevé (`projets_snapshot`)
-`find "$PROJETS_ROOT" -name node_modules -prune -o -type d -name .git -print` → parents, triés (`LC_ALL=C sort`), puis **filtre des dépôts imbriqués** : un chemin dont un chemin retenu avant lui est préfixe (`<retenu>/`) est écarté — `-prune` sur `.git` n'élague que `.git`, pas ses frères (contre-vérification, 29 sept 2026 ; spec : « sans descendre dans un dépôt »). `origin` par `git -C … remote get-url origin` ; absent → avertissement. Arbre trié (`LC_ALL=C sort`). Contenu actuel lu (`op read`) : identique → « arbre inchangé », rien d'écrit. Écriture : élément absent → `op item create --category "Secure Note" --vault Imarcom --title Projets …`, présent → `op item edit` sur `notesPlain` seul ; forme exacte (multiligne, entrée standard ou gabarit JSON) relevée à la tâche 0.2. L'arbre n'est pas un secret, mais il reste hors du journal (seuls le nombre et les chemins sont affichés).
+`find "$PROJETS_ROOT" -name node_modules -prune -o -type d -name .git -print` → parents, triés (`LC_ALL=C sort`), puis **filtre des dépôts imbriqués** : un chemin dont un chemin retenu avant lui est préfixe (`<retenu>/`) est écarté — `-prune` sur `.git` n'élague que `.git`, pas ses frères (contre-vérification, 29 sept 2026 ; spec : « sans descendre dans un dépôt »). `origin` par `git -C … remote get-url origin` ; absent → avertissement. Arbre trié (`LC_ALL=C sort`). Contenu actuel lu (`op read`) : identique → « arbre inchangé », rien d'écrit. Écriture : élément absent → `op item create --category "Secure Note" --vault Imarcom --title Projets …`, présent → `op item edit` sur `notesPlain` seul ; forme relevée à la tâche 0.2 (WSL, op 2.39.0, 29 sept 2026) : `op item create --category "Secure Note" --title Projets --vault Imarcom "notesPlain=$arbre"` et `op item edit Projets --vault Imarcom "notesPlain=$arbre"` conservent tabulations et sauts de ligne octet pour octet (relu par `op read`), et l'édition de `notesPlain` laisse le champ `hosts` intact. L'arbre passe en argument (visible dans `ps` le temps de l'appel) : il n'est pas un secret. L'arbre n'est pas un secret, mais il reste hors du journal (seuls le nombre et les chemins sont affichés).
 
 ### D9. Mise à jour (`projets_pull`)
 Arbre relu (D1, D2) ; domaines (D6) ; puis pour chaque ligne :
@@ -89,12 +89,10 @@ Cas : arbre → clones et étapes `make setup` (seulement les frais, seulement a
 - [`mkcert` et les navigateurs] → la base NSS d'un navigateur installé plus tard n'aura pas l'autorité ; relevé en VM (tâche 0.3) ; au besoin, `mkcert -install` se relance à la main.
 - [`IdentityFile` et l'agent] → hypothèse vérifiée en VM (D7.5) avant d'être gravée.
 - [Écriture dans 1Password] → première du dépôt ; limitée au champ `notesPlain` d'un élément dédié, jamais sans changement réel.
+- [WSL : `/etc/hosts` régénéré par WSL à chaque démarrage (en-tête du fichier ; `generateHosts` non désactivé dans `/etc/wsl.conf`, relevé le 29 sept 2026)] → les domaines ajoutés disparaissent au redémarrage de la WSL ; `--pull-projets` les remet. Sans objet sur le laptop (Ubuntu natif).
 - [Réseau de l'entreprise] → l'hôte legacy n'est joignable que depuis le réseau de l'entreprise ou le VPN (point ouvert DNS de la vague 5) : le module ne s'y connecte pas.
 
 ## Migration Plan
 
 Poste de référence (WSL) : l'utilisateur crée les deux éléments (tâche 0.1), lance `--snapshot-projets`, puis le module : clones existants reconnus (même origine), `known_hosts`, `mkcert`, `/etc/hosts`, accès legacy — la clé privée existante est laissée intacte et le bloc `Host` actuel de `~/.ssh/config` fait doublon avec `projets.conf` : l'utilisateur retire son ancien bloc à la main (étape de la tâche 2.1). Retour arrière : `git revert` ; les écritures sont additives.
 
-## Open Questions
-
-- Forme exacte de l'écriture multiligne dans 1Password (tâche 0.2) : n'affecte que l'implémentation de D8.
