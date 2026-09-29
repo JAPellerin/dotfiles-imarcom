@@ -29,7 +29,7 @@ Le module SHALL ajouter le dépôt apt officiel de GitHub CLI (`cli.github.com/p
 - **THEN** aucun `gh auth login` n'est lancé
 
 ### Requirement: Clé SSH selon l'environnement
-La clé SSH GitHub SHALL être référencée par `op://Private/GitHub SSH Key/private key` (format OpenSSH) et `op://Private/GitHub SSH Key/public key`. Lorsque l'application 1Password est installée, le module MUST NOT écrire de clé privée sur le disque : l'agent 1Password la sert (`SSH_AUTH_SOCK`). Sinon, le module SHALL écrire `~/.ssh/id_ed25519` (mode 0600, dossier `~/.ssh` en 0700) et `~/.ssh/id_ed25519.pub` (0644) depuis 1Password **uniquement si le fichier privé n'existe pas** ; un fichier existant MUST être laissé intact et signalé. La valeur de la clé MUST NOT apparaître à l'écran ni dans le journal.
+La clé SSH git (GitHub et Bitbucket) SHALL être référencée par `op://Private/Git SSH Key/private key` (format OpenSSH) et `op://Private/Git SSH Key/public key`. Lorsque l'application 1Password est installée, le module MUST NOT écrire de clé privée sur le disque : l'agent 1Password la sert (`SSH_AUTH_SOCK`). Sinon, le module SHALL écrire `~/.ssh/id_ed25519` (mode 0600, dossier `~/.ssh` en 0700) et `~/.ssh/id_ed25519.pub` (0644) depuis 1Password **uniquement si le fichier privé n'existe pas** ; un fichier existant MUST être laissé intact et signalé. La valeur de la clé MUST NOT apparaître à l'écran ni dans le journal.
 
 #### Scenario: Poste avec l'application
 - **WHEN** le paquet `1password` est installé
