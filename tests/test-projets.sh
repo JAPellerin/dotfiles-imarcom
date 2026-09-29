@@ -236,6 +236,13 @@ assert_eq "module_configure réussit" 0 "$rc"
 assert_contains "étape d'import de la clé" "$(cat "$MANUAL_STEPS_FILE")" "Legacy SSH"
 mv "$OPD/legacy-pub.bak" "$OPD/legacy-pub"
 
+printf '%s\n' "== ~/.ssh/config absent =="
+rm -f "$HOME/.ssh/config"
+out=$(mcall module_configure 2>&1); rc=$?
+assert_eq "module_configure réussit" 0 "$rc"
+assert_eq ".ssh/config créé avec l'inclusion seule" "Include config.d/*.conf" "$(cat "$HOME/.ssh/config")"
+assert_eq ".ssh/config en 0600" 600 "$(stat -c %a "$HOME/.ssh/config")"
+
 printf '%s\n' "== module_check : chacune de ses conditions =="
 assert_ok "tout est en place" mcall module_check
 mv "$HOME/.ssh/config.d/projets.conf" "$TEST_TMP/conf.bak"

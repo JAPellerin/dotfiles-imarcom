@@ -239,8 +239,9 @@ _projets_ssh_include() {
     mode=$(stat -c %a -- "$PROJETS_SSH_CONFIG") || return 1
   fi
   tmp=$(mktemp -- "$PROJETS_SSH_DIR/.config.XXXXXX") || return 1
+  # « if » et non « && » : sans ~/.ssh/config, le bloc rendrait 1 (vu en VM).
   { printf '%s\n' "$PROJETS_SSH_INCLUDE"
-    [[ -f $PROJETS_SSH_CONFIG ]] && { printf '\n'; cat -- "$PROJETS_SSH_CONFIG"; }
+    if [[ -f $PROJETS_SSH_CONFIG ]]; then printf '\n'; cat -- "$PROJETS_SSH_CONFIG"; fi
   } >"$tmp" || { rm -f -- "$tmp"; return 1; }
   if ! chmod "$mode" -- "$tmp" || ! mv -f -- "$tmp" "$PROJETS_SSH_CONFIG"; then
     rm -f -- "$tmp"; return 1
@@ -329,7 +330,8 @@ module_configure() {
   else
     manual_step "$PROJETS_SNAPSHOT_MANUAL"
   fi
-  if op_session_active; then _projets_legacy || failed=1
+  if op_session_active; then
+    _projets_legacy || { log_error "Projets : accès SSH legacy incomplet (voir le journal)."; failed=1; }
   elif ! _projets_legacy_ok; then manual_step "$PROJETS_LEGACY_MANUAL"; fi
   return "$failed"
 }
