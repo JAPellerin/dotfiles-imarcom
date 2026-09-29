@@ -94,6 +94,10 @@ export PATH="$TEST_TMP/bin:$PATH"
 export INSTALLED CALLS TEST_TMP
 _APT_UPDATED=1; export _APT_UPDATED
 mcall() { module_call "$MOD" "$1"; }
+# Commandes du runner : appelées sous set -e, comme le fait setup.sh (main →
+# run_projets_command → module_call, appels simples) — un échec hors conditionnel
+# arrêterait la commande sans bilan.
+ccall() { ( set -e; module_call "$MOD" "$1" ); }
 count_calls() { grep -c -- "$1" "$CALLS" || true; }
 
 # make_remote <nom> [setup] : dépôt nu $R/<nom>.git avec un commit (Makefile
@@ -200,6 +204,10 @@ printf 'deja.local.test commente.local.test' >"$OPD/hosts"
 assert_ok "module_configure réussit" mcall module_configure
 assert_eq "domaine déjà nommé (autre adresse) : rien ajouté" 1 "$(grep -c 'deja.local.test' "$PROJETS_HOSTS_FILE")"
 assert_ok "domaine seulement commenté : ajouté" grep -qxP '127\.0\.0\.1\tcommente\.local\.test' "$PROJETS_HOSTS_FILE"
+printf 'sans-arbre.local.test' >"$OPD/hosts"; mv "$OPD/tree" "$OPD/tree.bak"; : >"$OPD/tree"
+assert_ok "arbre vide : module_configure réussit" mcall module_configure
+assert_ok "domaine posé même sans arbre" grep -qxP '127\.0\.0\.1\tsans-arbre\.local\.test' "$PROJETS_HOSTS_FILE"
+mv "$OPD/tree.bak" "$OPD/tree"
 rm -f "$OPD/hosts"
 out=$(mcall module_configure 2>&1); rc=$?
 assert_eq "champ hosts absent : pas d'erreur" 0 "$rc"
@@ -265,11 +273,14 @@ assert_ok "module_check → déjà fait" mcall module_check
 printf '%s\n' "== relevé =="
 # Dépôt imbriqué, dépôt dans node_modules, dépôt sans origin.
 git init -q "$HOME/projets/client/app/vendu"; git -C "$HOME/projets/client/app/vendu" remote add origin "$(url nouveau)"
+# Nom classé avant « . » : « -vendu/.git » trierait avant « app/.git » si le tri
+# portait sur les chemins .git.
+git init -q -- "$HOME/projets/client/app/-vendu"; git -C "$HOME/projets/client/app/-vendu" remote add origin "$(url nouveau)"
 git init -q "$HOME/projets/client/app/node_modules/pkg"; git -C "$HOME/projets/client/app/node_modules/pkg" remote add origin "$(url nouveau)"
 git init -q "$HOME/projets/client/sans-origin"
 git clone -q "$(url doc)" "$HOME/projets/client/doc" 2>/dev/null || true
 rm -f "$OPD/item" "$OPD/tree"; : >"$CALLS"
-out=$(mcall projets_snapshot 2>&1); rc=$?
+out=$(ccall projets_snapshot 2>&1); rc=$?
 assert_eq "relevé réussit" 0 "$rc"
 assert_eq "arbre trié, sans dépôt imbriqué ni node_modules ni sans origin" \
   "$(printf 'projets/client/app\t%s\nprojets/client/doc\t%s\nprojets/client/legacy/vieux\t%s' "$(url app)" "$(url doc)" "$(url vieux)")" "$(cat "$OPD/tree")"
@@ -277,14 +288,14 @@ assert_eq "élément absent → créé" 1 "$(count_calls 'op item create')"
 assert_contains "dépôt sans origin signalé" "$out" "projets/client/sans-origin"
 assert_contains "nombre de dépôts affiché" "$out" "3 dépôt(s)"
 : >"$CALLS"
-out=$(mcall projets_snapshot 2>&1); rc=$?
+out=$(ccall projets_snapshot 2>&1); rc=$?
 assert_eq "relance réussit" 0 "$rc"
 assert_contains "arbre inchangé" "$out" "Arbre inchangé"
 assert_eq "aucune écriture" 0 "$(count_calls 'op item')"
 printf 'autre\n' >"$OPD/tree"; : >"$CALLS"
-mcall projets_snapshot >/dev/null 2>&1
+ccall projets_snapshot >/dev/null 2>&1
 assert_eq "arbre changé → élément édité" 1 "$(count_calls 'op item edit')"
-rm -rf "$HOME/projets/client/sans-origin" "$HOME/projets/client/app/vendu" "$HOME/projets/client/app/node_modules"
+rm -rf "$HOME/projets/client/sans-origin" "$HOME/projets/client/app/vendu" "$HOME/projets/client/app/-vendu" "$HOME/projets/client/app/node_modules"
 
 printf '%s\n' "== mise à jour =="
 A="$HOME/projets/client/app" D="$HOME/projets/client/doc" V="$HOME/projets/client/legacy/vieux"
@@ -295,7 +306,7 @@ printf 'modif\n' >>"$D/README"                        # modification suivie : la
 git -C "$V" checkout -q --detach                      # tête détachée : sans branche suivie
 write_tree; printf 'projets/client/nouveau\t%s\n' "$(url nouveau)" >>"$OPD/tree"
 printf 'exemple.local.test' >"$OPD/hosts"
-out=$(mcall projets_pull 2>&1); rc=$?
+out=$(ccall projets_pull 2>&1); rc=$?
 assert_eq "mise à jour réussie" 0 "$rc"
 assert_eq "app avancé (fichier non suivi présent)" "$(git -C "$R/app.git" rev-parse main)" "$(git -C "$A" rev-parse HEAD)"
 assert_contains "doc laissé : modifications en cours" "$out" "projets/client/doc : modifications en cours"
@@ -305,14 +316,22 @@ assert_ok "nouveau cloné" test -d "$HOME/projets/client/nouveau/.git"
 assert_contains "bilan" "$out" "1 mis à jour, 0 déjà à jour, 1 cloné(s), 2 laissé(s) de côté, 0 échec(s)"
 git -C "$D" checkout -q -- README; git -C "$V" checkout -q main
 printf 'local\n' >"$D/local.txt"; git -C "$D" add local.txt; git -C "$D" commit -qm local
-out=$(mcall projets_pull 2>&1); rc=$?
+out=$(ccall projets_pull 2>&1); rc=$?
 assert_contains "doc divergé : laissé" "$out" "projets/client/doc : divergé"
 assert_contains "vieux avancé" "$out" "Mis à jour : projets/client/legacy/vieux"
 git -C "$D" reset -q --hard origin/main; printf 'local\n' >"$D/l2.txt"; git -C "$D" add l2.txt; git -C "$D" commit -qm l2
-out=$(mcall projets_pull 2>&1)
+out=$(ccall projets_pull 2>&1)
 assert_contains "doc en avance : laissé" "$out" "projets/client/doc : en avance (1 commit(s) non poussé(s))"
+# git status échoue (index illisible) ; fetch passe, à condition de ne pas
+# chercher de sous-modules dans l'index.
+git -C "$V" config fetch.recurseSubmodules false; chmod 000 "$V/.git/index"
+out=$(ccall projets_pull 2>&1); rc=$?
+assert_eq "git status en échec → code 1" 1 "$rc"
+assert_contains "échec nommé, la commande continue" "$out" "projets/client/legacy/vieux : état du dépôt"
+assert_contains "bilan affiché malgré l'échec" "$out" "1 échec(s)."
+chmod 644 "$V/.git/index"; git -C "$V" config --unset fetch.recurseSubmodules
 printf 'projets/client/absent\t%s\n' "file://$R/absent.git" >>"$OPD/tree"
-out=$(mcall projets_pull 2>&1); rc=$?
+out=$(ccall projets_pull 2>&1); rc=$?
 assert_eq "clonage en échec → code 1" 1 "$rc"
 assert_contains "échec nommé" "$out" "projets/client/absent"
 

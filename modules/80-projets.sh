@@ -326,11 +326,13 @@ module_configure() {
   if (( rc == 0 )); then
     _projets_clone_all || failed=1
     (( ${#_PROJ_CLONED[@]} )) && log_ok "Projets : ${#_PROJ_CLONED[@]} dépôt(s) cloné(s)."
-    _projets_hosts || failed=1
   else
     manual_step "$PROJETS_SNAPSHOT_MANUAL"
   fi
   if op_session_active; then
+    # Domaines locaux (D6) indépendants de l'arbre : un champ hosts se pose même
+    # sans dépôt relevé.
+    _projets_hosts || failed=1
     _projets_legacy || { log_error "Projets : accès SSH legacy incomplet (voir le journal)."; failed=1; }
   elif ! _projets_legacy_ok; then manual_step "$PROJETS_LEGACY_MANUAL"; fi
   return "$failed"
@@ -344,8 +346,11 @@ projets_snapshot() {
   local -a found=() repos=()
   [[ -d $PROJETS_ROOT ]] || { log_error "Relevé impossible : $PROJETS_ROOT n'existe pas."; return 1; }
   op_session_active || { log_error "Relevé impossible : aucune session 1Password."; return 1; }
-  while IFS= read -r d; do found+=("${d%/.git}"); done < <(
-    find "$PROJETS_ROOT" -name node_modules -prune -o -type d -name .git -print 2>/dev/null | LC_ALL=C sort)
+  # Tri sur le dossier du dépôt (%h), pas sur « …/.git » : un parent précède
+  # toujours ses enfants (préfixe), même un enfant dont le nom commence par un
+  # caractère classé avant « . » (ex. « -vendor »).
+  while IFS= read -r d; do found+=("$d"); done < <(
+    find "$PROJETS_ROOT" -name node_modules -prune -o -type d -name .git -printf '%h\n' 2>/dev/null | LC_ALL=C sort)
   # Dépôts imbriqués écartés : -prune sur .git n'élague pas ses frères.
   for d in "${found[@]}"; do
     skip=0
@@ -400,11 +405,16 @@ projets_pull() {
     if ! git -C "$dir" fetch --prune --quiet >>"$LOG_FILE" 2>&1 </dev/null; then
       failures+=("$path : récupération (fetch)"); continue
     fi
-    dirty=$(git -C "$dir" status --porcelain --untracked-files=no 2>/dev/null)
+    # Échecs de git gardés en conditionnel : appelée par le runner (set -e) via des
+    # appels simples, cette fonction tourne sous errexit — une affectation depuis un
+    # $(…) ou un read en échec arrêterait la commande sans bilan.
+    dirty=$(git -C "$dir" status --porcelain --untracked-files=no 2>/dev/null) \
+      || { failures+=("$path : état du dépôt (git status)"); continue; }
     [[ -z $dirty ]] || { skipped+=("$path : modifications en cours"); continue; }
     git -C "$dir" rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1 \
       || { skipped+=("$path : sans branche suivie"); continue; }
-    read -r ahead behind < <(git -C "$dir" rev-list --left-right --count 'HEAD...@{u}' 2>/dev/null)
+    read -r ahead behind < <(git -C "$dir" rev-list --left-right --count 'HEAD...@{u}' 2>/dev/null) \
+      || { failures+=("$path : comparaison avec la branche suivie"); continue; }
     if (( ahead == 0 && behind == 0 )); then current+=("$path")
     elif (( ahead == 0 )); then
       if git -C "$dir" merge --ff-only --quiet '@{u}' >>"$LOG_FILE" 2>&1 </dev/null; then updated+=("$path")
