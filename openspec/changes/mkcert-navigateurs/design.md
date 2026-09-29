@@ -11,14 +11,14 @@ Voir `proposal.md`. Code actuel (`modules/80-projets.sh`) : `_projets_ca_ok` = `
 ## Decisions
 
 ### D1. Base partagée créée d'avance
-`~/.pki/nssdb` absente → `mkdir -p` (0700) puis `certutil -N -d sql:$HOME/.pki/nssdb --empty-password` (base vide, sans mot de passe — comme Chromium la créerait). Chromium, Brave et Chrome l'ouvrent au démarrage si elle existe (à confirmer, tâche 0.1).
+`~/.pki/nssdb` absente → `mkdir -p` (0700) puis `certutil -N -d sql:$HOME/.pki/nssdb --empty-password` (base vide, sans mot de passe — comme Chromium la créerait). Chromium, Brave et Chrome l'ouvrent au démarrage si elle existe — confirmé à la tâche 0.1 : Brave, démarré après l'ajout, sert la page https locale sans avertissement.
 
 ### D2. Bases visées
-Constante `PROJETS_NSS_GLOBS` : `$HOME/.pki/nssdb` et les profils Firefox `$HOME/.mozilla/firefox/*/` et `$HOME/.config/mozilla/firefox/*/` — un profil est une base s'il contient `cert9.db`. Emplacement de Firefox 157 relevé en tâche 0.1 ; la liste garde les deux formes (un profil importé d'une autre version peut vivre à l'ancien endroit).
+Constantes `PROJETS_NSS_SHARED` (`$HOME/.pki/nssdb`) et `PROJETS_FIREFOX_DIRS` (`$HOME/.mozilla/firefox` et `$HOME/.config/mozilla/firefox`, chaque sous-dossier étant un profil possible) — un profil est une base s'il contient `cert9.db`. Emplacement de Firefox 157 relevé en tâche 0.1 ; la liste garde les deux formes (un profil importé d'une autre version peut vivre à l'ancien endroit).
 
 ### D3. Ajout par `certutil`, reconnaissance par empreinte
 Autorité : `$(mkcert -CAROOT)/rootCA.pem`. Présence dans une base : l'empreinte SHA-256 de `rootCA.pem` (`openssl x509 -noout -fingerprint -sha256`) figure parmi celles des certificats de la base — reconnaît aussi un ajout fait par `mkcert -install` sous son propre surnom. Ajout : `certutil -A -d sql:<base> -t C,, -n "mkcert development CA" -i rootCA.pem`. Surnom volontairement différent de celui de mkcert (`mkcert development CA <numéro de série en décimal>`, source `cert.go` de la 1.4.4, contre-vérification du 29 sept 2026) : le numéro de série est un entier de 128 bits, hors de portée de l'arithmétique du shell, et l'empreinte suffit à reconnaître l'autorité quel que soit son surnom. Écarté : relancer `mkcert -install` (ne voit pas un profil hors de ses chemins, et ne dit pas ce qu'il a fait).
-Lecture des empreintes d'une base : `certutil -L -d sql:<base>` pour les surnoms, puis `certutil -L -a -n <surnom>` → `openssl` ; méthode exacte arrêtée à la tâche 0.1 (la plus simple qui marche sur `certutil` d'Ubuntu 26.04).
+Lecture des empreintes d'une base : `certutil -L -d sql:<base>` pour les surnoms — en-tête de quatre lignes sauté (`tail -n +5`), espaces de fin puis dernier champ (attributs de confiance) retirés, ce qui garde les surnoms avec espaces —, puis `certutil -L -d sql:<base> -n <surnom> -a` → `openssl x509 -noout -fingerprint -sha256` ; méthode confirmée sur de vraies bases (tâches 0.1 et 1.2).
 
 ### D3 bis. Firefox par ses profils, pas par stratégie d'entreprise (décision de l'utilisateur, 29 sept 2026)
 Question ouverte de la contre-vérification : la stratégie `Certificates.Install` de Firefox (posée par `navigateur`) couvrirait tout profil, même créé plus tard. **Écartée** : elle lierait `navigateur` à un fichier posé par `projets` (absent si `projets` ne passe pas), avec deux inconnues de plus en VM (chemin lu par Firefox sous Linux, effet d'un fichier absent), et n'aide pas Brave/Chromium (D1 reste). L'auto-réparation par `module_check` couvre déjà un profil créé plus tard.
