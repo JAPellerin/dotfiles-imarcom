@@ -85,4 +85,42 @@ out=$(FAKE_GUM_OUT="[shell] b — Module b sans dépendance — à faire" setup)
 assert_eq "sélection d'un module → code 0" 0 "$rc"
 assert_contains "le module choisi s'exécute" "$out" "install b"
 
+
+printf '%s\n' "== commandes des projets =="
+out=$(setup --help) && rc=0 || rc=$?
+assert_contains "aide : --snapshot-projets" "$out" "--snapshot-projets"
+assert_contains "aide : --pull-projets" "$out" "--pull-projets"
+out=$(setup --pull-projets) && rc=0 || rc=$?
+assert_eq "sans module projets → code 1" 1 "$rc"
+assert_contains "sans module projets → erreur qui le nomme" "$out" "Module « projets » introuvable"
+# Jeu factice des projets ; sudo qui trace ses appels (aucun -v attendu).
+psetup() { MODULES_DIR="$FIXTURES_DIR/projets" bash "$DOTFILES_DIR/setup.sh" "$@" 2>&1; }
+cat >"$TEST_TMP/bin/sudo" <<'FAKE'
+#!/usr/bin/env bash
+printf 'sudo %s\n' "$*" >>"$FIXTURE_STATE_DIR/sudo-calls"
+[[ ${1:-} == -v ]] && exit 0
+[[ ${1:-} == -n ]] && shift
+exec "$@"
+FAKE
+chmod +x "$TEST_TMP/bin/sudo"
+rm -f "$FIXTURE_STATE_DIR/1password" "$FIXTURE_STATE_DIR/sudo-calls"
+out=$(psetup --pull-projets) && rc=0 || rc=$?
+assert_eq "1password à faire → exécuté d'abord, code 0" 0 "$rc"
+assert_contains "1password exécuté avant la commande" "$out" $'install 1password'
+assert_contains "puis la mise à jour" "$out" "pull factice"
+assert_ok "1password avant la commande" test "$(grep -n 'install 1password' <<<"$out" | cut -d: -f1)" -lt "$(grep -n 'pull factice' <<<"$out" | cut -d: -f1)"
+assert_not_contains "aucun menu ni résumé des modules" "$out" "Résumé"
+assert_fail "aucun sudo -v au démarrage" grep -q -- 'sudo -v' "$FIXTURE_STATE_DIR/sudo-calls"
+out=$(psetup --snapshot-projets) && rc=0 || rc=$?
+assert_eq "relevé : code 0" 0 "$rc"
+assert_contains "relevé exécuté" "$out" "snapshot factice"
+assert_not_contains "1password déjà fait → pas réexécuté" "$out" "install 1password"
+out=$(FIXTURE_PULL_RC=1 psetup --pull-projets) && rc=0 || rc=$?
+assert_eq "échec de la commande → code 1" 1 "$rc"
+rm -f "$FIXTURE_STATE_DIR/1password"
+out=$(FIXTURE_OP_FAIL=1 psetup --pull-projets) && rc=0 || rc=$?
+assert_eq "1password en échec → code 1" 1 "$rc"
+assert_contains "renvoi vers setup.sh 1password" "$out" "lancer « setup.sh 1password »"
+assert_not_contains "commande non lancée" "$out" "pull factice"
+
 test_done

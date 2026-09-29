@@ -5,6 +5,8 @@
 #   ./setup.sh <module...>     exécute ces modules et leurs dépendances, sans menu
 #   ./setup.sh --all           tous les modules
 #   ./setup.sh --list          groupe, nom, description et état de chaque module
+#   ./setup.sh --snapshot-projets   relève les dépôts de ~/projets dans 1Password
+#   ./setup.sh --pull-projets       met à jour les projets d'après 1Password
 #
 # Tourne avec le compte utilisateur (jamais root) ; le mot de passe sudo est
 # demandé une seule fois. Les modules vivent dans $MODULES_DIR (défaut modules/)
@@ -37,12 +39,14 @@ source "$DOTFILES_DIR/lib/groups.sh"
 
 usage() {
   cat >&2 <<'USAGE'
-Usage : setup.sh [--list | --all | <module...>]
+Usage : setup.sh [--list | --all | --snapshot-projets | --pull-projets | <module...>]
 
-  (sans argument)   menu interactif, modules non faits précochés
-  <module...>       exécute ces modules et leurs dépendances, sans menu
-  --all             tous les modules
-  --list            groupe, nom, description et état de chaque module
+  (sans argument)     menu interactif, modules non faits précochés
+  <module...>         exécute ces modules et leurs dépendances, sans menu
+  --all               tous les modules
+  --list              groupe, nom, description et état de chaque module
+  --snapshot-projets  relève les dépôts git de ~/projets dans 1Password (poste de référence)
+  --pull-projets      clone les projets manquants et met à jour les autres (avance rapide)
 USAGE
 }
 
@@ -293,6 +297,28 @@ result_label() {
   esac
 }
 
+# --- Commandes des projets -----------------------------------------------------------------
+# run_projets_command <fonction> : exécute une commande du module projets
+# (projets_snapshot, projets_pull), hors menu et hors états des modules. Le
+# module 1password passe d'abord s'il n'est pas fait, dans ce même processus :
+# sans l'application, la session ne vit que dans le processus qui l'ouvre. Pas
+# de sudo_keepalive : la commande demande sudo elle-même, au besoin.
+# Voir openspec/changes/projets/design.md (D10).
+run_projets_command() {
+  local fn=$1
+  [[ -n ${MOD_FILE[projets]:-} ]] \
+    || die "Module « projets » introuvable : les commandes --snapshot-projets et --pull-projets en dépendent."
+  if [[ -n ${MOD_FILE[1password]:-} && $(module_state 1password) != fait ]]; then
+    log_info "Session 1Password requise : exécution du module 1password."
+    run_modules 1password
+    case ${RESULT[1password]:-} in
+      fait|a-terminer) ;;
+      *) log_error "1Password indisponible : lancer « setup.sh 1password », puis relancer la commande."; return 1 ;;
+    esac
+  fi
+  module_call "${MOD_FILE[projets]}" "$fn"
+}
+
 # --- Programme principal -----------------------------------------------------------------
 main() {
   require_not_root
@@ -301,12 +327,18 @@ main() {
     -h|--help) usage; return 0 ;;
     --list)    mode=list ;;
     --all)     mode=all ;;
+    --snapshot-projets) mode=snapshot ;;
+    --pull-projets)     mode=pull ;;
     --*)       usage; die "Option inconnue : $1" ;;
     "")        mode=menu ;;
     *)         mode=names ;;
   esac
 
   discover_modules
+  case $mode in
+    snapshot) run_projets_command projets_snapshot; return ;;
+    pull)     run_projets_command projets_pull; return ;;
+  esac
   compute_states
 
   case $mode in
