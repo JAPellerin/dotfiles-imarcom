@@ -17,8 +17,8 @@ MODULE_GROUP="dev"
 MODULE_DEPS="base 1password"
 
 # Convention des secrets (D1) : op://Private/<Item>/<champ>, champs nommés comme dans 1Password.
-GIT_SSH_KEY_REF="op://Private/GitHub SSH Key/private key?ssh-format=openssh"
-GIT_SSH_PUB_REF="op://Private/GitHub SSH Key/public key"
+GIT_SSH_KEY_REF="op://Private/Git SSH Key/private key?ssh-format=openssh"
+GIT_SSH_PUB_REF="op://Private/Git SSH Key/public key"
 GIT_SSH_DIR="$HOME/.ssh"
 GIT_SSH_KEY="$GIT_SSH_DIR/id_ed25519"
 GIT_KNOWN_HOSTS="$GIT_SSH_DIR/known_hosts"

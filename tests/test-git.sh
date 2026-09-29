@@ -40,8 +40,8 @@ case $1 in
   whoami) [[ -f $FAKE_DIR/session ]] ;;
   read)
     case ${*: -1} in
-      "op://Private/GitHub SSH Key/private key?ssh-format=openssh") cat "$FAKE_DIR/k" ;;
-      "op://Private/GitHub SSH Key/public key") cat "$FAKE_DIR/k.pub" ;;
+      "op://Private/Git SSH Key/private key?ssh-format=openssh") cat "$FAKE_DIR/k" ;;
+      "op://Private/Git SSH Key/public key") cat "$FAKE_DIR/k.pub" ;;
       *) echo "[ERROR] référence inattendue : ${*: -1}" >&2; exit 1 ;;
     esac ;;
 esac
