@@ -33,6 +33,26 @@ R="$TEST_TMP/remotes"
 export OPD="$TEST_TMP/op"; mkdir -p "$OPD"
 PRIV_MARK="CLE-PRIVEE-LEGACY-FACTICE-7"
 
+# Autorité d'essai (vrai certificat) : certutil et openssl réels, sur des bases
+# temporaires du HOME du test (mkcert-navigateurs, D5).
+for t in certutil openssl; do command -v "$t" >/dev/null || { echo "test-projets.sh : $t requis (paquets libnss3-tools, openssl)" >&2; exit 1; }; done
+openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -subj "/CN=essai mkcert" -days 2 \
+  -keyout "$TEST_TMP/ca.key" -out "$TEST_TMP/ca.pem" 2>/dev/null
+openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -subj "/CN=autre CA" -days 2 \
+  -keyout "$TEST_TMP/autre.key" -out "$TEST_TMP/autre.pem" 2>/dev/null
+CA_FP=$(openssl x509 -noout -fingerprint -sha256 -in "$TEST_TMP/ca.pem"); CA_FP=${CA_FP#*=}
+# has_ca <base> : l'autorité d'essai figure dans la base (par empreinte).
+has_ca() {
+  local nick
+  while IFS= read -r nick; do
+    [[ -n $nick ]] || continue
+    [[ $(certutil -L -d "sql:$1" -n "$nick" -a 2>/dev/null | openssl x509 -noout -fingerprint -sha256 2>/dev/null) == *"$CA_FP" ]] && return 0
+  done < <(certutil -L -d "sql:$1" 2>/dev/null | tail -n +5 | sed -E 's/[[:space:]]+$//; s/[[:space:]]+[^[:space:]]+$//')
+  return 1
+}
+nicks() { certutil -L -d "sql:$1" 2>/dev/null | tail -n +5 | sed -E 's/[[:space:]]+$//; s/[[:space:]]+[^[:space:]]+$//' | grep -c .; }
+new_profile() { mkdir -p "$1"; certutil -N -d "sql:$1" --empty-password; }
+
 # Clés d'hôte de Bitbucket factices mais valides (ssh-keygen -F les lit).
 ssh-keygen -q -t ed25519 -N '' -f "$TEST_TMP/bbkey" -C x >/dev/null
 printf 'bitbucket.org %s\n' "$(cut -d' ' -f1-2 "$TEST_TMP/bbkey.pub")" >"$TEST_TMP/bb-keys"
@@ -58,7 +78,7 @@ cat >"$TEST_TMP/bin/mkcert" <<'FAKE'
 case $1 in
   -CAROOT) printf '%s\n' "$FAKE_DIR/caroot" ;;
   -install) printf 'mkcert -install\n' >>"$FAKE_DIR/calls"
-            mkdir -p "$FAKE_DIR/caroot"; : >"$FAKE_DIR/caroot/rootCA.pem"
+            mkdir -p "$FAKE_DIR/caroot"; cp "$FAKE_DIR/ca.pem" "$FAKE_DIR/caroot/rootCA.pem"
             : >"$PROJETS_CA_DIR/mkcert_development_CA_123.crt" ;;
 esac
 FAKE
@@ -243,6 +263,36 @@ out=$(mcall module_configure 2>&1); rc=$?
 assert_eq "module_configure réussit" 0 "$rc"
 assert_contains "étape d'import de la clé" "$(cat "$MANUAL_STEPS_FILE")" "Legacy SSH"
 mv "$OPD/legacy-pub.bak" "$OPD/legacy-pub"
+
+printf '%s\n' "== navigateurs : bases de certificats =="
+NSS="$HOME/.pki/nssdb"
+assert_ok "base partagée créée" test -f "$NSS/cert9.db"
+assert_eq "base partagée en 0700" 700 "$(stat -c %a "$NSS")"
+assert_ok "autorité dans la base partagée" has_ca "$NSS"
+FF1="$HOME/.mozilla/firefox/abc.default-release"; FF2="$HOME/.config/mozilla/firefox/xyz.default"
+new_profile "$FF1"; new_profile "$FF2"
+certutil -A -d "sql:$FF2" -t C,, -n "autre CA" -i "$TEST_TMP/autre.pem"
+assert_fail "profil Firefox sans l'autorité → à faire" mcall module_check
+: >"$LOG_FILE"
+assert_ok "module_configure réussit" mcall module_configure
+assert_ok "autorité ajoutée au profil (emplacement historique)" has_ca "$FF1"
+assert_ok "autorité ajoutée au profil (emplacement XDG)" has_ca "$FF2"
+assert_eq "autre certificat du profil gardé" 2 "$(nicks "$FF2")"
+assert_eq "deux ajouts" 2 "$(grep -c 'certutil -A' "$LOG_FILE")"
+assert_ok "module_check → déjà fait" mcall module_check
+: >"$LOG_FILE"
+assert_ok "relance réussit" mcall module_configure
+assert_eq "relance : aucun ajout" 0 "$(grep -c 'certutil -A' "$LOG_FILE")"
+FF3="$HOME/.mozilla/firefox/mk.default"; new_profile "$FF3"
+certutil -A -d "sql:$FF3" -t C,, -n "mkcert development CA 123456789" -i "$TEST_TMP/ca.pem"
+: >"$LOG_FILE"
+assert_ok "autorité posée par mkcert -install (autre surnom) → déjà fait" mcall module_check
+assert_ok "module_configure réussit" mcall module_configure
+assert_eq "autre surnom : rien ajouté" 1 "$(nicks "$FF3")"
+rm -rf "$NSS"
+assert_fail "base partagée retirée → à faire" mcall module_check
+mcall module_configure >/dev/null 2>&1
+assert_ok "base partagée recréée avec l'autorité" has_ca "$NSS"
 
 printf '%s\n' "== ~/.ssh/config absent =="
 rm -f "$HOME/.ssh/config"

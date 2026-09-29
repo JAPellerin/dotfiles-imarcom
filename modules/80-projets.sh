@@ -37,6 +37,12 @@ PROJETS_KNOWN_HOSTS="$PROJETS_SSH_DIR/known_hosts"
 # Fichiers système ; surchargeables (tests).
 PROJETS_HOSTS_FILE="${PROJETS_HOSTS_FILE:-/etc/hosts}"
 PROJETS_CA_DIR="${PROJETS_CA_DIR:-/usr/local/share/ca-certificates}"
+# Bases de certificats des navigateurs (mkcert-navigateurs, D1, D2) : base partagée
+# de Chromium, Brave et Chrome, créée d'avance ; profils Firefox, aux deux
+# emplacements (historique et XDG). Une base = un dossier qui contient cert9.db.
+PROJETS_NSS_SHARED="$HOME/.pki/nssdb"
+PROJETS_FIREFOX_DIRS=("$HOME/.mozilla/firefox" "$HOME/.config/mozilla/firefox")
+PROJETS_NSS_NICK="mkcert development CA"
 # Accès legacy (D7) : coffre Private, que l'agent de 1Password sert sans agent.toml.
 PROJETS_LEGACY_ITEM="op://Private/Legacy SSH"
 PROJETS_LEGACY_KEY="$PROJETS_SSH_DIR/id_ed25519_legacy"
@@ -183,10 +189,91 @@ _projets_ca_ok() {
 }
 
 _projets_mkcert() {
-  if _projets_ca_ok; then log_ok "Autorité mkcert déjà installée."; return 0; fi
-  run mkcert -install || { log_error "mkcert -install a échoué : voir le journal."; return 1; }
-  _projets_ca_ok || { log_error "Autorité mkcert absente du magasin du système après mkcert -install."; return 1; }
-  log_ok "Autorité mkcert installée."
+  if _projets_ca_ok; then
+    log_ok "Autorité mkcert déjà installée."
+  else
+    run mkcert -install || { log_error "mkcert -install a échoué : voir le journal."; return 1; }
+    _projets_ca_ok || { log_error "Autorité mkcert absente du magasin du système après mkcert -install."; return 1; }
+    log_ok "Autorité mkcert installée."
+  fi
+  _projets_nss
+}
+
+# --- Navigateurs (mkcert-navigateurs, D1 à D4) ---------------------------------------------
+
+# _projets_nss_dbs : bases de certificats de navigateur présentes, une par ligne.
+_projets_nss_dbs() {
+  local d p
+  [[ -f $PROJETS_NSS_SHARED/cert9.db ]] && printf '%s\n' "$PROJETS_NSS_SHARED"
+  for d in "${PROJETS_FIREFOX_DIRS[@]}"; do
+    for p in "$d"/*/; do
+      [[ -f ${p}cert9.db ]] && printf '%s\n' "${p%/}"
+    done
+  done
+  return 0
+}
+
+# _projets_fingerprint : empreinte SHA-256 d'un certificat PEM lu sur stdin,
+# en majuscules et sans deux-points ; rien si illisible.
+_projets_fingerprint() {
+  local fp
+  fp=$(openssl x509 -noout -fingerprint -sha256 2>/dev/null) || return 0
+  fp=${fp#*=}; fp=${fp//:/}
+  printf '%s' "${fp^^}"
+}
+
+# _projets_db_has_ca <base> <empreinte> : l'autorité figure dans la base, quel
+# que soit son surnom (celui de mkcert -install ou le nôtre) — D3. Lecture seule.
+_projets_db_has_ca() {
+  local db=$1 fp=$2 nick
+  while IFS= read -r nick; do
+    [[ -n $nick ]] || continue
+    [[ $(certutil -L -d "sql:$db" -n "$nick" -a 2>/dev/null | _projets_fingerprint) == "$fp" ]] && return 0
+  done < <(certutil -L -d "sql:$db" 2>/dev/null | tail -n +5 \
+             | sed -E 's/[[:space:]]+$//; s/[[:space:]]+[^[:space:]]+$//')
+  return 1
+}
+
+# _projets_ca_fp : empreinte de l'autorité de mkcert ; échec si absente.
+_projets_ca_fp() {
+  local caroot fp
+  caroot=$(mkcert -CAROOT 2>/dev/null) && [[ -f $caroot/rootCA.pem ]] || return 1
+  fp=$(_projets_fingerprint <"$caroot/rootCA.pem")
+  [[ -n $fp ]] && printf '%s' "$fp"
+}
+
+# _projets_nss_ok : base partagée présente et autorité dans chaque base (D4).
+_projets_nss_ok() {
+  local fp db
+  [[ -f $PROJETS_NSS_SHARED/cert9.db ]] || return 1
+  fp=$(_projets_ca_fp) || return 1
+  while IFS= read -r db; do
+    _projets_db_has_ca "$db" "$fp" || return 1
+  done < <(_projets_nss_dbs)
+}
+
+# _projets_nss : crée la base partagée si elle manque (D1), puis ajoute
+# l'autorité aux bases qui ne l'ont pas (D3), sans toucher aux autres certificats.
+_projets_nss() {
+  local fp db caroot added=0
+  if [[ ! -f $PROJETS_NSS_SHARED/cert9.db ]]; then
+    if ! mkdir -p -- "$PROJETS_NSS_SHARED" || ! chmod 0700 -- "$PROJETS_NSS_SHARED" \
+       || ! run certutil -N -d "sql:$PROJETS_NSS_SHARED" --empty-password; then
+      log_error "Création de la base de certificats $PROJETS_NSS_SHARED impossible."; return 1
+    fi
+    log_ok "Base de certificats partagée des navigateurs créée : $PROJETS_NSS_SHARED"
+  fi
+  fp=$(_projets_ca_fp) || { log_error "Autorité mkcert illisible : ajout aux navigateurs impossible."; return 1; }
+  caroot=$(mkcert -CAROOT 2>/dev/null)
+  while IFS= read -r db; do
+    _projets_db_has_ca "$db" "$fp" && continue
+    run certutil -A -d "sql:$db" -t C,, -n "$PROJETS_NSS_NICK" -i "$caroot/rootCA.pem" \
+      || { log_error "Ajout de l'autorité mkcert à $db impossible."; return 1; }
+    log_ok "Autorité mkcert ajoutée à : $db"
+    added=$((added + 1))
+  done < <(_projets_nss_dbs)
+  (( added )) || log_ok "Autorité mkcert déjà présente dans les bases des navigateurs."
+  return 0
 }
 
 # --- Domaines locaux (D6) ---------------------------------------------------------------------
@@ -300,7 +387,8 @@ _projets_legacy_ok() {
 
 # --- Contrat de module ------------------------------------------------------------------------
 
-# Déjà fait = au moins un dépôt, bitbucket.org connu, mkcert et son autorité,
+# Déjà fait = au moins un dépôt, bitbucket.org connu, mkcert et son autorité (dans
+# le magasin du système et chaque base de navigateur présente),
 # accès legacy (D11). Sans sudo, réseau ni 1Password : ni l'arbre ni les
 # domaines ne sont vérifiés (--pull-projets s'en charge).
 module_check() {
@@ -308,6 +396,7 @@ module_check() {
   ssh-keygen -F bitbucket.org -f "$PROJETS_KNOWN_HOSTS" >/dev/null 2>&1 || return 1
   pkg_installed mkcert && pkg_installed libnss3-tools || return 1
   _projets_ca_ok || return 1
+  _projets_nss_ok || return 1
   _projets_legacy_ok
 }
 
