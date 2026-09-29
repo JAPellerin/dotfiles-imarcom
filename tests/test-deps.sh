@@ -19,7 +19,7 @@ assert_contains "groupe et nom" "$out" "[systeme] base"
 assert_contains "description" "$out" "Paquets de base"
 assert_contains "état à faire" "$out" "à faire"
 assert_contains "module graphique non disponible sans GUI" "$out" "non disponible ici"
-assert_eq "un module par ligne (7 factices)" 7 "$(printf '%s\n' "$out" | wc -l)"
+assert_eq "un module par ligne (8 factices)" 8 "$(printf '%s\n' "$out" | wc -l)"
 assert_not_contains "--list n'exécute rien" "$out" "install base"
 
 printf '%s\n' "== --help et options =="
@@ -53,7 +53,7 @@ printf '%s\n' "== noms en argument =="
 out=$(setup navigateurz) && rc=0 || rc=$?
 assert_eq "nom inconnu → code 1" 1 "$rc"
 assert_contains "nom inconnu cité" "$out" "« navigateurz »"
-assert_contains "noms valides listés" "$out" "Modules valides : base 1password b a echec dependant gui"
+assert_contains "noms valides listés" "$out" "Modules valides : base 1password b a secret echec dependant gui"
 assert_not_contains "rien n'est exécuté" "$out" "Ordre d'exécution"
 
 printf '%s\n' "== ordre d'exécution =="
@@ -62,6 +62,6 @@ assert_eq "dépendances d'abord (a → b a)" "b a" "$(ordre a)"
 assert_eq "1password et ses dépendances avancés (a 1password → base 1password b a)" "base 1password b a" "$(ordre a 1password)"
 assert_eq "scénario de la spec : git-like, 1password, base → base 1password puis le reste" "base 1password b a" "$(ordre a 1password base)"
 assert_eq "chaque module une seule fois" "b a" "$(ordre a b a)"
-assert_eq "--all : tous, 1password avancé, ordre des fichiers sinon" "base 1password b a echec dependant gui" "$(ordre --all)"
+assert_eq "--all : tous, 1password avancé, ordre des fichiers sinon" "base 1password b a secret echec dependant gui" "$(ordre --all)"
 
 test_done

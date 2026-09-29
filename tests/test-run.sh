@@ -8,6 +8,14 @@ source "$(dirname -- "${BASH_SOURCE[0]}")/lib.sh"
 fake_sudo
 export FIXTURE_STATE_DIR="$TEST_TMP/etat" WSL_DISTRO_NAME=test
 setup() { MODULES_DIR="$FIXTURES_DIR/modules" bash "$DOTFILES_DIR/setup.sh" "$@" 2>&1; }
+# Doublure op : session ouverte si le marqueur existe (module factice « secret »).
+mkdir -p "$TEST_TMP/bin"
+cat >"$TEST_TMP/bin/op" <<'FAKE'
+#!/usr/bin/env bash
+[[ $1 == whoami ]] && { printf 'whoami\n' >>"$FIXTURE_STATE_DIR/op-calls"; [[ -f $FIXTURE_STATE_DIR/op-session ]]; exit; }
+exit 1
+FAKE
+chmod +x "$TEST_TMP/bin/op"
 
 printf '%s\n' "== première exécution : a (et sa dépendance b) =="
 out=$(setup a) && rc=0 || rc=$?
@@ -89,6 +97,36 @@ assert_contains "le module choisi s'exécute" "$out" "install b"
 assert_contains "en-tête du menu : Ctrl+A pour tout cocher ou décocher" "$(cat "$FIXTURE_STATE_DIR/gum-header")" "Ctrl+A : tout cocher/tout décocher"
 assert_contains "en-tête du menu : espace et entrée" "$(cat "$FIXTURE_STATE_DIR/gum-header")" "espace : cocher/décocher"
 
+
+
+printf '%s\n' "== session 1Password rouverte avant un module qui en dépend =="
+touch "$FIXTURE_STATE_DIR/1password"; rm -f "$FIXTURE_STATE_DIR"/{secret,op-session}
+out=$(setup secret) && rc=0 || rc=$?
+assert_eq "code 0" 0 "$rc"
+assert_contains "réouverture annoncée" "$out" "Session 1Password expirée : réouverture avant « secret »"
+assert_contains "session vue dès l'installation" "$out" "install secret session=oui"
+assert_contains "session vue à la configuration" "$out" "configure secret session=oui"
+rm -f "$FIXTURE_STATE_DIR/secret"
+out=$(setup secret) && rc=0 || rc=$?
+assert_not_contains "session ouverte → aucune réouverture" "$out" "réouverture"
+rm -f "$FIXTURE_STATE_DIR/secret"
+out=$(FIXTURE_SECRET_CLOSE=1 setup secret) && rc=0 || rc=$?
+assert_contains "expirée pendant l'installation → rouverte avant la configuration" "$out" "configure secret session=oui"
+assert_eq "une réouverture (avant la configuration)" 1 "$(grep -c 'réouverture avant' <<<"$out")"
+rm -f "$FIXTURE_STATE_DIR"/{secret,op-session}
+out=$(FIXTURE_RECONNECT_FAIL=1 setup secret) && rc=0 || rc=$?
+assert_eq "réouverture refusée → module exécuté quand même, code 0" 0 "$rc"
+assert_contains "avertissement" "$out" "Session 1Password non rouverte : « secret »"
+assert_contains "module exécuté sans session" "$out" "configure secret session=non"
+assert_not_contains "pas de « seront sautés »" "$out" "seront sautés"
+rm -f "$FIXTURE_STATE_DIR"/op-session; : >"$FIXTURE_STATE_DIR/op-calls"
+out=$(setup b) && rc=0 || rc=$?
+assert_not_contains "module sans lien avec 1Password → aucune réouverture" "$out" "réouverture"
+out=$(setup --list) && rc=0 || rc=$?
+assert_eq "--list : aucun op whoami du runner" "" "$(cat "$FIXTURE_STATE_DIR/op-calls")"
+out=$(setup secret) && rc=0 || rc=$?
+assert_not_contains "module déjà fait → aucune réouverture" "$out" "réouverture"
+rm -f "$FIXTURE_STATE_DIR/secret"
 
 printf '%s\n' "== commandes des projets =="
 out=$(setup --help) && rc=0 || rc=$?

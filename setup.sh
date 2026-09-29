@@ -207,6 +207,38 @@ _closure_of() {
   done
 }
 
+# _depends_on_op <nom> : vrai si le module dépend de 1password, directement ou par
+# ses dépendances (graphe sans cycle, vérifié à la découverte).
+_depends_on_op() {
+  local dep
+  for dep in ${MOD_DEPS[$1]}; do
+    [[ $dep == 1password ]] && return 0
+    _depends_on_op "$dep" && return 0
+  done
+  return 1
+}
+
+# _op_session_ensure_for <nom> : avant l'installation, puis avant la configuration
+# d'un module qui dépend de 1password, rouvre la session si elle a expiré
+# (autorisation de la CLI retirée après ~10 min sans commande `op`) — seulement
+# si 1password a réussi ou était fait dans cette exécution. Jamais bloquant : un
+# échec est signalé et le module s'exécute quand même. Pas dans module_check.
+# Voir openspec/changes/socle-session-op/design.md (D1, D2).
+_op_session_ensure_for() {
+  local name=$1
+  [[ $name != 1password && -n ${MOD_FILE[1password]:-} ]] || return 0
+  case ${RESULT[1password]:-} in
+    fait|a-terminer|deja-fait) ;;
+    *) return 0 ;;
+  esac
+  _depends_on_op "$name" || return 0
+  op_session_active && return 0
+  log_info "Session 1Password expirée : réouverture avant « $name » (autoriser la demande de 1Password)."
+  module_call "${MOD_FILE[1password]}" _op_reconnect \
+    || log_warn "Session 1Password non rouverte : « $name » s'exécute sans secrets (étapes manuelles possibles)."
+  return 0
+}
+
 # --- Exécution --------------------------------------------------------------------------
 # run_modules <nom...> (déjà ordonnés) : check → install → configure, chaque
 # fonction dans un sous-shell ; un échec n'arrête pas les autres, mais les modules
@@ -237,7 +269,10 @@ run_modules() {
       log_ok "Déjà fait."
       continue
     fi
-    if module_call "${MOD_FILE[$name]}" module_install && module_call "${MOD_FILE[$name]}" module_configure; then
+    _op_session_ensure_for "$name"
+    if module_call "${MOD_FILE[$name]}" module_install \
+       && _op_session_ensure_for "$name" \
+       && module_call "${MOD_FILE[$name]}" module_configure; then
       # Étape manuelle déclarée pendant ce passage → « à terminer » (le fichier des
       # étapes est propre à l'exécution). Champ comparé tel quel par awk, sans
       # expression régulière tirée du nom ni grep -q en tube (SIGPIPE sous pipefail).

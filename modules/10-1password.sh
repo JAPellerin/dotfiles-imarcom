@@ -92,8 +92,10 @@ OP_CLI_CONFIG="${OP_CLI_CONFIG:-$HOME/.config/op/config}"
 # Connexion : rien à faire si une session est active ; sinon intégration avec
 # l'app de bureau (si installée), puis, sur demande ou sans app, `op account add` /
 # `op signin` en terminal. Échec explicite si aucune session à la fin.
+# --quiet : sans le message « seront sautés » (faux quand le runner rouvre la
+# session avant un module, qui s'exécute quand même : voir _op_reconnect).
 _op_connect() {
-  local rc=0
+  local quiet=${1:-} rc=0
   if op_session_active; then
     log_ok "Session 1Password déjà active ($(_op_email))"
     return 0
@@ -103,11 +105,19 @@ _op_connect() {
     case $rc in
       0) return 0 ;;
       2) log_info "Connexion en terminal (op account add / op signin)." ;;
-      *) _op_no_session; return 1 ;;
+      *) [[ $quiet == --quiet ]] || _op_no_session; return 1 ;;
     esac
   fi
-  op_signin_interactive || { _op_no_session; return 1; }
+  op_signin_interactive || { [[ $quiet == --quiet ]] || _op_no_session; return 1; }
 }
+
+# _op_reconnect : appelée par le runner (setup.sh, _op_session_ensure_for) quand
+# la session a expiré avant un module qui dépend de 1password — autorisation de
+# la CLI retirée après ~10 min sans commande `op`. Même parcours, sans le message
+# « seront sautés ». Ne pas renommer sans modifier setup.sh et le module factice
+# tests/fixtures/modules/10-1password.sh.
+# Voir openspec/changes/socle-session-op/design.md (D2).
+_op_reconnect() { _op_connect --quiet; }
 
 _op_no_session() {
   log_error "Aucune session 1Password : les modules qui ont besoin de secrets seront sautés. Relancer « setup.sh 1password » pour réessayer."

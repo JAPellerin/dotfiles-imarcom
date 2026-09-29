@@ -9,3 +9,10 @@ _marker="${FIXTURE_STATE_DIR:-/tmp/dotfiles-fixtures}/1password"
 module_check() { [[ -f $_marker ]]; }
 module_install() { mkdir -p "${_marker%/*}"; log_info "install 1password"; touch "$_marker"; }
 module_configure() { :; }
+# Réouverture par le runner (setup.sh, _op_session_ensure_for) : pose le marqueur
+# de session lu par la doublure `op` du test ; FIXTURE_RECONNECT_FAIL=1 → échec.
+_op_reconnect() {
+  [[ ${FIXTURE_RECONNECT_FAIL:-0} == 1 ]] && return 1
+  touch "${FIXTURE_STATE_DIR:-/tmp/dotfiles-fixtures}/op-session"
+  log_info "reconnexion 1password"
+}
