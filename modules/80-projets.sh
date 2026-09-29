@@ -200,6 +200,7 @@ _projets_mkcert() {
 }
 
 # --- Navigateurs (mkcert-navigateurs, D1 à D4) ---------------------------------------------
+# Voir openspec/changes/archive/2026-09-29-mkcert-navigateurs/design.md (D1 à D4).
 
 # _projets_nss_dbs : bases de certificats de navigateur présentes, une par ligne.
 _projets_nss_dbs() {
