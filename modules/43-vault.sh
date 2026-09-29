@@ -2,7 +2,7 @@
 # shellcheck disable=SC2034  # métadonnées lues par le runner
 # modules/43-vault.sh — CLI Vault de HashiCorp, réglée pour le serveur d'Imarcom,
 # et connexion LDAP avec les identifiants de 1Password : les projets lisent leurs
-# secrets dans Vault sans poser de question (client : `make env-vault`).
+# secrets dans Vault sans poser de question (projet client : `make env-vault`).
 #
 # Suit la doc officielle :
 #   https://developer.hashicorp.com/vault/install          (onglet Ubuntu/Debian)

@@ -1,6 +1,6 @@
 ## Why
 
-Les projets de l'utilisateur sont en Node et pnpm (`projet` : `engines.node >= 20.9.0` ; `projet-guide` : `packageManager: pnpm@11.20.0`), et `openspec` — l'outil de pilotage de ce dépôt — est un paquet npm global. Sans module `node`, rien de cela n'existe sur un poste neuf, et le futur module `projets` (vague 4) ne peut pas lancer ses installations.
+Les projets de l'utilisateur sont en Node et pnpm (projet client : `engines.node >= 20.9.0` ; son guide : `packageManager: pnpm@11.20.0`), et `openspec` — l'outil de pilotage de ce dépôt — est un paquet npm global. Sans module `node`, rien de cela n'existe sur un poste neuf, et le futur module `projets` (vague 4) ne peut pas lancer ses installations.
 
 La config shell est déjà prête : `config/shell/commonrc` charge `nvm.sh` (lignes 10 à 12) et `bashrc-extra.sh`/`zshrc` sa complétion. Il ne manque que nvm lui-même, les versions de Node et les outils globaux.
 
