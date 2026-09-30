@@ -1,0 +1,62 @@
+## Context
+
+Voir `proposal.md`. Relevés dans la VM (29 sept 2026, GNOME Shell 50.1, par `ssh vm`) :
+
+| Sujet | Constat |
+|---|---|
+| `dconf dump /` | lisible par SSH ; ne liste que les clés de la base de l'utilisateur, donc l'écart aux valeurs par défaut — pas besoin d'un relevé « avant » |
+| Profil dconf | `/etc/dconf/profile/` ne contient que `ibus` (profil du démon ibus) ; **pas de `user`** : sans lui, seule la base de l'utilisateur est lue |
+| Défauts d'Ubuntu | `/usr/share/glib-2.0/schemas/*.gschema.override` (`10_ubuntu-settings`, `10_ubuntu-dock`, …) — en dessous de la base dconf du système dans l'ordre de priorité |
+| Réglages de l'utilisateur retenus | `input-sources sources=[('xkb', 'ca')]` ; `peripherals/keyboard numlock-state=false` ; `interface color-scheme='prefer-dark'`, `gtk-theme='Yaru-dark'`, `icon-theme='Yaru-dark'` ; `background` et `screensaver` : `picture-uri` (et `picture-uri-dark` pour le fond) `file:///usr/share/backgrounds/osselo-Ask_a_friend.jpg`, `picture-options='zoom'`, couleurs `#000000000000` ; `shell/extensions/dash-to-dock` : `dock-position='BOTTOM'`, `dash-max-icon-size=42`, `dock-fixed=false`, `show-trash=false` ; `shell/extensions/ding show-home=false` ; `privacy report-technical-problems=false` ; `system/location enabled=false` ; `settings-daemon/plugins/color night-light-schedule-automatic=false` ; `gtk/gtk4/settings/file-chooser sort-directories-first=true` |
+| Écartés (utilisateur) | `settings-daemon/plugins/power sleep-inactive-ac-*` (matériel, laptop) ; tout ce qu'écrit l'extension `tiling-assistant` (`mutter edge-tiling=false`, raccourcis `toggle-tiled-*` vidés, `overridden-settings`, couleur, version) ; état tenu par GNOME ou les applications (`app-picker-layout`, fenêtre des Paramètres, notifications vues, horodatages, migrations, profil de Ptyxis, dossiers d'applications par défaut, `enabled-extensions` = liste d'Ubuntu) |
+| Lanceurs connus | VM : `org.gnome.Nautilus.desktop`, `brave-browser.desktop`, `firefox.desktop`, `com.onepassword.OnePassword.desktop` (celui du dock actuel ; `1password.desktop` existe aussi) ; modules : `com.mitchellh.ghostty.desktop`, `google-chrome.desktop`, `thunderbird.desktop` (lanceur posé par le module) ; à relever : VS Code, Claude, Rocket.Chat, Obsidian, Spotify |
+| Raccourci du terminal | spec `module-terminal` : le raccourci du bureau ouvre Ghostty par `xdg-terminal-exec` — rien à faire ici |
+
+Modèle : `modules/61-rocketchat.sh` (fichiers système par `install_system_file`, commande système à relancer seulement si le fichier a changé, racine `/etc` surchargeable dans les tests).
+
+## Goals / Non-Goals
+
+**Goals :** un poste neuf prend les réglages de l'utilisateur sans rien écraser ; mise à jour du dépôt par simple report d'un `dconf dump` ; `module_check` hors ligne, sans `sudo`, indépendant des retouches de l'utilisateur.
+
+**Non-Goals :** verrouiller des réglages (`locks/`) ; lire ou écrire la base de l'utilisateur ; outil de relevé automatique (le report du `dconf dump` reste manuel, fait avec l'utilisateur) ; extensions GNOME.
+
+## Decisions
+
+### D1. Base dconf du système (décision de l'utilisateur, 29 sept 2026 : mécanisme « C »)
+Deux fichiers versionnés, copiés par `install_system_file` :
+- `config/gnome/dconf-profile` → `/etc/dconf/profile/user` : `user-db:user` puis `system-db:local` (la base de l'utilisateur d'abord : ses valeurs l'emportent).
+- `config/gnome/reglages.dconf` → `/etc/dconf/db/local.d/00-dotfiles` : les réglages de base, **au format de `dconf dump`** (sections `[chemin]`, valeurs GVariant), commentaires `#` en tête qui disent comment le mettre à jour.
+Puis `run_sudo dconf update` (compile `/etc/dconf/db/local`), **seulement** si l'un des deux fichiers vient d'être écrit ou si la base compilée est absente ou plus ancienne que les réglages (D3).
+Alternatives écartées (utilisateur) : `dconf load` dans la base de l'utilisateur (ses retouches seraient écrasées à chaque passage) ; surcharge de schémas `…gschema.override` (format à convertir, clés d'extension selon l'emplacement de leur schéma).
+Constante `GNOME_ETC` (racine de `/etc`, surchargeable pour les tests), `GNOME_PROFILE="$GNOME_ETC/dconf/profile/user"`, `GNOME_KEYFILE="$GNOME_ETC/dconf/db/local.d/00-dotfiles"`, `GNOME_DB="$GNOME_ETC/dconf/db/local"`.
+
+### D2. Profil existant
+Absent → écrit. Identique (`cmp`) → rien. Différent → `log_error` qui nomme le fichier, retour 1, fichier intact (spec) : un profil posé par un administrateur ou un autre outil ne se fusionne pas à l'aveugle.
+
+### D3. Recompilation
+`_gnome_db_fresh` : `/etc/dconf/db/local` existe et n'est pas plus ancien que `00-dotfiles` (`! [[ keyfile -nt db ]]`). Dans `module_configure` : écriture des fichiers (D1, D2) ; si l'un a changé ou si la base n'est pas fraîche → `run_sudo dconf update` ; échec → nommé (une erreur de syntaxe du fichier de réglages s'y montre : sortie au journal).
+
+### D4. Dock
+Clé `org/gnome/shell favorite-apps` du fichier de réglages : `['org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'brave-browser.desktop', 'firefox.desktop', 'google-chrome.desktop', 'com.onepassword.OnePassword.desktop', 'code.desktop', '<Claude>', 'thunderbird.desktop', '<Rocket.Chat>', '<Obsidian>', '<Spotify>']`. GNOME ignore un identifiant sans lanceur installé (spec : l'absent n'empêche pas les autres). Noms à relever marqués dans le fichier jusqu'à la tâche 2.2 — la VM n'a aucun de ces cinq lanceurs (relevé le 30 sept 2026, VM restaurée depuis les vagues précédentes) ; en attendant, les noms les plus probables des paquets officiels (`claude-desktop.desktop`, `rocketchat.desktop`, `obsidian.desktop`, `spotify.desktop`), corrigés au relevé.
+
+### D5. `module_check`
+`pkg_installed dconf-cli`, profil identique au dépôt, réglages identiques au dépôt, base compilée fraîche (D3). Aucune lecture de `dconf`/`gsettings` : les retouches de l'utilisateur ne rendent pas le module « à faire » (spec).
+
+### D6. Métadonnées
+`modules/70-gnome.sh` : `MODULE_NAME="gnome"`, `MODULE_DESC="bureau GNOME : clavier ; thème sombre ; fond ; dock ; confidentialité (valeurs par défaut du système)"` (points-virgules : `module_meta` refuse la virgule et « | » dans ce champ — contre-vérification, 30 sept 2026), `MODULE_GROUP="bureau"`, `MODULE_DEPS="base"`, `MODULE_NEEDS_GUI=1`. `module_install` : `apt_install dconf-cli` (sans effet s'il est présent — c'est le cas sur Ubuntu 26.04, relevé en VM le 30 sept 2026 — mais `dconf update` en dépend : l'installer d'office est plus sûr qu'un relevé).
+
+### D7. Tests (`tests/test-gnome.sh`)
+Racine `GNOME_ETC` du test ; `sudo` factice (`fake_sudo`) ; `dconf` factice (`update` touche la base compilée, trace ses appels ; échec sur drapeau). Cas : `dconf-cli` passé à `apt_install` ; `module_check` 1 sans `dconf-cli` ; premier passage → deux fichiers écrits, `dconf update` une fois, `module_check` 0 ; relance → aucun `sudo`, aucun `dconf update` ; réglages du dépôt modifiés → à faire, fichier réécrit, recompilé ; base compilée absente ou plus ancienne → recompilée ; profil différent → échec nommé, intact, aucune recompilation ; `dconf update` en échec → échec nommé ; fichier de réglages : chaque clé retenue présente (dont le dock et son ordre), aucune clé écartée (`power`, `mutter`, `tiling-assistant`) ; métadonnées (`NEEDS_GUI`, groupe).
+
+## Risks / Trade-offs
+
+- [Base de l'utilisateur déjà remplie : les défauts ne se voient pas] → c'est voulu (spec) ; dans la VM, qui porte déjà ces valeurs, la validation remet à zéro les clés concernées pour observer la base du système (tâche 2.1).
+- [Clés écrites par l'assistant de première connexion d'un poste vraiment neuf (disposition du clavier, localisation, rapports d'erreur)] → pour ces clés, la valeur du système ne s'applique jamais, sans message (la base de l'utilisateur passe devant — voulu, spec) ; la tâche 2.2 relève `dconf dump /` sur le snapshot vierge **après la première connexion et avant le module**, puis vérifie chaque clé retenue après le module, et consigne celles que l'assistant écrit (contre-vérification, 30 sept 2026).
+- [Prise en compte en cours de session] → à relever (tâche 0.1) : dconf suit en principe la base compilée à chaud ; sinon « à la session suivante » (spec).
+- [Erreur de syntaxe dans le fichier de réglages après une mise à jour] → `dconf update` échoue, nommé ; test du fichier (D7) sur les clés attendues.
+- [Profil dconf posé par un tiers plus tard] → le module échoue en le nommant (D2) plutôt que de l'écraser.
+- [Noms de lanceurs provisoires] → sans effet si faux (ignorés) ; corrigés à la tâche 2.2.
+
+## Migration Plan
+
+Poste existant (VM) : la base de l'utilisateur garde ses valeurs ; seul ce qui n'y est pas réglé prend les défauts. Retour arrière : retirer `/etc/dconf/profile/user` et `/etc/dconf/db/local.d/00-dotfiles`, puis `dconf update`.
