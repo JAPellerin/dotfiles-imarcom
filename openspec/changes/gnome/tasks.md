@@ -4,8 +4,8 @@
 
 ## 1. Module
 
-- [ ] 1.1 `config/gnome/dconf-profile` et `config/gnome/reglages.dconf` (D1, D4 : clés retenues du Context, dock dans l'ordre, commentaires de mise à jour en tête, aucune clé écartée) ; `modules/70-gnome.sh` (D1 à D3, D5, D6) ; vérifier `shellcheck` propre et `./setup.sh --list` → `gnome` dans `[bureau]`, « non disponible ici » dans la WSL
-- [ ] 1.2 `tests/test-gnome.sh` : cas de D7 ; vérifier `bash tests/run-all.sh` vert
+- [x] 1.1 `config/gnome/dconf-profile` et `config/gnome/reglages.dconf` (D1, D4 : clés retenues du Context, dock dans l'ordre, commentaires de mise à jour en tête, aucune clé écartée) ; `modules/70-gnome.sh` (D1 à D3, D5, D6) ; vérifier `shellcheck` propre et `./setup.sh --list` → `gnome` dans `[bureau]`, « non disponible ici » dans la WSL — **fait le 30 sept 2026** : syntaxe du fichier vérifiée par le vrai `dconf compile` dans la VM (compilation OK ; un fichier fautif → code 1, clé nommée)
+- [x] 1.2 `tests/test-gnome.sh` : cas de D7 ; vérifier `bash tests/run-all.sh` vert — **fait le 30 sept 2026** : 53 assertions (métadonnées acceptées par `module_meta` ; chaque clé retenue et le dock dans l'ordre ; clés écartées absentes ; premier passage, relance sans `sudo`, fichier modifié, base absente ou plus ancienne, profil différent intact, `dconf update` en échec, `dconf-cli` absent)
 
 ## 2. Validation et documentation
 
