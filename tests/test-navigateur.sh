@@ -239,12 +239,16 @@ assert_eq "10 mai 2022 12:00 UTC → ability (bascule à midi UTC)" ability "$(N
 assert_eq "21 sept 2026 18:00 UTC → index 1596 (vérifié sur la note réelle)" "$(sed -n 1597p "$DOTFILES_DIR/config/navigateur/bip39-english.txt")" "$(NAV_NOW=1790013600 _nav_brave_word25)"
 
 printf '%s\n' "== Brave Sync : parcours guidé =="
+# clipboard_ready : attend que le parcours ait copié la phrase (10 s au plus).
+clipboard_ready() { local i; for (( i = 0; i < 200; i++ )); do [[ -s $TEST_TMP/clipboard ]] && return; sleep 0.05; done; }
 reset 'brave-browser\t1.80'; touch "$TEST_TMP/session"
 seq -f 'mot%g' 1 25 | paste -sd' ' >"$TEST_TMP/note"
 expected25=$(NAV_NOW=1790013600 _nav_brave_word25)
 # La chaîne apparaît dans Preferences pendant l'attente (sondage à 0,1 s ; délai de 3 s :
-# wait_for compte en secondes entières, 1 s pourrait expirer aussitôt).
-( sleep 0.3; printf '{"brave_sync_v2":{"seed":"chiffre"}}' >"$NAV_BRAVE_PREFS" ) &
+# wait_for compte en secondes entières, 1 s pourrait expirer aussitôt). Écrite dès que
+# la phrase est au presse-papiers, donc le parcours commencé : un délai fixe la faisait
+# arriver avant la sonde sur une machine chargée (« déjà fait », test intermittent).
+( clipboard_ready; printf '{"brave_sync_v2":{"seed":"chiffre"}}' >"$NAV_BRAVE_PREFS" ) &
 out=$(NAV_NOW=1790013600 module_configure 2>&1); rc=$?
 wait
 assert_eq "module_configure réussit" 0 "$rc"
@@ -262,7 +266,7 @@ assert_not_contains "la graine n'est pas à l'écran" "$out" "mot1 mot2"
 reset 'brave-browser\t1.80'; touch "$TEST_TMP/session"
 seq -f 'mot%g' 1 25 | paste -sd' ' >"$TEST_TMP/note"
 # Le presse-papiers est relevé pendant l'attente : « Passer » le vide ensuite.
-( sleep 0.3; cp "$TEST_TMP/clipboard" "$TEST_TMP/clipboard-pendant" ) &
+( clipboard_ready; cp "$TEST_TMP/clipboard" "$TEST_TMP/clipboard-pendant" ) &
 out=$(NAV_NOW=1790013600 FAKE_SYNC="Passer (étape manuelle)" module_configure 2>&1); rc=$?
 wait
 assert_eq "« Passer » : réussit" 0 "$rc"
