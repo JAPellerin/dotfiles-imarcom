@@ -1,0 +1,18 @@
+# Profil AppArmor d'Orca, copié vers /etc/apparmor.d/opt.Orca.orca-ide par le
+# module orca. Ubuntu 26.04 restreint les espaces de noms utilisateur non
+# privilégiés : sans ce profil, le bac à sable Chromium d'Orca est refusé et il
+# plante au lancement, malgré son chrome-sandbox setuid (même cas que Rocket.Chat).
+# Le paquet livre un profil (/opt/Orca/resources/apparmor-profile) mais ne
+# l'installe pas ; celui-ci en reprend le contenu, sous le nom du chemin de
+# l'exécutable (convention AppArmor classique), hors de portée des scripts de
+# maintenance du paquet.
+# Voir openspec/changes/orca/design.md (D3).
+abi <abi/4.0>,
+include <tunables/global>
+
+profile /opt/Orca/orca-ide flags=(unconfined) {
+  userns,
+
+  # Ajouts propres au poste : voir /etc/apparmor.d/local/README.
+  include if exists <local/opt.Orca.orca-ide>
+}

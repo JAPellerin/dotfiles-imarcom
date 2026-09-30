@@ -74,8 +74,8 @@ assert_ok "localisation coupée" key org/gnome/system/location "enabled=false"
 assert_ok "veilleuse sans horaire automatique" key org/gnome/settings-daemon/plugins/color "night-light-schedule-automatic=false"
 assert_ok "dossiers en premier" key org/gtk/gtk4/settings/file-chooser "sort-directories-first=true"
 dock=$(sed -n "s/^favorite-apps=//p" "$SRC")
-assert_eq "dock : applications dans l'ordre (Fichiers, Ghostty, navigateurs, 1Password, VS Code, …, éditeur de texte)" \
-  "['org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'brave-browser.desktop', 'firefox.desktop', 'google-chrome.desktop', 'com.onepassword.OnePassword.desktop', 'com.microsoft.VSCode.desktop', 'com.anthropic.Claude.desktop', 'thunderbird.desktop', 'rocketchat-desktop.desktop', 'md.obsidian.Obsidian.desktop', 'spotify.desktop', 'org.gnome.TextEditor.desktop']" "$dock"
+assert_eq "dock : applications dans l'ordre (Fichiers, Ghostty, navigateurs, 1Password, Orca, VS Code, …, éditeur de texte)" \
+  "['org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'brave-browser.desktop', 'firefox.desktop', 'google-chrome.desktop', 'com.onepassword.OnePassword.desktop', 'orca-ide.desktop', 'com.microsoft.VSCode.desktop', 'com.anthropic.Claude.desktop', 'thunderbird.desktop', 'rocketchat-desktop.desktop', 'md.obsidian.Obsidian.desktop', 'spotify.desktop', 'org.gnome.TextEditor.desktop']" "$dock"
 for ecarte in 'numlock-state' 'settings-daemon/plugins/power' 'org/gnome/mutter' 'tiling-assistant' 'app-picker-layout' 'enabled-extensions'; do
   assert_fail "clé écartée absente : $ecarte" grep -q -- "$ecarte" "$SRC"
 done
