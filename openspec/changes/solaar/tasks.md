@@ -1,7 +1,7 @@
 ## 1. Module `solaar`
 
-- [ ] 1.1 `modules/71-solaar.sh` (D1 à D3) — en-tête avec liens officiels (https://pwr-solaar.github.io/Solaar/) ; vérifier `shellcheck` propre et `./setup.sh --list` → `solaar` dans `[bureau]`, « non disponible ici » dans la WSL
-- [ ] 1.2 `tests/test-solaar.sh` : cas de D4 ; vérifier `bash tests/run-all.sh` vert et la ligne `shellcheck` de `CLAUDE.md` propre
+- [x] 1.1 `modules/71-solaar.sh` (D1 à D3) — en-tête avec liens officiels (https://pwr-solaar.github.io/Solaar/) ; vérifier `shellcheck` propre et `./setup.sh --list` → `solaar` dans `[bureau]`, « non disponible ici » dans la WSL — **fait le 30 sept 2026** : `[bureau] solaar … non disponible ici` dans la WSL, `shellcheck` propre
+- [x] 1.2 `tests/test-solaar.sh` : cas de D4 ; vérifier `bash tests/run-all.sh` vert et la ligne `shellcheck` de `CLAUDE.md` propre — **fait le 30 sept 2026** : 17 assertions (métadonnées acceptées par `module_meta`, première installation avec `DEBIAN_FRONTEND=noninteractive` constaté par le faux `apt-get`, relance sans aucun `apt-get`, paquet retiré → à faire) ; `run-all.sh` vert
 
 ## 2. Validation en VM et documentation
 
