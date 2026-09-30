@@ -5,11 +5,15 @@ Installer Solaar, le gestionnaire des périphériques Logitech (souris, claviers
 ## ADDED Requirements
 
 ### Requirement: Solaar depuis les dépôts d'Ubuntu
-Le module `solaar` (groupe `bureau`, dépend de `base`, nécessite une session graphique) SHALL installer le paquet `solaar` depuis les dépôts d'Ubuntu, sans question à l'utilisateur. L'accès aux récepteurs MUST passer par les droits de la session locale fournis par le paquet, sans groupe système supplémentaire ni réouverture de session. Un paquet déjà installé MUST NOT être réinstallé. Le module MUST NOT écrire de réglages de périphériques.
+Le module `solaar` (groupe `bureau`, dépend de `base`, nécessite une session graphique) SHALL installer le paquet `solaar` depuis les dépôts d'Ubuntu, sans question à l'utilisateur. L'accès aux récepteurs MUST passer par les droits de la session locale fournis par le paquet, sans groupe système supplémentaire ni réouverture de session ; lorsque le module vient d'installer le paquet, il SHALL appliquer ces droits aux périphériques déjà présents, sans redémarrage ni rebranchement. Un paquet déjà installé MUST NOT être réinstallé. Le module MUST NOT écrire de réglages de périphériques.
 
 #### Scenario: Machine fraîche
 - **WHEN** le module s'exécute sur une machine sans Solaar
 - **THEN** le paquet `solaar` est installé et, à la session suivante, Solaar démarre de lui-même ; son icône s'affiche dans la barre du haut dès qu'un récepteur ou un appareil Logitech est détecté
+
+#### Scenario: Récepteur déjà branché
+- **WHEN** un récepteur Logitech est branché avant l'exécution du module
+- **THEN** dès la fin du module, l'utilisateur de la session a accès au récepteur et Solaar le voit, sans redémarrage ni rebranchement
 
 #### Scenario: Déjà installé
 - **WHEN** le paquet `solaar` est installé

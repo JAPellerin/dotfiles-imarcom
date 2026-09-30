@@ -10,13 +10,14 @@ Voir `proposal.md`. Relevés du 30 sept 2026 (paquet `solaar` 1.1.19-1 des dép�
 | Démarrage | `/etc/xdg/autostart/solaar.desktop` : `Exec=solaar --window=hide` (icône dans la barre ; Ubuntu affiche ces icônes par son extension AppIndicator, active par défaut) |
 | Lanceur | `/usr/share/applications/solaar.desktop` |
 | Réglages | `~/.config/solaar/config.yaml`, par appareil (numéro de série) |
+| Règles udev après installation (VM, 30 sept 2026, relevé par `ssh vm` après installation et réouverture de session) | `udevadm info /dev/uinput` sans ligne `TAGS` (pas d'`uaccess`), `getfacl /dev/uinput` → `user::rw- group::--- other::---`, `crw------- root root` ; Solaar au démarrage : « cannot create uinput device: /dev/uinput cannot be opened for writing ». Cause : udevd relit ses règles dès que leur horodatage change, mais seulement au prochain événement, et aucun événement ne concerne les périphériques déjà présents (`/dev/uinput` créé au démarrage, récepteur déjà branché) : ni tag ni ACL avant un redémarrage ou un rebranchement. Le `postinst` du paquet ne recharge ni ne rejoue rien |
 | Sans appareil (VM, 30 sept 2026, relevé par `ssh vm`) | Solaar lancé, indicateur enregistré (`/org/ayatana/NotificationItem/indicator_solaar`) mais `Status='Passive'`, `IconName='solaar-init'` : sans récepteur ni appareil détecté, Solaar se met en passif, et l'extension `ubuntu-appindicators` (active) masque les éléments passifs. Aucune icône visible dans la VM, qui n'a pas d'USB : ce n'est pas un défaut — l'icône apparaît dès qu'un appareil est détecté |
 
 Modèle : un module « paquet apt seul » (`apt_install` dans `module_install`, `pkg_installed` dans `module_check`) ; `apt_install` passe `DEBIAN_FRONTEND=noninteractive`.
 
 ## Goals / Non-Goals
 
-**Goals :** Solaar installé, démarré avec la session, accès aux récepteurs sans configuration.
+**Goals :** Solaar installé, démarré avec la session, accès aux récepteurs sans configuration — y compris un récepteur déjà branché pendant `setup.sh`, sans redémarrage.
 
 **Non-Goals :** réglages des périphériques (décision de l'utilisateur, 30 sept 2026) ; groupe `plugdev` (utile seulement pour un accès par SSH) ; Solaar dans le dock ; règles de touches de Solaar (limitées sous Wayland).
 
@@ -32,11 +33,16 @@ Alternative écartée : groupe `plugdev` + `ensure_user_in_group` (accès par SS
 ### D3. Métadonnées
 `MODULE_NAME="solaar"`, `MODULE_DESC="Solaar (périphériques Logitech ; dépôts Ubuntu)"` (sans virgule ni « | »), `MODULE_GROUP="bureau"`, `MODULE_DEPS="base"`, `MODULE_NEEDS_GUI=1` (application de la session graphique ; sans intérêt dans la WSL).
 
+### D5. Règles udev appliquées aux périphériques déjà présents (contre-vérification, 30 sept 2026)
+Après `apt_install`, **seulement quand le paquet vient d'être installé** (`pkg_installed` avant ; une relance ne fait rien) : `run_sudo udevadm control --reload-rules`, puis `run_sudo udevadm trigger --action=change --subsystem-match=hidraw --subsystem-match=misc` — les règles du paquet visent `hidraw` (récepteurs, appareils Bluetooth) et `misc` (`/dev/uinput`). Le `change` rejoue les règles sur ces périphériques : tag `uaccess` posé, ACL de la session active écrites par udev. Échec de l'une des deux commandes → module en échec nommé. Constat prévu (tâche 2.3) : `getfacl /dev/uinput` porte `user:<utilisateur>:rw-` juste après le module, sans réouverture de session.
+Alternative écartée : une étape manuelle « redémarrer ou rebrancher le récepteur » (contredit la spec : accès sans réouverture de session).
+
 ### D4. Tests (`tests/test-solaar.sh`)
-Doublures `dpkg-query` (fichier) et `apt-get` (ajoute les paquets, trace ses appels), `sudo` factice ; fonctions par `module_call`. Cas : `module_check` 1 sans le paquet ; `module_install` → `solaar` installé ; `module_check` 0 ; relance → aucun `apt-get install` ; métadonnées (`NEEDS_GUI`, groupe, description acceptée par `module_meta`).
+Doublures `dpkg-query` (fichier), `apt-get` (ajoute les paquets, trace ses appels) et `udevadm` (trace, échec sur marqueur), `sudo` factice ; fonctions par `module_call`. Cas : `module_check` 1 sans le paquet ; `module_install` → `solaar` installé, puis `udevadm control --reload-rules` et `udevadm trigger --action=change` sur `hidraw` et `misc`, dans cet ordre (D5) ; `module_check` 0 ; relance → aucun `apt-get install` ni `udevadm` ; `udevadm` en échec → module en échec nommé ; métadonnées (`NEEDS_GUI`, groupe, description acceptée par `module_meta`).
 
 ## Risks / Trade-offs
 
+- [Récepteur branché pendant `setup.sh`, avant le module] → couvert par D5 (événement `change` rejoué) ; un récepteur branché **après** le module reçoit ses ACL par l'événement `add` normal.
 - [VM sans périphérique USB] → validation en VM limitée à l'installation et au démarrage : sans appareil, l'indicateur reste passif et l'icône n'est pas affichée (Context) ; icône et détection des appareils constatées sur le laptop.
 - [Récepteur Bolt ou appareil Bluetooth récent mal pris en charge par la version d'Ubuntu] → à constater sur le laptop ; Solaar amont publie aussi un PPA, hors périmètre tant que la version d'Ubuntu suffit.
 
