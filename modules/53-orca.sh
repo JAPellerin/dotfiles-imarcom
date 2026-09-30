@@ -12,7 +12,7 @@
 # AppArmor versionné, comme `rocketchat` : le chrome-sandbox setuid du paquet ne
 # suffit pas sous Ubuntu 26.04 (D3). Rien à voir avec le lecteur d'écran `orca`
 # de GNOME : paquet `orca-ide`, lanceur `orca-ide.desktop`.
-# Voir openspec/changes/orca/specs/module-orca/spec.md et openspec/changes/orca/design.md.
+# Voir openspec/specs/module-orca/spec.md et openspec/changes/archive/2026-09-30-orca/design.md.
 MODULE_NAME="orca"
 MODULE_DESC="Orca (IDE d'agents en parallèle ; .deb officiel des releases GitHub)"
 MODULE_GROUP="apps"

@@ -6,7 +6,7 @@
 # l'installe pas ; celui-ci en reprend le contenu, sous le nom du chemin de
 # l'exécutable (convention AppArmor classique), hors de portée des scripts de
 # maintenance du paquet.
-# Voir openspec/changes/orca/design.md (D3).
+# Voir openspec/changes/archive/2026-09-30-orca/design.md (D3).
 abi <abi/4.0>,
 include <tunables/global>
 
