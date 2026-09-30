@@ -18,7 +18,7 @@
 # branché et /dev/uinput, créé au démarrage, n'ont ni tag ni ACL tant qu'aucun
 # événement ne les concerne (relevé en VM). À l'installation, le module recharge
 # donc les règles et rejoue un événement « change » sur ces périphériques (D5).
-# Voir openspec/changes/solaar/specs/module-solaar/spec.md et openspec/changes/solaar/design.md.
+# Voir openspec/specs/module-solaar/spec.md et openspec/changes/archive/2026-09-30-solaar/design.md.
 MODULE_NAME="solaar"
 MODULE_DESC="Solaar (périphériques Logitech ; dépôts Ubuntu)"
 MODULE_GROUP="bureau"
