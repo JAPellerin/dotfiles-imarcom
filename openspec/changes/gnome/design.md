@@ -38,7 +38,7 @@ Absent → écrit. Identique (`cmp`) → rien. Différent → `log_error` qui no
 `_gnome_db_fresh` : `/etc/dconf/db/local` existe et n'est pas plus ancien que `00-dotfiles` (`! [[ keyfile -nt db ]]`). Dans `module_configure` : écriture des fichiers (D1, D2) ; si l'un a changé ou si la base n'est pas fraîche → `run_sudo dconf update` ; échec → nommé (une erreur de syntaxe du fichier de réglages s'y montre : sortie au journal).
 
 ### D4. Dock
-Clé `org/gnome/shell favorite-apps` du fichier de réglages : `['org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'brave-browser.desktop', 'firefox.desktop', 'google-chrome.desktop', 'com.onepassword.OnePassword.desktop', 'code.desktop', '<Claude>', 'thunderbird.desktop', '<Rocket.Chat>', '<Obsidian>', '<Spotify>']`. GNOME ignore un identifiant sans lanceur installé (spec : l'absent n'empêche pas les autres). Noms à relever marqués dans le fichier jusqu'à la tâche 2.2 — la VM n'a aucun de ces cinq lanceurs (relevé le 30 sept 2026, VM restaurée depuis les vagues précédentes) ; en attendant, les noms les plus probables des paquets officiels (`claude-desktop.desktop`, `rocketchat.desktop`, `obsidian.desktop`, `spotify.desktop`), corrigés au relevé.
+Clé `org/gnome/shell favorite-apps` du fichier de réglages : `['org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'brave-browser.desktop', 'firefox.desktop', 'google-chrome.desktop', 'com.onepassword.OnePassword.desktop', 'com.microsoft.VSCode.desktop', 'com.anthropic.Claude.desktop', 'thunderbird.desktop', 'rocketchat-desktop.desktop', 'md.obsidian.Obsidian.desktop', 'spotify.desktop']`. GNOME ignore un identifiant sans lanceur installé (spec : l'absent n'empêche pas les autres). Lanceurs relevés sur la VM après l'installation complète (30 sept 2026, tâche 2.2) : VS Code `com.microsoft.VSCode.desktop` (pas `code.desktop`), Claude `com.anthropic.Claude.desktop`, Obsidian `md.obsidian.Obsidian.desktop`, Rocket.Chat `rocketchat-desktop.desktop`, Spotify `spotify.desktop` ; Chrome non installé sur la VM (nom tenu par le module `navigateur`).
 
 ### D5. `module_check`
 `pkg_installed dconf-cli`, profil identique au dépôt, réglages identiques au dépôt, base compilée fraîche (D3), dock qui n'est plus celui d'Ubuntu (D8). Seule lecture de `dconf` : ce dock ; les retouches de l'utilisateur ne rendent pas le module « à faire » (spec).
@@ -61,7 +61,7 @@ Alternatives écartées (utilisateur) : toujours écrire le dock (retouches écr
 - [Prise en compte en cours de session] → à relever (tâche 0.1) : dconf suit en principe la base compilée à chaud ; sinon « à la session suivante » (spec).
 - [Erreur de syntaxe dans le fichier de réglages après une mise à jour] → `dconf update` échoue, nommé ; test du fichier (D7) sur les clés attendues.
 - [Profil dconf posé par un tiers plus tard] → le module échoue en le nommant (D2) plutôt que de l'écraser.
-- [Noms de lanceurs provisoires] → sans effet si faux (ignorés) ; corrigés à la tâche 2.2.
+- [Nom de lanceur changé par un éditeur] → l'icône disparaît du dock sans erreur (identifiant ignoré) ; relever et corriger au cycle de mise à jour.
 
 ## Migration Plan
 

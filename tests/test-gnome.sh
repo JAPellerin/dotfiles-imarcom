@@ -76,7 +76,7 @@ assert_ok "veilleuse sans horaire automatique" key org/gnome/settings-daemon/plu
 assert_ok "dossiers en premier" key org/gtk/gtk4/settings/file-chooser "sort-directories-first=true"
 dock=$(sed -n "s/^favorite-apps=//p" "$SRC")
 assert_eq "dock : applications dans l'ordre (Fichiers, Ghostty, navigateurs, 1Password, VS Code, …)" \
-  "['org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'brave-browser.desktop', 'firefox.desktop', 'google-chrome.desktop', 'com.onepassword.OnePassword.desktop', 'code.desktop', 'claude-desktop.desktop', 'thunderbird.desktop', 'rocketchat-desktop.desktop', 'obsidian.desktop', 'spotify.desktop']" "$dock"
+  "['org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'brave-browser.desktop', 'firefox.desktop', 'google-chrome.desktop', 'com.onepassword.OnePassword.desktop', 'com.microsoft.VSCode.desktop', 'com.anthropic.Claude.desktop', 'thunderbird.desktop', 'rocketchat-desktop.desktop', 'md.obsidian.Obsidian.desktop', 'spotify.desktop']" "$dock"
 for ecarte in 'settings-daemon/plugins/power' 'org/gnome/mutter' 'tiling-assistant' 'app-picker-layout' 'enabled-extensions'; do
   assert_fail "clé écartée absente : $ecarte" grep -q -- "$ecarte" "$SRC"
 done
