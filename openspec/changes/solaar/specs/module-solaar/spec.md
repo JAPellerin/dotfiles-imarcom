@@ -9,7 +9,7 @@ Le module `solaar` (groupe `bureau`, dépend de `base`, nécessite une session g
 
 #### Scenario: Machine fraîche
 - **WHEN** le module s'exécute sur une machine sans Solaar
-- **THEN** le paquet `solaar` est installé et, à la session suivante, Solaar démarre de lui-même avec son icône dans la barre du haut
+- **THEN** le paquet `solaar` est installé et, à la session suivante, Solaar démarre de lui-même ; son icône s'affiche dans la barre du haut dès qu'un récepteur ou un appareil Logitech est détecté
 
 #### Scenario: Déjà installé
 - **WHEN** le paquet `solaar` est installé

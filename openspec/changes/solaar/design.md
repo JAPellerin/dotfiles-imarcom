@@ -10,6 +10,7 @@ Voir `proposal.md`. Relevés du 30 sept 2026 (paquet `solaar` 1.1.19-1 des dép�
 | Démarrage | `/etc/xdg/autostart/solaar.desktop` : `Exec=solaar --window=hide` (icône dans la barre ; Ubuntu affiche ces icônes par son extension AppIndicator, active par défaut) |
 | Lanceur | `/usr/share/applications/solaar.desktop` |
 | Réglages | `~/.config/solaar/config.yaml`, par appareil (numéro de série) |
+| Sans appareil (VM, 30 sept 2026, relevé par `ssh vm`) | Solaar lancé, indicateur enregistré (`/org/ayatana/NotificationItem/indicator_solaar`) mais `Status='Passive'`, `IconName='solaar-init'` : sans récepteur ni appareil détecté, Solaar se met en passif, et l'extension `ubuntu-appindicators` (active) masque les éléments passifs. Aucune icône visible dans la VM, qui n'a pas d'USB : ce n'est pas un défaut — l'icône apparaît dès qu'un appareil est détecté |
 
 Modèle : un module « paquet apt seul » (`apt_install` dans `module_install`, `pkg_installed` dans `module_check`) ; `apt_install` passe `DEBIAN_FRONTEND=noninteractive`.
 
@@ -36,7 +37,7 @@ Doublures `dpkg-query` (fichier) et `apt-get` (ajoute les paquets, trace ses app
 
 ## Risks / Trade-offs
 
-- [VM sans périphérique USB] → validation en VM limitée à l'installation, au démarrage et à l'icône ; détection des appareils constatée sur le laptop.
+- [VM sans périphérique USB] → validation en VM limitée à l'installation et au démarrage : sans appareil, l'indicateur reste passif et l'icône n'est pas affichée (Context) ; icône et détection des appareils constatées sur le laptop.
 - [Récepteur Bolt ou appareil Bluetooth récent mal pris en charge par la version d'Ubuntu] → à constater sur le laptop ; Solaar amont publie aussi un PPA, hors périmètre tant que la version d'Ubuntu suffit.
 
 ## Migration Plan
