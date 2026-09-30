@@ -16,7 +16,7 @@
 # l'utilisateur dès la première connexion ; il y est recopié tant qu'il est encore
 # celui d'Ubuntu ou la liste que le dépôt avait déployée avant une mise à jour,
 # jamais une fois modifié par l'utilisateur (D8, D9).
-# Voir openspec/changes/gnome/specs/module-gnome/spec.md et openspec/changes/gnome/design.md.
+# Voir openspec/specs/module-gnome/spec.md et openspec/changes/archive/2026-09-30-gnome/design.md.
 MODULE_NAME="gnome"
 MODULE_DESC="bureau GNOME : clavier ; thème sombre ; fond ; dock ; confidentialité (valeurs par défaut du système)"
 MODULE_GROUP="bureau"

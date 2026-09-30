@@ -5,7 +5,7 @@
 # Mise à jour : sur le poste de référence, `dconf dump /` ne liste que ce qui
 # s'écarte des défauts ; y reprendre les clés voulues (pas l'état tenu par GNOME
 # ou les applications, ni ce qu'écrit l'extension de pavage), puis relancer
-# `setup.sh gnome`. Voir openspec/changes/gnome/design.md (D1, D4).
+# `setup.sh gnome`. Voir openspec/changes/archive/2026-09-30-gnome/design.md (D1, D4, D8, D9).
 
 [org/gnome/desktop/input-sources]
 sources=[('xkb', 'ca')]
