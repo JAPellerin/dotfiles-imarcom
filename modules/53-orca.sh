@@ -26,6 +26,9 @@ ORCA_PACKAGE="orca-ide"
 ORCA_ROOT="${ORCA_ROOT:-}"
 ORCA_APPARMOR_SRC="config/orca/apparmor-profile"
 ORCA_APPARMOR="$ORCA_ROOT/etc/apparmor.d/opt.Orca.orca-ide"
+# Profil que poserait un paquet bâti par un electron-builder plus récent, attaché
+# au même exécutable : deux attachements → exec refusé (D3, « Risks »).
+ORCA_APPARMOR_UPSTREAM="$ORCA_ROOT/etc/apparmor.d/orca-ide"
 ORCA_REPOS_MANUAL="Ouvrir Orca (menu des applications) et y ajouter ses dépôts de travail (~/projets/…)."
 
 # Déjà fait = paquet installé et profil AppArmor identique au dépôt (D1, D3).
@@ -53,8 +56,12 @@ module_install() {
 
 # Profil AppArmor (D3) : chargé seulement s'il vient d'être écrit ; retiré si le
 # chargement échoue, pour que module_check ne tienne pas pour fait un profil
-# jamais chargé.
+# jamais chargé. Un profil du paquet au même attachement est signalé, jamais
+# retiré (il n'est pas au script).
 module_configure() {
+  if [[ -e $ORCA_APPARMOR_UPSTREAM ]]; then
+    log_warn "Profil AppArmor du paquet présent : $ORCA_APPARMOR_UPSTREAM — deux profils attachés à /opt/Orca/orca-ide empêchent Orca de démarrer ; en retirer un (sudo apparmor_parser -R <fichier>, puis supprimer le fichier)."
+  fi
   if cmp -s -- "$DOTFILES_DIR/$ORCA_APPARMOR_SRC" "$ORCA_APPARMOR"; then
     log_ok "Profil AppArmor déjà à jour : $ORCA_APPARMOR"
     return 0

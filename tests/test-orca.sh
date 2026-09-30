@@ -112,6 +112,16 @@ assert_fail "module_check → à faire" mcall module_check
 rm -f "$TEST_TMP/parser-refuse"
 assert_ok "après correction, module_configure réussit" mcall module_configure
 
+printf '%s\n' "== profil du paquet au même attachement =="
+touch "$ORCA_ROOT/etc/apparmor.d/orca-ide"
+out=$(mcall module_configure 2>&1); rc=$?
+assert_eq "module_configure réussit" 0 "$rc"
+assert_contains "doublon signalé en le nommant" "$out" "$ORCA_ROOT/etc/apparmor.d/orca-ide"
+assert_ok "doublon laissé en place" test -e "$ORCA_ROOT/etc/apparmor.d/orca-ide"
+rm -f "$ORCA_ROOT/etc/apparmor.d/orca-ide"
+out=$(mcall module_configure 2>&1)
+assert_not_contains "sans doublon : aucun avertissement" "$out" "Profil AppArmor du paquet"
+
 printf '%s\n' "== recherche de l'URL en échec =="
 : >"$INSTALLED"; : >"$CALLS"; : >"$MANUAL_STEPS_FILE"; touch "$TEST_TMP/github-refuse"
 out=$(mcall module_install 2>&1); rc=$?

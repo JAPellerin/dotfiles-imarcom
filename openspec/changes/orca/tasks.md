@@ -2,6 +2,7 @@
 
 - [x] 1.1 `config/orca/apparmor-profile` (D3, commentaires en tête sur le modèle de celui de `rocketchat`) ; `modules/53-orca.sh` (`MODULE_GROUP=apps`, `MODULE_DEPS="base"`, `MODULE_NEEDS_GUI=1`, description de D1) — en-tête avec liens officiels, constantes, `module_check`, `module_install` (D1, D2), `module_configure` (profil, D3) ; vérifier `shellcheck` propre et `./setup.sh --list` → « non disponible ici » dans la WSL — **fait le 30 sept 2026**
 - [x] 1.2 `tests/test-orca.sh` : cas de D5 ; vérifier `bash tests/run-all.sh` vert et la ligne `shellcheck` de `CLAUDE.md` propre — **fait le 30 sept 2026** : 44 assertions (dont profil écrit et chargé une fois, relance sans rechargement, profil modifié ou retiré, chargement en échec → profil retiré)
+- [x] 1.3 Contre-vérification (30 sept 2026) : profil AppArmor du paquet au même attachement signalé par `module_configure` (D3), risque du conflit d'attachement et ligne des mises à jour intégrées corrigés dans le design ; test : doublon signalé et laissé en place — **fait le 30 sept 2026** : 48 assertions
 
 ## 2. Dock
 
