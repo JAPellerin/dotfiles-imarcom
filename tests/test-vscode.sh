@@ -24,7 +24,8 @@ cat >"$TEST_TMP/bin/dpkg-query" <<'FAKE'
 grep -qx -- "${*: -1}" "$FAKE_DIR/installed" 2>/dev/null && printf 'install ok installed'
 FAKE
 # Faux code : --list-extensions lit le fichier, --install-extension l'ajoute —
-# ou échoue si l'identifiant figure dans « extensions-refusees ».
+# ou échoue si l'identifiant figure dans « extensions-refusees », ou une seule
+# fois s'il figure dans « extensions-refusees-une-fois » (retiré au passage).
 cat >"$TEST_TMP/bin/code" <<'FAKE'
 #!/usr/bin/env bash
 case ${1:-} in
@@ -32,13 +33,18 @@ case ${1:-} in
   --install-extension)
     printf 'code --install-extension %s\n' "$2" >>"$FAKE_DIR/calls"
     grep -qxF -- "$2" "$FAKE_DIR/extensions-refusees" 2>/dev/null && exit 1
+    if grep -qxF -- "$2" "$FAKE_DIR/extensions-refusees-une-fois" 2>/dev/null; then
+      grep -vxF -- "$2" "$FAKE_DIR/extensions-refusees-une-fois" >"$FAKE_DIR/reste-une-fois"
+      mv "$FAKE_DIR/reste-une-fois" "$FAKE_DIR/extensions-refusees-une-fois"
+      echo "Server returned 503" >&2; exit 1
+    fi
     printf '%s\n' "$2" >>"$FAKE_DIR/extensions" ;;
   *) exit 1 ;;
 esac
 FAKE
 chmod +x "$TEST_TMP/bin/"*
 export PATH="$TEST_TMP/bin:$PATH"
-export VSCODE_BIN="$TEST_TMP/bin/code"
+export VSCODE_BIN="$TEST_TMP/bin/code" VSCODE_EXT_PAUSE=0
 # shellcheck source=../modules/51-vscode.sh
 source "$DOTFILES_DIR/modules/51-vscode.sh"
 
@@ -114,11 +120,23 @@ VSCODE_EXTENSIONS_FILE="$TEST_TMP/liste.garde"
 printf '%s\n' "== extension introuvable =="
 grep -v '^yzhang.markdown-all-in-one$' "$EXTS" >"$TEST_TMP/reste"; mv "$TEST_TMP/reste" "$EXTS"
 printf 'yzhang.markdown-all-in-one\n' >"$TEST_TMP/extensions-refusees"
+: >"$CALLS"
 out=$(module_configure 2>&1); rc=$?
 assert_ok "module_configure échoue" test "$rc" -ne 0
 assert_contains "l'échec nomme l'extension" "$out" "yzhang.markdown-all-in-one"
+assert_eq "trois tentatives avant l'échec" 3 "$(count_calls 'code --install-extension yzhang.markdown-all-in-one')"
 rm -f "$TEST_TMP/extensions-refusees"
 assert_ok "après correction, module_configure réussit" module_configure
+
+printf '%s\n' "== panne passagère du magasin =="
+grep -v '^yzhang.markdown-all-in-one$' "$EXTS" >"$TEST_TMP/reste"; mv "$TEST_TMP/reste" "$EXTS"
+printf 'yzhang.markdown-all-in-one\n' >"$TEST_TMP/extensions-refusees-une-fois"
+: >"$CALLS"
+out=$(module_configure 2>&1); rc=$?
+assert_eq "module_configure réussit" 0 "$rc"
+assert_eq "deux tentatives" 2 "$(count_calls 'code --install-extension yzhang.markdown-all-in-one')"
+assert_contains "extension installée" "$(cat "$EXTS")" "yzhang.markdown-all-in-one"
+assert_not_contains "aucun échec affiché" "$out" "Échec"
 
 printf '%s\n' "== module_check : chacune de ses conditions =="
 assert_ok "module_check → déjà fait" module_check

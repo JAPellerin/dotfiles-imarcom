@@ -1,6 +1,6 @@
 ## 1. Module
 
-- [ ] 1.1 `modules/51-vscode.sh` : `VSCODE_EXT_TRIES`, `VSCODE_EXT_PAUSE` et `_vscode_install_extension` (D1, D2) ; `module_configure` l'appelle sous un seul `ui_spin` ; `tests/test-vscode.sh` : cas de D3 ; vérifier `bash tests/run-all.sh` vert et la ligne `shellcheck` de `CLAUDE.md` propre
+- [x] 1.1 `modules/51-vscode.sh` : `VSCODE_EXT_TRIES`, `VSCODE_EXT_PAUSE` et `_vscode_install_extension` (D1, D2) ; `module_configure` l'appelle sous un seul `ui_spin` ; `tests/test-vscode.sh` : cas de D3 ; vérifier `bash tests/run-all.sh` vert et la ligne `shellcheck` de `CLAUDE.md` propre — **fait le 30 sept 2026** : 41 assertions (dont trois tentatives avant l'échec, panne passagère rattrapée au 2ᵉ essai sans échec affiché)
 
 ## 2. Validation
 

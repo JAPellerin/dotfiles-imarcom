@@ -23,6 +23,10 @@ VSCODE_EXTENSIONS_FILE="$DOTFILES_DIR/config/vscode/extensions.txt"
 # Chemin du paquet plutôt que `code` du PATH : dans la WSL, `code` est celui de
 # Windows (D5).
 VSCODE_BIN="${VSCODE_BIN:-/usr/bin/code}"
+# Installation d'une extension : tentatives et pause entre deux, en secondes
+# (magasin parfois en 503 passager) ; surchargeables (tests).
+VSCODE_EXT_TRIES="${VSCODE_EXT_TRIES:-3}"
+VSCODE_EXT_PAUSE="${VSCODE_EXT_PAUSE:-10}"
 # Connexion de l'extension Atlassian : OAuth dans le navigateur, jetons dans le
 # stockage de secrets de VS Code — rien de scriptable, étape manuelle (D6b).
 VSCODE_ATLASSIAN_MANUAL="Connecter Jira et Bitbucket dans VS Code : extension Atlassian (barre latérale) → se connecter, dans le navigateur."
@@ -81,9 +85,22 @@ _vscode_debconf() {
   run_sudo debconf-set-selections "$tmp"
 }
 
-# Extensions manquantes seulement, une à une ; un échec arrête le module en
-# nommant l'extension, la relance ne refera que celles qui manquent (D3). En
-# utilisateur, jamais sudo : VS Code refuse de tourner en root.
+# _vscode_install_extension <id> : jusqu'à VSCODE_EXT_TRIES tentatives, espacées
+# de VSCODE_EXT_PAUSE secondes ; 0 à la première réussite. Lancée sous un seul
+# ui_spin : une tentative ratée puis rattrapée n'affiche rien, chacune reste au
+# journal (par run). Voir openspec/changes/vscode-reessai/design.md (D1, D2).
+_vscode_install_extension() {
+  local id=$1 try
+  for (( try = 1; try <= VSCODE_EXT_TRIES; try++ )); do
+    run "$VSCODE_BIN" --install-extension "$id" && return 0
+    (( try < VSCODE_EXT_TRIES )) && sleep "$VSCODE_EXT_PAUSE"
+  done
+  return 1
+}
+
+# Extensions manquantes seulement, une à une ; un échec (après les tentatives)
+# arrête le module en nommant l'extension, la relance ne refera que celles qui
+# manquent (D3). En utilisateur, jamais sudo : VS Code refuse de tourner en root.
 module_configure() {
   local installed id
   installed=$(_vscode_installed) || installed=""
@@ -91,7 +108,7 @@ module_configure() {
     if grep -qxF -- "$id" <<<"$installed"; then
       continue
     fi
-    ui_spin "Extension VS Code : $id" run "$VSCODE_BIN" --install-extension "$id" \
+    ui_spin "Extension VS Code : $id" _vscode_install_extension "$id" \
       || { log_error "Extension VS Code non installée : $id"; return 1; }
   done < <(_vscode_wanted)
   log_ok "Extensions VS Code : $(_vscode_wanted | wc -l) présentes."
