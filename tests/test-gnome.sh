@@ -2,7 +2,8 @@
 # tests/test-gnome.sh — module gnome avec des doublures : racine /etc du test
 # (GNOME_ETC) ; sudo factice (run_sudo et install_system_file restent les vrais) ;
 # dpkg-query et apt-get (paquets dans un fichier) ; dconf factice (`update` touche
-# la base compilée et trace ses appels, échec sur drapeau). Fonctions du module
+# la base compilée, échec sur drapeau ; `read`/`write` du dock dans un fichier ;
+# appels tracés, sauf `read`). Fonctions du module
 # appelées par module_call, comme le fait le runner.
 # shellcheck source=lib.sh
 source "$(dirname -- "${BASH_SOURCE[0]}")/lib.sh"
@@ -36,7 +37,9 @@ shift; for a in "$@"; do [[ $a == -* ]] || printf '%s\n' "$a" >>"$FAKE_DIR/insta
 FAKE
 cat >"$TEST_TMP/bin/dconf" <<'FAKE'
 #!/usr/bin/env bash
+if [[ $1 == read ]]; then cat "$FAKE_DIR/dock" 2>/dev/null; exit 0; fi
 printf 'dconf %s\n' "$*" >>"$FAKE_DIR/calls"
+if [[ $1 == write ]]; then printf '%s\n' "$3" >"$FAKE_DIR/dock"; exit 0; fi
 [[ $1 == update ]] || exit 0
 [[ -e $FAKE_DIR/dconf-refuse ]] && { echo "error: invalid keyfile" >&2; exit 1; }
 mkdir -p "$GNOME_ETC/dconf/db"; : >"$GNOME_ETC/dconf/db/local"
@@ -132,9 +135,30 @@ out=$(mcall module_configure 2>&1); rc=$?
 assert_eq "module_configure échoue" 1 "$rc"
 assert_contains "échec nommé" "$out" "dconf update a échoué"
 rm -f "$TEST_TMP/dconf-refuse"
+mcall module_configure >/dev/null 2>&1
+
+printf '%s\n' "== dock d'Ubuntu (première connexion) =="
+UBUNTU="['firefox_firefox.desktop', 'org.gnome.Nautilus.desktop', 'snap-store_snap-store.desktop', 'org.gnome.Yelp.desktop', 'org.gnome.Ptyxis.desktop']"
+printf '%s\n' "$UBUNTU" >"$TEST_TMP/dock"
+assert_fail "dock d'Ubuntu → à faire" mcall module_check
+: >"$CALLS"
+assert_ok "module_configure réussit" mcall module_configure
+assert_eq "dock du dépôt écrit" "$dock" "$(cat "$TEST_TMP/dock")"
+assert_eq "écrit à la clé du dock" 1 "$(count_calls 'dconf write /org/gnome/shell/favorite-apps')"
+assert_eq "sans sudo ni recompilation" 0 "$(count_calls 'sudo\|dconf update')"
+assert_ok "module_check → déjà fait" mcall module_check
+
+printf '%s\n' "== dock modifié par l'utilisateur =="
+printf '%s\n' "['org.gnome.Nautilus.desktop', 'brave-browser.desktop']" >"$TEST_TMP/dock"
+assert_ok "module_check → déjà fait" mcall module_check
+: >"$CALLS"
+assert_ok "module_configure réussit" mcall module_configure
+assert_eq "dock intact" "['org.gnome.Nautilus.desktop', 'brave-browser.desktop']" "$(cat "$TEST_TMP/dock")"
+assert_eq "aucune écriture" 0 "$(count_calls 'dconf write')"
+rm -f "$TEST_TMP/dock"
+assert_ok "dock sans valeur (défaut du système) → déjà fait" mcall module_check
 
 printf '%s\n' "== dconf-cli absent =="
-mcall module_configure >/dev/null 2>&1
 : >"$INSTALLED"
 assert_fail "sans dconf-cli → à faire" mcall module_check
 

@@ -53,8 +53,10 @@ show-trash=false
 show-home=false
 
 # Dock : applications du script, dans l'ordre ; un lanceur absent est ignoré par
-# GNOME (un seul navigateur installé → un seul affiché). Claude, Rocket.Chat,
-# Obsidian et Spotify : noms probables, à confirmer au test d'installation
-# complète (tâche 2.2).
+# GNOME (un seul navigateur installé → un seul affiché). Ubuntu écrit son propre
+# dock dans la base de l'utilisateur à la première connexion : le module y
+# recopie cette liste tant que ce dock est encore celui d'Ubuntu (D8).
+# Claude, Rocket.Chat, Obsidian et Spotify : noms probables, à confirmer au test
+# d'installation complète (tâche 2.2).
 [org/gnome/shell]
 favorite-apps=['org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'brave-browser.desktop', 'firefox.desktop', 'google-chrome.desktop', 'com.onepassword.OnePassword.desktop', 'code.desktop', 'claude-desktop.desktop', 'thunderbird.desktop', 'rocketchat-desktop.desktop', 'obsidian.desktop', 'spotify.desktop']
