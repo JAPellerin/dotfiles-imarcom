@@ -157,6 +157,28 @@ assert_eq "aucune écriture" 0 "$(count_calls 'dconf write')"
 rm -f "$TEST_TMP/dock"
 assert_ok "dock sans valeur (défaut du système) → déjà fait" mcall module_check
 
+printf '%s\n' "== liste du dock mise à jour dans le dépôt =="
+OLD="['org.gnome.Nautilus.desktop', 'ancienne.desktop']"
+# old_keyfile : réglages déployés par une version antérieure du dépôt (autre dock).
+old_keyfile() { sed "s/^favorite-apps=.*/favorite-apps=$OLD/" "$SRC" >"$KEYFILE"; }
+old_keyfile; printf '%s\n' "$OLD" >"$TEST_TMP/dock"
+assert_fail "réglages déployés anciens → à faire" mcall module_check
+out=$(mcall module_configure 2>&1); rc=$?
+assert_eq "module_configure réussit" 0 "$rc"
+assert_eq "ancienne liste du dépôt → nouvelle liste écrite" "$dock" "$(cat "$TEST_TMP/dock")"
+assert_contains "mise à jour annoncée" "$out" "Dock mis à jour"
+assert_ok "module_check → déjà fait" mcall module_check
+old_keyfile; printf '%s\n' "['org.gnome.Nautilus.desktop', 'ancienne.desktop', 'org.gnome.TextEditor.desktop']" >"$TEST_TMP/dock"
+: >"$CALLS"
+assert_ok "dock retouché, dépôt mis à jour : module_configure réussit" mcall module_configure
+assert_eq "dock retouché intact" "['org.gnome.Nautilus.desktop', 'ancienne.desktop', 'org.gnome.TextEditor.desktop']" "$(cat "$TEST_TMP/dock")"
+assert_eq "aucune écriture du dock" 0 "$(count_calls 'dconf write')"
+printf '%s\n' "$dock" >"$TEST_TMP/dock"
+: >"$CALLS"
+assert_ok "relance, dock du dépôt : module_configure réussit" mcall module_configure
+assert_eq "aucune écriture" "" "$(cat "$CALLS")"
+rm -f "$TEST_TMP/dock"
+
 printf '%s\n' "== dconf-cli absent =="
 : >"$INSTALLED"
 assert_fail "sans dconf-cli → à faire" mcall module_check

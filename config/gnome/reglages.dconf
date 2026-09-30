@@ -52,7 +52,8 @@ show-home=false
 # Dock : applications du script, dans l'ordre ; un lanceur absent est ignoré par
 # GNOME (un seul navigateur installé → un seul affiché). Ubuntu écrit son propre
 # dock dans la base de l'utilisateur à la première connexion : le module y
-# recopie cette liste tant que ce dock est encore celui d'Ubuntu (D8).
+# recopie cette liste tant que ce dock est encore celui d'Ubuntu (D8), ou la
+# liste précédente du dépôt quand celle-ci change (D9).
 # Noms des lanceurs relevés sur la VM après l'installation complète (30 sept 2026).
 [org/gnome/shell]
 favorite-apps=['org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'brave-browser.desktop', 'firefox.desktop', 'google-chrome.desktop', 'com.onepassword.OnePassword.desktop', 'com.microsoft.VSCode.desktop', 'com.anthropic.Claude.desktop', 'thunderbird.desktop', 'rocketchat-desktop.desktop', 'md.obsidian.Obsidian.desktop', 'spotify.desktop', 'org.gnome.TextEditor.desktop']

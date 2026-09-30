@@ -8,6 +8,7 @@ Dernier module de la vague 5 (ROADMAP : `gnome`, groupe `bureau`, « réglages d
 - Les réglages de base deviennent les **valeurs par défaut du système** — base dconf du système, fichier versionné dans le dépôt au format de `dconf dump` — et non des réglages imposés (décision de l'utilisateur, 29 sept 2026) : ce que l'utilisateur règle ensuite garde la priorité, et une relance du script ne l'écrase pas.
 - Contenu de base, relevé dans la VM : clavier canadien français ; thème sombre (Yaru) ; fond d'écran fourni par Ubuntu, aussi pour l'écran verrouillé ; dock en bas, icônes de 42, masqué automatiquement, sans corbeille ; pas d'icône du dossier personnel sur le bureau ; pas de rapports d'erreur ; localisation coupée ; veilleuse sans horaire automatique ; dossiers en premier dans le sélecteur de fichiers.
 - **Dock** fixé par le script : Fichiers, Ghostty, navigateurs (Brave, Firefox, Chrome — seuls les installés s'affichent), 1Password, VS Code, Claude, Thunderbird, Rocket.Chat, Obsidian, Spotify, éditeur de texte de GNOME (ajouté après le test en VM). Liste provisoire, ajustée après un test d'installation complète.
+- **Dock d'Ubuntu remplacé** (décision de l'utilisateur, 30 sept 2026, après le relevé du snapshot vierge) : Ubuntu écrit son propre dock dans la base de l'utilisateur dès la première connexion, qui masquerait la valeur par défaut du système ; tant que le dock en vigueur est exactement celui d'Ubuntu, le module y écrit celui du dépôt — même chose, plus tard, pour un dock qui vaut encore l'ancienne liste du dépôt quand celle-ci change (contre-vérification) ; jamais un dock retouché par l'utilisateur.
 - Le **profil dconf** de l'utilisateur, absent sur Ubuntu 26.04, est créé pour que la base du système soit lue.
 
 Cycle convenu (utilisateur, 29 sept 2026) : cette base → test en VM → ajustements de l'utilisateur → mise à jour du fichier versionné depuis son `dconf dump` ; même chose plus tard sur le laptop.
@@ -26,6 +27,6 @@ _Aucune._
 
 - Nouveaux : `modules/70-gnome.sh`, `config/gnome/` (profil dconf et réglages au format de `dconf dump`), `tests/test-gnome.sh`.
 - Écritures système : `/etc/dconf/profile/user`, `/etc/dconf/db/local.d/<fichier>`, base compilée `/etc/dconf/db/local` (`dconf update`).
-- Aucune écriture dans la base dconf de l'utilisateur ; aucun réseau.
+- Base dconf de l'utilisateur : seule écriture, le dock, tant qu'il est encore celui d'Ubuntu ou l'ancienne liste du dépôt (`dconf write`, sans `sudo`) ; aucun réseau.
 - `ROADMAP.md` (ligne 70, vague 5).
 - Validation en VM : une base utilisateur déjà remplie (VM actuelle) masque les défauts ; le test remet à zéro les clés concernées pour voir la base du système s'appliquer.

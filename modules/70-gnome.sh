@@ -14,7 +14,8 @@
 # si quelque chose a changé (D1 à D3). Aucun réglage n'est verrouillé. Seule
 # exception à la base du système : le dock, qu'Ubuntu écrit dans la base de
 # l'utilisateur dès la première connexion ; il y est recopié tant qu'il est encore
-# celui d'Ubuntu, jamais une fois modifié par l'utilisateur (D8).
+# celui d'Ubuntu ou la liste que le dépôt avait déployée avant une mise à jour,
+# jamais une fois modifié par l'utilisateur (D8, D9).
 # Voir openspec/changes/gnome/specs/module-gnome/spec.md et openspec/changes/gnome/design.md.
 MODULE_NAME="gnome"
 MODULE_DESC="bureau GNOME : clavier ; thème sombre ; fond ; dock ; confidentialité (valeurs par défaut du système)"
@@ -43,8 +44,8 @@ _gnome_db_fresh() { [[ -f $GNOME_DB ]] && ! [[ $GNOME_KEYFILE -nt $GNOME_DB ]]; 
 # _gnome_dock_ubuntu : le dock en vigueur est encore celui d'Ubuntu (D8).
 _gnome_dock_ubuntu() { [[ $(dconf read "$GNOME_DOCK_KEY" 2>/dev/null) == "$GNOME_DOCK_UBUNTU" ]]; }
 
-# _gnome_dock_repo : liste du dock du fichier de réglages du dépôt.
-_gnome_dock_repo() { sed -n 's/^favorite-apps=//p' "$DOTFILES_DIR/$GNOME_KEYFILE_SRC"; }
+# _gnome_dock_of <fichier de réglages> : sa liste du dock (vide si absente).
+_gnome_dock_of() { sed -n 's/^favorite-apps=//p' "$1" 2>/dev/null; }
 
 # Déjà fait = dconf-cli installé, profil et réglages identiques au dépôt, base
 # recompilée depuis, dock qui n'est plus celui d'Ubuntu (D5, D8). Les retouches
@@ -64,15 +65,17 @@ module_install() {
 
 # Profil (D2 : un profil différent n'est jamais écrasé), réglages, puis
 # recompilation seulement si l'un a changé ou si la base n'est pas fraîche (D3) ;
-# enfin le dock, s'il est encore celui d'Ubuntu (D8).
+# enfin le dock, s'il est encore celui d'Ubuntu (D8) ou l'ancienne liste du
+# dépôt, lue dans les réglages déployés avant de les remplacer (D9).
 module_configure() {
-  local changed=0
+  local changed=0 old_dock new_dock dock
   if [[ -e $GNOME_PROFILE ]] && ! _gnome_same "$GNOME_PROFILE_SRC" "$GNOME_PROFILE"; then
     log_error "Profil dconf existant et différent : $GNOME_PROFILE (laissé intact ; le fusionner à la main avec $GNOME_PROFILE_SRC)."
     return 1
   fi
   _gnome_same "$GNOME_PROFILE_SRC" "$GNOME_PROFILE" || changed=1
   install_system_file "$GNOME_PROFILE_SRC" "$GNOME_PROFILE" || return 1
+  old_dock=$(_gnome_dock_of "$GNOME_KEYFILE")
   _gnome_same "$GNOME_KEYFILE_SRC" "$GNOME_KEYFILE" || changed=1
   install_system_file "$GNOME_KEYFILE_SRC" "$GNOME_KEYFILE" || return 1
   if (( changed )) || ! _gnome_db_fresh; then
@@ -81,8 +84,13 @@ module_configure() {
   else
     log_ok "Réglages de base du bureau déjà en place."
   fi
-  if _gnome_dock_ubuntu; then
-    run dconf write "$GNOME_DOCK_KEY" "$(_gnome_dock_repo)" || { log_error "Écriture du dock échouée : voir le journal."; return 1; }
+  new_dock=$(_gnome_dock_of "$DOTFILES_DIR/$GNOME_KEYFILE_SRC")
+  dock=$(dconf read "$GNOME_DOCK_KEY" 2>/dev/null) || dock=""
+  if [[ $dock == "$GNOME_DOCK_UBUNTU" ]]; then
+    run dconf write "$GNOME_DOCK_KEY" "$new_dock" || { log_error "Écriture du dock échouée : voir le journal."; return 1; }
     log_ok "Dock d'Ubuntu remplacé par celui du dépôt."
+  elif [[ -n $old_dock && $old_dock != "$new_dock" && $dock == "$old_dock" ]]; then
+    run dconf write "$GNOME_DOCK_KEY" "$new_dock" || { log_error "Écriture du dock échouée : voir le journal."; return 1; }
+    log_ok "Dock mis à jour : nouvelle liste du dépôt."
   fi
 }
