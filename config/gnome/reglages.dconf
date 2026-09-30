@@ -1,0 +1,60 @@
+# config/gnome/reglages.dconf — réglages de base du bureau GNOME, déployés par le
+# module `gnome` comme VALEURS PAR DÉFAUT du système (/etc/dconf/db/local.d/) :
+# ce que l'utilisateur règle lui-même garde la priorité. Format de `dconf dump`.
+#
+# Mise à jour : sur le poste de référence, `dconf dump /` ne liste que ce qui
+# s'écarte des défauts ; y reprendre les clés voulues (pas l'état tenu par GNOME
+# ou les applications, ni ce qu'écrit l'extension de pavage), puis relancer
+# `setup.sh gnome`. Voir openspec/changes/gnome/design.md (D1, D4).
+
+[org/gnome/desktop/input-sources]
+sources=[('xkb', 'ca')]
+
+[org/gnome/desktop/peripherals/keyboard]
+numlock-state=false
+
+[org/gnome/desktop/interface]
+color-scheme='prefer-dark'
+gtk-theme='Yaru-dark'
+icon-theme='Yaru-dark'
+
+[org/gnome/desktop/background]
+picture-options='zoom'
+picture-uri='file:///usr/share/backgrounds/osselo-Ask_a_friend.jpg'
+picture-uri-dark='file:///usr/share/backgrounds/osselo-Ask_a_friend.jpg'
+primary-color='#000000000000'
+secondary-color='#000000000000'
+
+[org/gnome/desktop/screensaver]
+picture-options='zoom'
+picture-uri='file:///usr/share/backgrounds/osselo-Ask_a_friend.jpg'
+primary-color='#000000000000'
+secondary-color='#000000000000'
+
+[org/gnome/desktop/privacy]
+report-technical-problems=false
+
+[org/gnome/system/location]
+enabled=false
+
+[org/gnome/settings-daemon/plugins/color]
+night-light-schedule-automatic=false
+
+[org/gtk/gtk4/settings/file-chooser]
+sort-directories-first=true
+
+[org/gnome/shell/extensions/dash-to-dock]
+dock-position='BOTTOM'
+dash-max-icon-size=42
+dock-fixed=false
+show-trash=false
+
+[org/gnome/shell/extensions/ding]
+show-home=false
+
+# Dock : applications du script, dans l'ordre ; un lanceur absent est ignoré par
+# GNOME (un seul navigateur installé → un seul affiché). Claude, Rocket.Chat,
+# Obsidian et Spotify : noms probables, à confirmer au test d'installation
+# complète (tâche 2.2).
+[org/gnome/shell]
+favorite-apps=['org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'brave-browser.desktop', 'firefox.desktop', 'google-chrome.desktop', 'com.onepassword.OnePassword.desktop', 'code.desktop', 'claude-desktop.desktop', 'thunderbird.desktop', 'rocketchat-desktop.desktop', 'obsidian.desktop', 'spotify.desktop']
