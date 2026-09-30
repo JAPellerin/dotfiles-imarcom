@@ -6,4 +6,4 @@
 ## 2. Validation en VM et documentation
 
 - [ ] 2.1 VM : `git pull` puis `./setup.sh solaar` → `dpkg -s solaar` ; `grep USE_PLUGDEV_GROUP /etc/default/solaar` → `"false"` ; réouverture de session → processus `solaar` lancé et icône dans la barre du haut ; relance → « déjà fait » ; consigner ici (détection des appareils : sur le laptop)
-- [ ] 2.2 `ROADMAP.md` : ligne 71 `solaar` au tableau (et mention dans la vague 6) ; `openspec validate solaar --strict` vert
+- [ ] 2.2 `ROADMAP.md` : ligne 71 `solaar` au tableau (et mention dans la vague 6) ; `openspec validate solaar --strict` vert — **en cours, 30 sept 2026** : ligne 71 ajoutée au tableau (`c8532fb`) ; la mention dans la vague 6 est écrite par la tâche 3.3 d'`orca` (paragraphe commun aux deux modules, même session que `orca`)
