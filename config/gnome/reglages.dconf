@@ -10,9 +10,6 @@
 [org/gnome/desktop/input-sources]
 sources=[('xkb', 'ca')]
 
-[org/gnome/desktop/peripherals/keyboard]
-numlock-state=false
-
 [org/gnome/desktop/interface]
 color-scheme='prefer-dark'
 gtk-theme='Yaru-dark'
@@ -58,4 +55,4 @@ show-home=false
 # recopie cette liste tant que ce dock est encore celui d'Ubuntu (D8).
 # Noms des lanceurs relevés sur la VM après l'installation complète (30 sept 2026).
 [org/gnome/shell]
-favorite-apps=['org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'brave-browser.desktop', 'firefox.desktop', 'google-chrome.desktop', 'com.onepassword.OnePassword.desktop', 'com.microsoft.VSCode.desktop', 'com.anthropic.Claude.desktop', 'thunderbird.desktop', 'rocketchat-desktop.desktop', 'md.obsidian.Obsidian.desktop', 'spotify.desktop']
+favorite-apps=['org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'brave-browser.desktop', 'firefox.desktop', 'google-chrome.desktop', 'com.onepassword.OnePassword.desktop', 'com.microsoft.VSCode.desktop', 'com.anthropic.Claude.desktop', 'thunderbird.desktop', 'rocketchat-desktop.desktop', 'md.obsidian.Obsidian.desktop', 'spotify.desktop', 'org.gnome.TextEditor.desktop']

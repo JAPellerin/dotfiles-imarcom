@@ -61,7 +61,6 @@ printf '%s\n' "== fichier des réglages de base =="
 # key <section> <clé=valeur> : la section du fichier porte cette ligne.
 key() { awk -v s="[$1]" -v k="$2" '$0 == s { f = 1; next } /^\[/ { f = 0 } f && $0 == k { found = 1 } END { exit !found }' "$SRC"; }
 assert_ok "clavier canadien français" key org/gnome/desktop/input-sources "sources=[('xkb', 'ca')]"
-assert_ok "verrouillage numérique désactivé" key org/gnome/desktop/peripherals/keyboard "numlock-state=false"
 assert_ok "thème sombre" key org/gnome/desktop/interface "color-scheme='prefer-dark'"
 assert_ok "fond d'écran" key org/gnome/desktop/background "picture-uri='file:///usr/share/backgrounds/osselo-Ask_a_friend.jpg'"
 assert_ok "fond de l'écran verrouillé" key org/gnome/desktop/screensaver "picture-uri='file:///usr/share/backgrounds/osselo-Ask_a_friend.jpg'"
@@ -75,9 +74,9 @@ assert_ok "localisation coupée" key org/gnome/system/location "enabled=false"
 assert_ok "veilleuse sans horaire automatique" key org/gnome/settings-daemon/plugins/color "night-light-schedule-automatic=false"
 assert_ok "dossiers en premier" key org/gtk/gtk4/settings/file-chooser "sort-directories-first=true"
 dock=$(sed -n "s/^favorite-apps=//p" "$SRC")
-assert_eq "dock : applications dans l'ordre (Fichiers, Ghostty, navigateurs, 1Password, VS Code, …)" \
-  "['org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'brave-browser.desktop', 'firefox.desktop', 'google-chrome.desktop', 'com.onepassword.OnePassword.desktop', 'com.microsoft.VSCode.desktop', 'com.anthropic.Claude.desktop', 'thunderbird.desktop', 'rocketchat-desktop.desktop', 'md.obsidian.Obsidian.desktop', 'spotify.desktop']" "$dock"
-for ecarte in 'settings-daemon/plugins/power' 'org/gnome/mutter' 'tiling-assistant' 'app-picker-layout' 'enabled-extensions'; do
+assert_eq "dock : applications dans l'ordre (Fichiers, Ghostty, navigateurs, 1Password, VS Code, …, éditeur de texte)" \
+  "['org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'brave-browser.desktop', 'firefox.desktop', 'google-chrome.desktop', 'com.onepassword.OnePassword.desktop', 'com.microsoft.VSCode.desktop', 'com.anthropic.Claude.desktop', 'thunderbird.desktop', 'rocketchat-desktop.desktop', 'md.obsidian.Obsidian.desktop', 'spotify.desktop', 'org.gnome.TextEditor.desktop']" "$dock"
+for ecarte in 'numlock-state' 'settings-daemon/plugins/power' 'org/gnome/mutter' 'tiling-assistant' 'app-picker-layout' 'enabled-extensions'; do
   assert_fail "clé écartée absente : $ecarte" grep -q -- "$ecarte" "$SRC"
 done
 
