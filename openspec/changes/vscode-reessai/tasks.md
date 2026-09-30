@@ -4,4 +4,4 @@
 
 ## 2. Validation
 
-- [ ] 2.1 VM : `./setup.sh vscode` → extensions manquantes installées (dont `anthropic.claude-code`, en échec au test complet du 30 sept 2026), relance → « déjà fait » ; `openspec validate vscode-reessai --strict` vert ; consigner ici
+- [x] 2.1 VM : `./setup.sh vscode` → extensions manquantes installées (dont `anthropic.claude-code`, en échec au test complet du 30 sept 2026), relance → « déjà fait » ; `openspec validate vscode-reessai --strict` vert ; consigner ici — **fait le 30 sept 2026** : `anthropic.claude-code` désinstallée → réinstallée en une tentative, « Extensions VS Code : 18 présentes » ; relance → « Déjà fait » (le cas 503 reste couvert par les tests : impossible à provoquer sur le vrai magasin)
