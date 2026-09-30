@@ -26,7 +26,7 @@ Le module `gnome` (groupe `bureau`, dépend de `base`, nécessite une session gr
 - **THEN** le module est annoncé « non disponible ici » et n'est pas exécuté
 
 ### Requirement: Dock des applications du script
-Les réglages de base SHALL fixer les applications du dock, dans cet ordre : Fichiers, Ghostty, Brave, Firefox, Chrome, 1Password, VS Code, Claude, Thunderbird, Rocket.Chat, Obsidian, Spotify, l'éditeur de texte de GNOME. Une application absente du poste MUST NOT empêcher l'affichage des autres. Ubuntu écrivant son propre dock dans la base de l'utilisateur dès la première connexion, la valeur par défaut du système ne s'y verrait jamais : tant que le dock en vigueur est exactement celui qu'Ubuntu pose à la première connexion, le module SHALL y écrire le dock du dépôt. De même, quand la liste du dock change dans le dépôt, un dock qui vaut exactement la liste déployée auparavant par le module SHALL être remplacé par la nouvelle. Un dock modifié par l'utilisateur MUST NOT être réécrit.
+Les réglages de base SHALL fixer les applications du dock, dans cet ordre : Fichiers, Ghostty, Brave, Firefox, Chrome, 1Password, Orca, VS Code, Claude, Thunderbird, Rocket.Chat, Obsidian, Spotify, l'éditeur de texte de GNOME. Une application absente du poste MUST NOT empêcher l'affichage des autres. Ubuntu écrivant son propre dock dans la base de l'utilisateur dès la première connexion, la valeur par défaut du système ne s'y verrait jamais : tant que le dock en vigueur est exactement celui qu'Ubuntu pose à la première connexion, le module SHALL y écrire le dock du dépôt. De même, quand la liste du dock change dans le dépôt, un dock qui vaut exactement la liste déployée auparavant par le module SHALL être remplacé par la nouvelle. Un dock modifié par l'utilisateur MUST NOT être réécrit.
 
 #### Scenario: Navigateur choisi
 - **WHEN** seul Brave a été installé parmi les trois navigateurs
@@ -43,6 +43,10 @@ Les réglages de base SHALL fixer les applications du dock, dans cet ordre : Fic
 #### Scenario: Dock déjà personnalisé
 - **WHEN** l'utilisateur a déjà ajouté ou retiré des applications du dock
 - **THEN** son dock reste tel qu'il l'a laissé, y compris après une relance du module ou une mise à jour de la liste du dépôt
+
+#### Scenario: Orca dans le dock
+- **WHEN** Orca est installé
+- **THEN** le dock le présente entre 1Password et VS Code
 
 ### Requirement: Profil dconf de l'utilisateur
 Pour que la base dconf du système soit lue, le module SHALL créer le profil dconf de l'utilisateur, qui place la base de l'utilisateur avant celle du système, lorsqu'il n'existe pas. Un profil existant identique MUST NOT être réécrit ; un profil existant différent MUST NOT être modifié : le module SHALL alors échouer en le nommant.
