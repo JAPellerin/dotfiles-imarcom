@@ -88,7 +88,7 @@ _vscode_debconf() {
 # _vscode_install_extension <id> : jusqu'à VSCODE_EXT_TRIES tentatives, espacées
 # de VSCODE_EXT_PAUSE secondes ; 0 à la première réussite. Lancée sous un seul
 # ui_spin : une tentative ratée puis rattrapée n'affiche rien, chacune reste au
-# journal (par run). Voir openspec/changes/vscode-reessai/design.md (D1, D2).
+# journal (par run). Voir openspec/changes/archive/2026-09-30-vscode-reessai/design.md (D1, D2).
 _vscode_install_extension() {
   local id=$1 try
   for (( try = 1; try <= VSCODE_EXT_TRIES; try++ )); do
